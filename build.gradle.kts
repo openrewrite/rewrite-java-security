@@ -107,6 +107,8 @@ dependencies {
 
     testRuntimeOnly("org.openrewrite:rewrite-java-11:${rewriteVersion}")
     testRuntimeOnly("org.openrewrite:rewrite-java-8:${rewriteVersion}")
+
+    testRuntimeOnly("com.fasterxml.jackson.core:jackson-databind:latest.release")
 }
 
 tasks.withType(KotlinCompile::class.java).configureEach {
