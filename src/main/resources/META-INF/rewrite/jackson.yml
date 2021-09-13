@@ -15,10 +15,20 @@
 #
 
 type: specs.openrewrite.org/v1beta/recipe
-name: org.openrewrite.java.security.search
+name: org.openrewrite.java.security.search.FindJacksonDefaultTypeMapping
 displayName: Find Jackson default type mapping enablement
 description: '`ObjectMapper#enableTypeMapping(..)` can lead to vulnerable deserialization.'
 recipeList:
   - org.openrewrite.java.search.FindMethods:
       methodPattern: com.fasterxml.jackson.databind.ObjectMapper enableDefaultTyping(..)
       matchOverrides: true
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.java.security.search.FindVulnerableJacksonJsonTypeInfo
+displayName: 'Find vulnerable uses of Jackson `@JsonTypeInfo`'
+description: 'Identify where attackers can deserialize gadgets into a target field.'
+recipeList:
+  - org.openrewrite.java.search.FindAnnotations:
+      annotationPattern: '@com.fasterxml.jackson.annotation.JsonTypeInfo(use=com.fasterxml.jackson.annotation.JsonTypeInfo.Id.CLASS)'
+  - org.openrewrite.java.search.FindAnnotations:
+      annotationPattern: '@com.fasterxml.jackson.annotation.JsonTypeInfo(use=com.fasterxml.jackson.annotation.JsonTypeInfo.Id.MINIMAL_CLASS)'
