@@ -19,6 +19,8 @@ import org.junit.jupiter.api.Test
 import org.openrewrite.Recipe
 import org.openrewrite.java.JavaParser
 import org.openrewrite.java.JavaRecipeTest
+import org.openrewrite.java.search.FindAnnotations
+import org.openrewrite.java.security.search.FindVulnerableJacksonJsonTypeInfo
 
 class SecureJacksonDefaultTypingTest: JavaRecipeTest {
     override val parser: JavaParser
@@ -37,6 +39,7 @@ class SecureJacksonDefaultTypingTest: JavaRecipeTest {
 
             class Test {
                 ObjectMapper o = new ObjectMapper().enableDefaultTyping();
+                ObjectMapper o2 = new ObjectMapper().enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
             }
         """,
         after = """
@@ -45,6 +48,7 @@ class SecureJacksonDefaultTypingTest: JavaRecipeTest {
             
             class Test {
                 ObjectMapper o = new ObjectMapper().activateDefaultTyping(BasicPolymorphicTypeValidator.builder().build());
+                ObjectMapper o2 = new ObjectMapper().activateDefaultTyping(BasicPolymorphicTypeValidator.builder().build(), ObjectMapper.DefaultTyping.NON_FINAL);
             }
         """
     )

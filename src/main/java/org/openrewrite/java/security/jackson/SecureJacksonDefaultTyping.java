@@ -17,13 +17,19 @@ package org.openrewrite.java.security.jackson;
 
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Recipe;
+import org.openrewrite.internal.ListUtils;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.JavaVisitor;
 import org.openrewrite.java.MethodMatcher;
+import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.java.tree.TypeUtils;
+
+import java.util.Collections;
+
+import static java.util.Collections.emptyList;
 
 public class SecureJacksonDefaultTyping extends Recipe {
 
@@ -39,7 +45,7 @@ public class SecureJacksonDefaultTyping extends Recipe {
 
     @Override
     protected JavaVisitor<ExecutionContext> getVisitor() {
-        MethodMatcher enableDefaultTyping = new MethodMatcher("com.fasterxml.jackson.databind.ObjectMapper enableDefaultTyping()", true);
+        MethodMatcher enableDefaultTyping = new MethodMatcher("com.fasterxml.jackson.databind.ObjectMapper enableDefaultTyping(..)", true);
         return new JavaVisitor<ExecutionContext>() {
             @Override
             public J visitMethodInvocation(J.MethodInvocation method, ExecutionContext executionContext) {
@@ -50,16 +56,26 @@ public class SecureJacksonDefaultTyping extends Recipe {
                     if (methodType.getDeclaringType().getMethods().stream().anyMatch(m -> m.getName().equals("activateDefaultTyping"))) {
                         // Jackson version is 2.10 or above
                         maybeAddImport("com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator");
+
+                        StringBuilder template = new StringBuilder("#{any(com.fasterxml.jackson.databind.ObjectMapper)}.activateDefaultTyping(BasicPolymorphicTypeValidator.builder().build()");
+                        for (Expression arg : method.getArguments()) {
+                            JavaType.FullyQualified argType = TypeUtils.asFullyQualified(arg.getType());
+                            if (argType != null) {
+                                template.append(",#{any(").append(argType.getFullyQualifiedName()).append(")}");
+                            }
+                        }
+                        template.append(')');
+
                         return method.withTemplate(
                                 JavaTemplate
-                                        .builder(this::getCursor, "#{any(com.fasterxml.jackson.databind.ObjectMapper)}.activateDefaultTyping(BasicPolymorphicTypeValidator.builder().build())")
+                                        .builder(this::getCursor, template.toString())
                                         .imports("com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator")
                                         .javaParser(() -> JavaParser.fromJavaVersion()
                                                 .classpath("jackson-databind", "jackson-core")
                                                 .build())
                                         .build(),
                                 method.getCoordinates().replace(),
-                                method.getSelect()
+                                ListUtils.concat(method.getSelect(), method.getArguments().get(0) instanceof J.Empty ? emptyList() : method.getArguments()).toArray()
                         );
                     }
                 }
