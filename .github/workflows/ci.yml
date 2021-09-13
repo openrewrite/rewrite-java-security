@@ -71,7 +71,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
       - name: publish-snapshots
-        if: github.event_name == 'push'
         timeout-minutes: 30
         run: ./gradlew ${GRADLE_SWITCHES} snapshot publish -PforceSigning -x test
         env:
