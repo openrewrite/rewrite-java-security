@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 @NonNullApi
-package org.openrewrite.java.security.jackson;
+package org.openrewrite.java.security.marshalling;
 
 import org.openrewrite.internal.lang.NonNullApi;

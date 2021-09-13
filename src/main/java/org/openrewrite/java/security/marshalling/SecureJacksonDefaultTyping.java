@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.openrewrite.java.security.jackson;
+package org.openrewrite.java.security.marshalling;
 
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Recipe;
@@ -26,8 +26,6 @@ import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.java.tree.TypeUtils;
-
-import java.util.Collections;
 
 import static java.util.Collections.emptyList;
 

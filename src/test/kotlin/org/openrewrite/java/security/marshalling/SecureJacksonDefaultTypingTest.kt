@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.openrewrite.java.security.jackson
+package org.openrewrite.java.security.marshalling
 
 import org.junit.jupiter.api.Test
 import org.openrewrite.Recipe
 import org.openrewrite.java.JavaParser
 import org.openrewrite.java.JavaRecipeTest
-import org.openrewrite.java.search.FindAnnotations
-import org.openrewrite.java.security.search.FindVulnerableJacksonJsonTypeInfo
 
 class SecureJacksonDefaultTypingTest: JavaRecipeTest {
     override val parser: JavaParser
