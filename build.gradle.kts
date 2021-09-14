@@ -90,9 +90,9 @@ dependencies {
     implementation("org.openrewrite:rewrite-maven:${rewriteVersion}")
     runtimeOnly("org.openrewrite:rewrite-java-11:${rewriteVersion}")
 
-    implementation("org.springframework:spring-context:latest.release")
-    implementation("org.springframework.security:spring-security-config:latest.release")
-    implementation("jakarta.servlet:jakarta.servlet-api:4.+")
+    runtimeOnly("org.springframework:spring-context:latest.release")
+    runtimeOnly("org.springframework.security:spring-security-config:latest.release")
+    runtimeOnly("jakarta.servlet:jakarta.servlet-api:4.+")
 
     // eliminates "unknown enum constant DeprecationLevel.WARNING" warnings from the build log
     // see https://github.com/gradle/kotlin-dsl-samples/issues/1301 for why (okhttp is leaking parts of kotlin stdlib)
@@ -106,8 +106,6 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:latest.release")
 
     testRuntimeOnly("org.springframework.boot:spring-boot-starter:latest.release")
-//    testRuntimeOnly("org.springframework.boot:spring-boot-starter-web:latest.release")
-//    testRuntimeOnly("jakarta.servlet:jakarta.servlet-api:4.+")
 
     testImplementation("org.openrewrite:rewrite-test:${rewriteVersion}")
 
