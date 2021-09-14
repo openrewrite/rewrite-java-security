@@ -51,7 +51,7 @@ public class SecureJacksonDefaultTyping extends Recipe {
                     JavaType.Method methodType = TypeUtils.asMethod(method.getType());
                     assert methodType != null;
 
-                    if (methodType.getDeclaringType().getMethods().stream().anyMatch(m -> m.getName().equals("activateDefaultTyping"))) {
+                    if (methodType.getDeclaringType().getMethods().stream().anyMatch(m -> "activateDefaultTyping".equals(m.getName()))) {
                         // Jackson version is 2.10 or above
                         maybeAddImport("com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator");
 
