@@ -153,7 +153,7 @@ configure<LicenseExtension> {
     header = project.rootProject.file("gradle/licenseHeader.txt")
     mapping(mapOf("kt" to "SLASHSTAR_STYLE", "java" to "SLASHSTAR_STYLE"))
     // exclude JavaTemplate shims from license check
-    exclude("src/main/resources/META-INF/rewrite/*.java")
+    exclude("src/main/resources/*.java")
     strictCheck = true
 }
 
