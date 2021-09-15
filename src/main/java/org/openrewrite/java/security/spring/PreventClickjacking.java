@@ -15,10 +15,10 @@
  */
 package org.openrewrite.java.security.spring;
 
-import org.openrewrite.ExecutionContext;
-import org.openrewrite.Recipe;
-import org.openrewrite.SourceFile;
-import org.openrewrite.TreeVisitor;
+import lombok.EqualsAndHashCode;
+import lombok.Value;
+import org.openrewrite.*;
+import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.JavaVisitor;
@@ -29,7 +29,15 @@ import org.openrewrite.java.tree.JavaType;
 
 import java.util.List;
 
+@Value
+@EqualsAndHashCode(callSuper = true)
 public class PreventClickjacking extends Recipe {
+    @Option(displayName = "Only if security configuration exists",
+            description = "Only patch existing implementations of `WebSecurityConfigurerAdapter`.",
+            required = false)
+    @Nullable
+    Boolean onlyIfSecurityConfig;
+
     @Override
     public String getDisplayName() {
         return "Prevent clickjacking";
@@ -49,7 +57,7 @@ public class PreventClickjacking extends Recipe {
 
     @Override
     protected List<SourceFile> visit(List<SourceFile> before, ExecutionContext ctx) {
-        return GenerateWebSecurityConfigurerAdapter.andAddConfiguration(before, ctx, new JavaVisitor<ExecutionContext>() {
+        return new GenerateWebSecurityConfigurerAdapter(Boolean.TRUE.equals(onlyIfSecurityConfig), new JavaVisitor<ExecutionContext>() {
             @Override
             public J visitBlock(J.Block block, ExecutionContext executionContext) {
                 for (JavaType javaType : getCursor().firstEnclosingOrThrow(J.CompilationUnit.class).getTypesInUse()) {
@@ -57,8 +65,8 @@ public class PreventClickjacking extends Recipe {
                         return block;
                     }
                 }
-
-                return block.withTemplate(JavaTemplate
+                return block.withTemplate(
+                        JavaTemplate
                                 .builder(this::getCursor, "http.headers().frameOptions().deny();")
                                 .javaParser(() -> JavaParser.fromJavaVersion()
                                         .classpath("spring-security-config", "spring-context", "jakarta.servlet-api")
@@ -67,6 +75,6 @@ public class PreventClickjacking extends Recipe {
                         block.getCoordinates().lastStatement()
                 );
             }
-        });
+        }).maybeAddConfiguration(before, ctx);
     }
 }

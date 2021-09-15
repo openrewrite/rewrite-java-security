@@ -15,6 +15,7 @@
  */
 package org.openrewrite.java.security.spring;
 
+import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Parser;
@@ -23,11 +24,11 @@ import org.openrewrite.internal.ListUtils;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.java.JavaVisitor;
 import org.openrewrite.java.MethodMatcher;
+import org.openrewrite.java.format.AutoFormatVisitor;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.java.tree.TypeUtils;
 
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -36,26 +37,24 @@ import java.util.concurrent.atomic.AtomicReference;
 import static java.util.Collections.singletonList;
 import static org.openrewrite.Tree.randomId;
 
+@RequiredArgsConstructor
 public class GenerateWebSecurityConfigurerAdapter {
     private static final MethodMatcher CONFIGURE = new MethodMatcher("org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter configure(org.springframework.security.config.annotation.web.builders.HttpSecurity)");
 
-    public static List<SourceFile> andAddConfiguration(List<SourceFile> sourceFiles,
-                                                       ExecutionContext ctx,
-                                                       JavaVisitor<ExecutionContext> onConfigureBlock) {
+    private final boolean onlyIfExistingConfig;
+    private final JavaVisitor<ExecutionContext> onConfigureBlock;
+
+    public List<SourceFile> maybeAddConfiguration(List<SourceFile> sourceFiles,
+                                                  ExecutionContext ctx) {
         AtomicBoolean found = new AtomicBoolean(false);
-        AtomicReference<Path> springBootApplicationPackage = new AtomicReference<>(Paths.get(""));
-        AtomicReference<J.Package> springBootApplicationPackageName = new AtomicReference<>();
+        AtomicReference<J.CompilationUnit> springBootApplication = new AtomicReference<>();
 
         List<SourceFile> after = ListUtils.map(sourceFiles, sourceFile -> {
             if (sourceFile instanceof J.CompilationUnit) {
                 J.CompilationUnit cu = (J.CompilationUnit) sourceFile;
                 for (JavaType javaType : cu.getTypesInUse()) {
                     if (TypeUtils.isOfClassType(javaType, "org.springframework.boot.autoconfigure.SpringBootApplication")) {
-                        springBootApplicationPackage.set(cu.getSourcePath().getParent() == null ? Paths.get("") :
-                                cu.getSourcePath().getParent());
-                        if (cu.getPackageDeclaration() != null) {
-                            springBootApplicationPackageName.set(cu.getPackageDeclaration());
-                        }
+                        springBootApplication.set(cu);
                     }
                 }
 
@@ -71,23 +70,37 @@ public class GenerateWebSecurityConfigurerAdapter {
 
         if (found.get()) {
             return after;
-        } else {
-            J.CompilationUnit generated = JavaParser.fromJavaVersion()
-                    .classpath("spring-security-config", "spring-context", "jakarta.servlet-api")
-                    .build()
-                    .parseInputs(singletonList(new Parser.Input(
-                            springBootApplicationPackage.get()
-                                    .resolve("SecurityConfig.java")
-                                    .normalize(),
-                            () -> GenerateWebSecurityConfigurerAdapter.class
-                                    .getResourceAsStream("/WebSecurityConfigurerAdapterTemplate.java")
-                    )), null, ctx)
-                    .get(0)
-                    .withPackageDeclaration(springBootApplicationPackageName.get() == null ? null :
-                            springBootApplicationPackageName.get().withId(randomId()));
+        } else if(!onlyIfExistingConfig) {
+            J.CompilationUnit springBootApp = springBootApplication.get();
+            if (springBootApp != null) {
+                J.CompilationUnit generated = JavaParser.fromJavaVersion()
+                        .classpath("spring-security-config", "spring-context", "jakarta.servlet-api")
+                        .build()
+                        .parseInputs(singletonList(new Parser.Input(
+                                (springBootApp.getSourcePath().getParent() == null ? Paths.get("") :
+                                        springBootApp.getSourcePath().getParent())
+                                        .resolve("SecurityConfig.java")
+                                        .normalize(),
+                                () -> GenerateWebSecurityConfigurerAdapter.class
+                                        .getResourceAsStream("/WebSecurityConfigurerAdapterTemplate.java")
+                        )), null, ctx)
+                        .get(0);
 
-            return ListUtils.concat(after, visitConfigureMethod(generated, ctx, onConfigureBlock));
+                J.Package pkg = springBootApp.getPackageDeclaration();
+                if (pkg != null) {
+                    generated = generated.withPackageDeclaration(pkg.withId(randomId()));
+                }
+
+                generated = generated.withMarkers(springBootApp.getMarkers());
+                generated = (J.CompilationUnit) new AutoFormatVisitor<ExecutionContext>(generated.getClasses().get(0).getName())
+                        .visit(generated, ctx);
+                assert generated != null;
+
+                return ListUtils.concat(after, visitConfigureMethod(generated, ctx, onConfigureBlock));
+            }
         }
+
+        return sourceFiles;
     }
 
     @Nullable

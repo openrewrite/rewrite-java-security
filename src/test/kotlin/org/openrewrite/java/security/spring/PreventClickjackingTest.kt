@@ -15,19 +15,21 @@
  */
 package org.openrewrite.java.security.spring
 
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.openrewrite.Recipe
 import org.openrewrite.java.JavaParser
 import org.openrewrite.java.JavaRecipeTest
+import java.nio.file.Paths
 
 class PreventClickjackingTest : JavaRecipeTest {
     override val parser: JavaParser
         get() = JavaParser.fromJavaVersion()
-            .classpath(JavaParser.runtimeClasspath)
+            .classpath(JavaParser.runtimeClasspath())
             .build()
 
     override val recipe: Recipe
-        get() = PreventClickjacking()
+        get() = PreventClickjacking(null)
 
     @Test
     fun withSecurityConfig() = assertChanged(
@@ -64,4 +66,39 @@ class PreventClickjackingTest : JavaRecipeTest {
             }
         """
     )
+
+    @Test
+    fun withoutSecurityConfig() {
+        val cus = parser.parse("""
+            package org.openrewrite;
+            
+            import org.springframework.boot.autoconfigure.SpringBootApplication;
+            
+            @SpringBootApplication
+            class Application {
+            }
+        """.trimIndent()).map { it.withSourcePath(Paths.get("src/main/java/org/openrewrite/Application.java")) }
+
+        val results = recipe.run(cus)
+
+        assertThat(results.size).isEqualTo(1)
+        assertThat(results[0].after!!.sourcePath).isEqualTo(Paths.get("src/main/java/org/openrewrite/SecurityConfig.java"))
+
+        //language=java
+        assertThat(results[0].after!!.printTrimmed()).isEqualTo("""
+            package org.openrewrite;
+            
+            import org.springframework.context.annotation.Configuration;
+            import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+            import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+            
+            @Configuration
+            class SecurityConfig extends WebSecurityConfigurerAdapter {
+                @Override
+                protected void configure(HttpSecurity http) throws Exception {
+                    http.headers().frameOptions().deny();
+                }
+            }
+        """.trimIndent())
+    }
 }
