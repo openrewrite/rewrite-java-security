@@ -92,8 +92,7 @@ public class GenerateWebSecurityConfigurerAdapter {
                 }
 
                 generated = generated.withMarkers(springBootApp.getMarkers());
-                generated = (J.CompilationUnit) new AutoFormatVisitor<ExecutionContext>(generated.getClasses().get(0).getName())
-                        .visit(generated, ctx);
+                generated = (J.CompilationUnit) new AutoFormatVisitor<ExecutionContext>().visit(generated, ctx);
                 assert generated != null;
 
                 return ListUtils.concat(after, visitConfigureMethod(generated, ctx, onConfigureBlock));

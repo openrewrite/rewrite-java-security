@@ -92,6 +92,7 @@ dependencies {
 
     runtimeOnly("org.springframework:spring-context:latest.release")
     runtimeOnly("org.springframework.security:spring-security-config:latest.release")
+    runtimeOnly("org.springframework.security:spring-security-web:latest.release")
     runtimeOnly("jakarta.servlet:jakarta.servlet-api:4.+")
 
     // eliminates "unknown enum constant DeprecationLevel.WARNING" warnings from the build log
