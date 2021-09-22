@@ -85,7 +85,7 @@ class PreventClickjackingTest : JavaRecipeTest {
         assertThat(results[0].after!!.sourcePath).isEqualTo(Paths.get("src/main/java/org/openrewrite/SecurityConfig.java"))
 
         //language=java
-        assertThat(results[0].after!!.printTrimmed()).isEqualTo("""
+        assertThat(results[0].after!!.printAllTrimmed()).isEqualTo("""
             package org.openrewrite;
             
             import org.springframework.context.annotation.Configuration;
