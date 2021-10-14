@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2021 the original author or authors.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.openrewrite.java.security
 
 import org.junit.jupiter.api.Test
 import org.openrewrite.Recipe
-import org.openrewrite.java.JavaParser
 import org.openrewrite.java.JavaRecipeTest
 
 class SecureTempFileCreationTest : JavaRecipeTest {
@@ -28,17 +27,23 @@ class SecureTempFileCreationTest : JavaRecipeTest {
     fun twoArgCreateTempFile() = assertChanged(
         before = """
             import java.io.File;
-            
-            public class A {
-                File tempDir = File.createTempFile("hello", "world");
+            import java.io.IOException;
+
+            class Test {
+                static void method() throws IOException {
+                    File tempDir = File.createTempFile("hello", "world");
+                }
             }
         """,
         after = """
             import java.io.File;
+            import java.io.IOException;
             import java.nio.file.Files;
-            
-            public class A {
-                File tempDir = Files.createTempFile("hello", "world").toFile();
+
+            class Test {
+                static void method() throws IOException {
+                    File tempDir = Files.createTempFile("hello", "world").toFile();
+                }
             }
         """
     )
@@ -47,18 +52,25 @@ class SecureTempFileCreationTest : JavaRecipeTest {
     fun threeArgCreateTempFile() = assertChanged(
         before = """
             import java.io.File;
-            
-            public class A {
-                File tempDir = File.createTempFile("hello", "world", new File("."));
+            import java.io.IOException;
+
+            class Test {
+                static void method() throws IOException {
+                    File tempDir = File.createTempFile("hello", "world", new File("."));
+                }
             }
         """,
         after = """
             import java.io.File;
+            import java.io.IOException;
             import java.nio.file.Files;
-            
-            public class A {
-                File tempDir = Files.createTempFile(new File(".").toPath(), "hello", "world").toFile();
+
+            class Test {
+                static void method() throws IOException {
+                    File tempDir = Files.createTempFile(new File(".").toPath(), "hello", "world").toFile();
+                }
             }
         """
     )
+
 }
