@@ -60,6 +60,7 @@ class SecureRandomUseDefaultSeedTest : JavaRecipeTest {
                 void test(byte[] bytes) {
                     SecureRandom r = new SecureRandom();
                     r.setSeed(System.currentTimeMillis());
+                    r.setSeed(System.nanoTime());
                 }
             }
         """,

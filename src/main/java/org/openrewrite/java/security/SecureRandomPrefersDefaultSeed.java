@@ -33,12 +33,12 @@ public class SecureRandomPrefersDefaultSeed extends Recipe {
 
     @Override
     public String getDisplayName() {
-        return "SecureRandom seeds should not be predictable";
+        return "SecureRandom seeds are not constant or predictable";
     }
 
     @Override
     public String getDescription() {
-        return "Seeding `java.security.SecureRandom` with constant or predictable values is not recommended. This recipe will remove `SecureRandom#setSeed(*) invocations having weak arguments in favor of the implementation's default seed.";
+        return "Remove `SecureRandom#setSeed(*)` method invocations having constant or predictable arguments.";
     }
 
     @Override
@@ -64,6 +64,7 @@ public class SecureRandomPrefersDefaultSeed extends Recipe {
     private static class SecureRandomUseDefaultSeedVisitor extends JavaIsoVisitor<ExecutionContext> {
         private static final MethodMatcher SET_SEED_MATCHER = new MethodMatcher("java.security.SecureRandom setSeed(..)");
         private static final MethodMatcher SYSTEM_TIME_MATCHER = new MethodMatcher("System currentTimeMillis()");
+        private static final MethodMatcher SYSTEM_NANO_TIME_MATCHER = new MethodMatcher("System nanoTime()");
         private static final MethodMatcher STRING_BYTES_MATCHER = new MethodMatcher("String getBytes()");
         private final JavaType dateType = JavaType.buildType("java.util.Date");
 
@@ -77,10 +78,11 @@ public class SecureRandomPrefersDefaultSeed extends Recipe {
                         isWeakSeed = true;
                     } else if (arg instanceof J.MethodInvocation) {
                         J.MethodInvocation argMi = (J.MethodInvocation) arg;
-                        if (SYSTEM_TIME_MATCHER.matches(arg)
+                        if (SYSTEM_TIME_MATCHER.matches(arg) || SYSTEM_NANO_TIME_MATCHER.matches(argMi)
                                 || (STRING_BYTES_MATCHER.matches(argMi) && argMi.getSelect() instanceof J.Literal)) {
                             isWeakSeed = true;
-                        } else if (argMi.getType() != null && TypeUtils.isAssignableTo(dateType, argMi.getType().getDeclaringType())) {
+                        } else if (argMi.getType() != null
+                                && (TypeUtils.isAssignableTo(dateType, argMi.getType().getDeclaringType()))) {
                             isWeakSeed = true;
                             maybeRemoveImport("java.util.Date");
                         }
@@ -94,6 +96,4 @@ public class SecureRandomPrefersDefaultSeed extends Recipe {
             return mi;
         }
     }
-
-
 }
