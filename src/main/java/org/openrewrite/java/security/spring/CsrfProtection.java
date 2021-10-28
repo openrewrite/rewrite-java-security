@@ -61,7 +61,6 @@ public class CsrfProtection extends Recipe {
                                         ".csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());")
                                 .imports("org.springframework.security.web.csrf.CookieCsrfTokenRepository")
                                 .javaParser(() -> JavaParser.fromJavaVersion()
-                                        .logCompilationWarningsAndErrors(true)
                                         .classpath(
                                                 "spring-security-config",
                                                 "spring-context",
