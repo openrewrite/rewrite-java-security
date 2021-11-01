@@ -30,11 +30,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.util.Collections.emptySet;
-
 public class FindTextDirectionChanges extends Recipe {
 
-    private static final Set<?> EMPTY_SET = emptySet();
     public static final char LRE = '\u202A';
     public static final char RLE = '\u202B';
     public static final char LRO = '\u202D';
@@ -47,6 +44,7 @@ public class FindTextDirectionChanges extends Recipe {
     public static final Set<Character> sneakyCodes = Stream.of(LRE, RLE, LRO, RLO, LRI, RLI, FSI, PDF, PDI)
             .collect(Collectors.toSet());
     public static final Map<Character, String> charToText = new HashMap<>();
+
     static {
         charToText.put(LRE, "LRE");
         charToText.put(RLE, "RLE");
@@ -87,9 +85,10 @@ public class FindTextDirectionChanges extends Recipe {
             public @Nullable J visit(@Nullable Tree tree, ExecutionContext context) {
                 J j = super.visit(tree, context);
                 Object foundCodes = getCursor().pollMessage("FOUND_SNEAKY_CODES");
-                if(j != null && foundCodes != null) {
+                if (j != null && foundCodes != null) {
                     //noinspection unchecked
-                    j = j.withMarkers(j.getMarkers().searchResult("Found text-direction altering unicode control characters: " + String.join(",", (Set<String>)foundCodes)));
+                    j = j.withMarkers(j.getMarkers().searchResult("Found text-direction altering unicode control characters: " +
+                            String.join(",", (Set<String>) foundCodes)));
                 }
 
                 return j;
@@ -98,22 +97,22 @@ public class FindTextDirectionChanges extends Recipe {
             @Override
             public Space visitSpace(Space s, Space.Location loc, ExecutionContext context) {
                 Set<String> foundCodes = null;
-                if(containsSneakyCode(s.getWhitespace())) {
+                if (containsSneakyCodes(s.getWhitespace())) {
                     foundCodes = listSneakyCodes(s.getWhitespace());
                 }
-                if(containsSneakyCode(s.getComments(), Comment::printComment)) {
-                    if(foundCodes == null) {
+                if (containsSneakyCodes(s.getComments(), Comment::printComment)) {
+                    if (foundCodes == null) {
                         foundCodes = new HashSet<>();
                     }
                     foundCodes.addAll(listSneakyCodes(s.getComments(), Comment::printComment));
                 }
-                if(containsSneakyCode(s.getComments(), Comment::getSuffix)) {
-                    if(foundCodes == null) {
+                if (containsSneakyCodes(s.getComments(), Comment::getSuffix)) {
+                    if (foundCodes == null) {
                         foundCodes = new HashSet<>();
                     }
                     foundCodes.addAll(listSneakyCodes(s.getComments(), Comment::getSuffix));
                 }
-                if(foundCodes != null) {
+                if (foundCodes != null) {
                     getCursor().putMessage("FOUND_SNEAKY_CODES", foundCodes);
                 }
                 return s;
@@ -122,17 +121,16 @@ public class FindTextDirectionChanges extends Recipe {
             @Override
             public J.Literal visitLiteral(J.Literal literal, ExecutionContext context) {
                 J.Literal l = super.visitLiteral(literal, context);
-                if(l.getType() == JavaType.Primitive.String && l.getValueSource() != null) {
-                    if(containsSneakyCode(l.getValueSource())) {
-                        l = l.withMarkers(l.getMarkers().searchResult("Found text-direction altering unicode control characters: " + String.join(",", listSneakyCodes(l.getValueSource()))));
-                    }
+                if (l.getType() == JavaType.Primitive.String && l.getValueSource() != null && containsSneakyCodes(l.getValueSource())) {
+                    l = l.withMarkers(l.getMarkers().searchResult("Found text-direction altering unicode control characters: " +
+                            String.join(",", listSneakyCodes(l.getValueSource()))));
                 }
                 return l;
             }
         };
     }
 
-    private static boolean containsSneakyCode(String s) {
+    private static boolean containsSneakyCodes(String s) {
         for (char c : s.toCharArray()) {
             if (sneakyCodes.contains(c)) {
                 return true;
@@ -141,17 +139,16 @@ public class FindTextDirectionChanges extends Recipe {
         return false;
     }
 
-    private static <T> boolean containsSneakyCode(Collection<T> collection, Function<T, String> conversion) {
-        return collection.stream().map(conversion).anyMatch(FindTextDirectionChanges::containsSneakyCode);
+    private static <T> boolean containsSneakyCodes(Collection<T> collection, Function<T, String> conversion) {
+        return collection.stream()
+                .map(conversion)
+                .anyMatch(FindTextDirectionChanges::containsSneakyCodes);
     }
 
     private static Set<String> listSneakyCodes(String s) {
         Set<String> foundCodes = new HashSet<>();
         for (char c : s.toCharArray()) {
             if (sneakyCodes.contains(c)) {
-                if (foundCodes == EMPTY_SET) {
-                    foundCodes = new HashSet<>();
-                }
                 foundCodes.add(charToText.get(c));
             }
         }
