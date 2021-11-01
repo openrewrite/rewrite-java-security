@@ -26,7 +26,7 @@ class FindTextDirectionChangesTest : JavaRecipeTest {
         get() = FindTextDirectionChanges()
 
     @Test
-    fun isAdmin() = assertChanged(
+    fun conditionalActuallyInComment() = assertChanged(
         before = """
             class A {
                 void foo() {
@@ -45,6 +45,20 @@ class FindTextDirectionChangesTest : JavaRecipeTest {
                         System.out./*~~(Found text-direction altering unicode control characters: LRI,RLO,PDI)~~>*/println("You are an admin.");
                     /* end admins only $RLO { $LRI */
                 }
+            }
+        """
+    )
+
+    @Test
+    fun stringLiteral() = assertChanged(
+        before = """
+            class A {
+                String s = "$RLO";
+            }
+        """,
+        after = """
+            class A {
+                String s = /*~~(Found text-direction altering unicode control characters: RLO)~~>*/"$RLO";
             }
         """
     )

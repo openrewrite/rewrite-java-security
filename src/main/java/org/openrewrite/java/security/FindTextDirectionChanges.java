@@ -22,6 +22,7 @@ import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.tree.Comment;
 import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.java.tree.Space;
 
 import java.util.*;
@@ -68,9 +69,9 @@ public class FindTextDirectionChanges extends Recipe {
         return "Finds unicode control characters which can change the direction text is displayed in. " +
                 "These control characters can alter how source code is presented to a human reader without affecting its interpretation by tools like compilers. " +
                 "So a malicious patch could pass code review while introducing vulnerabilities. " +
-                "See: https://trojansource.codes/ \n" +
                 "Note that text direction-changing unicode control characters aren't inherently malicious. " +
-                "These characters can appear for legitimate reasons in code written in or dealing with right-to-left languages.";
+                "These characters can appear for legitimate reasons in code written in or dealing with right-to-left languages. " +
+                "See: https://trojansource.codes/";
     }
 
     @Override
@@ -116,6 +117,17 @@ public class FindTextDirectionChanges extends Recipe {
                     getCursor().putMessage("FOUND_SNEAKY_CODES", foundCodes);
                 }
                 return s;
+            }
+
+            @Override
+            public J.Literal visitLiteral(J.Literal literal, ExecutionContext context) {
+                J.Literal l = super.visitLiteral(literal, context);
+                if(l.getType() == JavaType.Primitive.String && l.getValueSource() != null) {
+                    if(containsSneakyCode(l.getValueSource())) {
+                        l = l.withMarkers(l.getMarkers().searchResult("Found text-direction altering unicode control characters: " + String.join(",", listSneakyCodes(l.getValueSource()))));
+                    }
+                }
+                return l;
             }
         };
     }
