@@ -18,8 +18,14 @@ package org.openrewrite.java.security
 import org.junit.jupiter.api.Test
 import org.openrewrite.Recipe
 import org.openrewrite.java.JavaRecipeTest
+import org.openrewrite.java.cache.ClasspathJavaTypeCache
+import org.openrewrite.java.cache.JavaTypeCache
 
 class SecureTempFileCreationTest : JavaRecipeTest {
+
+    override val typeCache: JavaTypeCache
+        get() = ClasspathJavaTypeCache()
+
     override val recipe: Recipe
         get() = SecureTempFileCreation()
 

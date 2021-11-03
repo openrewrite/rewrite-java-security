@@ -24,6 +24,7 @@ import org.openrewrite.java.JavaVisitor;
 import org.openrewrite.java.search.InJavaSourceSet;
 import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.JavaSourceFile;
 import org.openrewrite.java.tree.TypeUtils;
 
 import java.util.Arrays;
@@ -48,7 +49,7 @@ public class SecureRandom extends Recipe {
     protected TreeVisitor<?, ExecutionContext> getSingleSourceApplicableTest() {
         return new JavaVisitor<ExecutionContext>() {
             @Override
-            public J visitCompilationUnit(J.CompilationUnit cu, ExecutionContext ctx) {
+            public J visitJavaSourceFile(JavaSourceFile cu, ExecutionContext context) {
                 doAfterVisit(new UsesType<>("java.util.Random"));
                 doAfterVisit(new InJavaSourceSet<>("main"));
                 return cu;

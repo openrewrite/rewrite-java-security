@@ -23,7 +23,6 @@ import org.openrewrite.java.JavaVisitor;
 import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
-import org.openrewrite.java.tree.TypeUtils;
 
 public class SecureSnakeYamlConstructor extends Recipe {
 
@@ -44,7 +43,7 @@ public class SecureSnakeYamlConstructor extends Recipe {
             @Override
             public J visitNewClass(J.NewClass newClass, ExecutionContext ctx) {
                 if (snakeYamlConstructor.matches(newClass)) {
-                    JavaType.Method ctorType = TypeUtils.asMethod(newClass.getConstructorType());
+                    JavaType.Method ctorType = newClass.getConstructorType();
                     assert ctorType != null;
 
                     maybeAddImport("org.yaml.snakeyaml.constructor.SafeConstructor");

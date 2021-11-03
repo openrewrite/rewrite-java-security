@@ -25,6 +25,7 @@ import org.openrewrite.java.JavaVisitor;
 import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.search.HasTypeOnClasspathSourceSet;
 import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.JavaSourceFile;
 import org.openrewrite.java.tree.JavaType;
 
 import java.util.List;
@@ -60,8 +61,8 @@ public class PreventClickjacking extends Recipe {
         return new GenerateWebSecurityConfigurerAdapter(Boolean.TRUE.equals(onlyIfSecurityConfig), new JavaVisitor<ExecutionContext>() {
             @Override
             public J visitBlock(J.Block block, ExecutionContext executionContext) {
-                for (JavaType javaType : getCursor().firstEnclosingOrThrow(J.CompilationUnit.class).getTypesInUse()) {
-                    if (FRAME_OPTIONS.matches(javaType)) {
+                for (JavaType.Method method : getCursor().firstEnclosingOrThrow(JavaSourceFile.class).getTypesInUse().getUsedMethods()) {
+                    if (FRAME_OPTIONS.matches(method)) {
                         return block;
                     }
                 }

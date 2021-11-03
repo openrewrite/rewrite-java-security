@@ -26,6 +26,7 @@ import org.openrewrite.java.JavaVisitor;
 import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.format.AutoFormatVisitor;
 import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.JavaSourceFile;
 import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.java.tree.TypeUtils;
 
@@ -52,13 +53,13 @@ public class GenerateWebSecurityConfigurerAdapter {
         List<SourceFile> after = ListUtils.map(sourceFiles, sourceFile -> {
             if (sourceFile instanceof J.CompilationUnit) {
                 J.CompilationUnit cu = (J.CompilationUnit) sourceFile;
-                for (JavaType javaType : cu.getTypesInUse()) {
+                for (JavaType javaType : cu.getTypesInUse().getTypesInUse()) {
                     if (TypeUtils.isOfClassType(javaType, "org.springframework.boot.autoconfigure.SpringBootApplication")) {
                         springBootApplication.set(cu);
                     }
                 }
 
-                for (JavaType.Method declaredMethod : cu.getDeclaredMethods()) {
+                for (JavaType.Method declaredMethod : cu.getTypesInUse().getDeclaredMethods()) {
                     if (CONFIGURE.matches(declaredMethod)) {
                         found.set(true);
                         return visitConfigureMethod(cu, ctx, onConfigureBlock);
@@ -107,7 +108,7 @@ public class GenerateWebSecurityConfigurerAdapter {
         return (SourceFile) new JavaVisitor<ExecutionContext>() {
             @Override
             public J visitMethodDeclaration(J.MethodDeclaration method, ExecutionContext ctx) {
-                if (CONFIGURE.matches(method.getType())) {
+                if (CONFIGURE.matches(method.getMethodType())) {
                     return method.withBody((J.Block) onConfigureBlock.visit(method.getBody(),
                             ctx, getCursor()));
                 }
