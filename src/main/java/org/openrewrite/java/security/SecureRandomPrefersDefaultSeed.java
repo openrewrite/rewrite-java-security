@@ -81,8 +81,8 @@ public class SecureRandomPrefersDefaultSeed extends Recipe {
                         if (SYSTEM_TIME_MATCHER.matches(arg) || SYSTEM_NANO_TIME_MATCHER.matches(argMi)
                                 || (STRING_BYTES_MATCHER.matches(argMi) && argMi.getSelect() instanceof J.Literal)) {
                             isWeakSeed = true;
-                        } else if (argMi.getType() != null
-                                && (TypeUtils.isAssignableTo(dateType, argMi.getType().getDeclaringType()))) {
+                        } else if (argMi.getMethodType() != null
+                                && (TypeUtils.isAssignableTo(dateType, argMi.getMethodType().getDeclaringType()))) {
                             isWeakSeed = true;
                             maybeRemoveImport("java.util.Date");
                         }

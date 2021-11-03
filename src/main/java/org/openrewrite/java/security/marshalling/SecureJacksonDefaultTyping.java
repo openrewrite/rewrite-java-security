@@ -48,7 +48,7 @@ public class SecureJacksonDefaultTyping extends Recipe {
             @Override
             public J visitMethodInvocation(J.MethodInvocation method, ExecutionContext executionContext) {
                 if (enableDefaultTyping.matches(method)) {
-                    JavaType.Method methodType = TypeUtils.asMethod(method.getType());
+                    JavaType.Method methodType = TypeUtils.asMethod(method.getMethodType());
                     assert methodType != null;
 
                     if (methodType.getDeclaringType().getMethods().stream().anyMatch(m -> "activateDefaultTyping".equals(m.getName()))) {
