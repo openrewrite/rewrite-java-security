@@ -107,7 +107,7 @@ public class GenerateWebSecurityConfigurerAdapter {
         return (SourceFile) new JavaVisitor<ExecutionContext>() {
             @Override
             public J visitMethodDeclaration(J.MethodDeclaration method, ExecutionContext ctx) {
-                if (CONFIGURE.matches(method.getType())) {
+                if (CONFIGURE.matches(method.org.openrewrite.java.tree.J.MethodDeclaration getMethodType()())) {
                     return method.withBody((J.Block) onConfigureBlock.visit(method.getBody(),
                             ctx, getCursor()));
                 }
