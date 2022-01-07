@@ -25,12 +25,13 @@ import java.nio.file.Paths
 class PreventClickjackingTest : JavaRecipeTest {
     override val parser: JavaParser
         get() = JavaParser.fromJavaVersion()
-            .classpath(JavaParser.runtimeClasspath())
+            .classpath("spring-boot-autoconfigure", "spring-security-config")
             .build()
 
     override val recipe: Recipe
         get() = PreventClickjacking(null)
 
+    @Suppress("RedundantThrows")
     @Test
     fun withSecurityConfig() = assertChanged(
         dependsOn = arrayOf("""
