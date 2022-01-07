@@ -26,7 +26,6 @@ import org.openrewrite.java.JavaVisitor;
 import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.format.AutoFormatVisitor;
 import org.openrewrite.java.tree.J;
-import org.openrewrite.java.tree.JavaSourceFile;
 import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.java.tree.TypeUtils;
 
@@ -40,7 +39,7 @@ import static org.openrewrite.Tree.randomId;
 
 @RequiredArgsConstructor
 public class GenerateWebSecurityConfigurerAdapter {
-    private static final MethodMatcher CONFIGURE = new MethodMatcher("org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter configure(org.springframework.security.config.annotation.web.builders.HttpSecurity)");
+    private static final MethodMatcher CONFIGURE = new MethodMatcher("org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter configure(org.springframework.security.config.annotation.web.builders.HttpSecurity)", true);
 
     private final boolean onlyIfExistingConfig;
     private final JavaVisitor<ExecutionContext> onConfigureBlock;
