@@ -19,8 +19,6 @@ import org.junit.jupiter.api.Test
 import org.openrewrite.Recipe
 import org.openrewrite.java.JavaParser
 import org.openrewrite.java.JavaRecipeTest
-import org.openrewrite.java.cache.ClasspathJavaTypeCache
-import org.openrewrite.java.cache.JavaTypeCache
 
 class CsrfProtectionTest : JavaRecipeTest {
     override val parser: JavaParser
@@ -28,12 +26,10 @@ class CsrfProtectionTest : JavaRecipeTest {
             .classpath(JavaParser.runtimeClasspath())
             .build()
 
-    override val typeCache: JavaTypeCache
-        get() = ClasspathJavaTypeCache()
-
     override val recipe: Recipe
         get() = CsrfProtection(null)
 
+    @Suppress("RedundantThrows")
     @Test
     fun withSecurityConfig() = assertChanged(
         dependsOn = arrayOf("""
