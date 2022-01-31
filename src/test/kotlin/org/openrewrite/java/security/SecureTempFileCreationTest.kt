@@ -75,4 +75,23 @@ class SecureTempFileCreationTest : JavaRecipeTest {
         """
     )
 
+    @Test
+    fun threeArgWithNullPath() =  assertChanged(
+        before = """
+            import java.io.File;
+            
+            class T {
+                File temp = File.createTempFile("random", "file", null);
+            }
+        """,
+        after = """
+            import java.io.File;
+            import java.nio.file.Files;
+            
+            class T {
+                File temp = Files.createTempFile("random", "file").toFile();
+            }
+        """
+    )
+
 }

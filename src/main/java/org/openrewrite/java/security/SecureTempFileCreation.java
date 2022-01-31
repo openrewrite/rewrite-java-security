@@ -22,6 +22,7 @@ import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.search.UsesMethod;
 import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.JavaType;
 
 public class SecureTempFileCreation extends Recipe {
     private static final MethodMatcher matcher = new MethodMatcher("java.io.File createTempFile(..)");
@@ -57,7 +58,7 @@ public class SecureTempFileCreation extends Recipe {
                 J.MethodInvocation m = method;
                 if (matcher.matches(m)) {
                     maybeAddImport("java.nio.file.Files");
-                    if (m.getArguments().size() == 2) {
+                    if (m.getArguments().size() == 2 || (m.getArguments().size() == 3 && m.getArguments().get(2).getType() == JavaType.Primitive.Null)) {
                         // File.createTempFile(String prefix, String suffix)
                         m = m.withTemplate(twoArg,
                                 m.getCoordinates().replace(),
