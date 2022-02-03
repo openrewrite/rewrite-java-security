@@ -15,6 +15,7 @@
  */
 package org.openrewrite.java.security;
 
+import org.openrewrite.Cursor;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Recipe;
 import org.openrewrite.internal.lang.Nullable;
@@ -22,7 +23,6 @@ import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.marker.JavaVersion;
-import org.openrewrite.java.search.UsesMethod;
 import org.openrewrite.java.tree.*;
 
 import java.time.Duration;
@@ -52,10 +52,10 @@ public class UseFilesCreateTempDirectory extends Recipe {
         return Duration.ofMinutes(10);
     }
 
-    @Override
-    protected UsesMethod<ExecutionContext> getSingleSourceApplicableTest() {
-        return new UsesMethod<>("java.io.File createTempFile(..)");
-    }
+//    @Override
+//    protected UsesMethod<ExecutionContext> getSingleSourceApplicableTest() {
+//        return new UsesMethod<>("java.io.File createTempFile(..)");
+//    }
 
     @Override
     protected UsesFilesCreateTempDirVisitor getVisitor() {
@@ -65,6 +65,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
     private static class UsesFilesCreateTempDirVisitor extends JavaIsoVisitor<ExecutionContext> {
         private static final MethodMatcher DELETE_MATCHER = new MethodMatcher("java.io.File delete()");
         private static final MethodMatcher MKDIR_MATCHER = new MethodMatcher("java.io.File mkdir()");
+        private static final MethodMatcher SYSTEM_PROPERTY_MATCHER = new MethodMatcher("System getProperty(java.lang.String)");
 
         @Override
         public JavaSourceFile visitJavaSourceFile(JavaSourceFile cu, ExecutionContext executionContext) {
@@ -78,6 +79,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
         @Override
         public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, ExecutionContext executionContext) {
             J.MethodInvocation mi = super.visitMethodInvocation(method, executionContext);
+            J.VariableDeclarations.NamedVariable tempFileVar = getCursor().getNearestMessage("TEMP_DIR_FILE_VAR");
             if (CREATE_TEMP_FILE_MATCHER.matches(mi)) {
                 J.Block block = getCursor().firstEnclosing(J.Block.class);
                 if (block != null) {
@@ -94,8 +96,30 @@ public class UseFilesCreateTempDirectory extends Recipe {
                                 .computeMessageIfAbsent("CREATE_FILE_STATEMENT", v -> new ArrayList<J>()).add(createFileStatement);
                     }
                 }
+            } else if (tempFileVar != null && isMethodForIdent(tempFileVar.getName(), MKDIR_MATCHER, mi) && parentBlockThrowsIOExceptionOrException()) {
+                mi = mi.withTemplate(JavaTemplate.builder(this::getCursor, "Files.createTempDirectory(#{any(java.io.File)}.toPath(), UUID.randomUUID().toString()).toFile();")
+                        .imports("java.nio.file.Files", "java.util.UUID").build(), mi.getCoordinates().replace(), tempFileVar.getName());
+                maybeAddImport("java.nio.file.Files");
+                maybeAddImport("java.util.UUID");
             }
             return mi;
+        }
+
+        @Override
+        public J.VariableDeclarations.NamedVariable visitVariable(J.VariableDeclarations.NamedVariable variable, ExecutionContext executionContext) {
+            J.VariableDeclarations.NamedVariable var = super.visitVariable(variable, executionContext);
+            if (TypeUtils.isOfClassType(var.getType(),"java.io.File") && var.getInitializer() != null && var.getInitializer() instanceof J.NewClass) {
+                J.NewClass newFileInitializer = (J.NewClass)var.getInitializer();
+                if (newFileInitializer.getArguments() != null && !newFileInitializer.getArguments().isEmpty() && newFileInitializer.getArguments().get(0) instanceof J.MethodInvocation) {
+                    J.MethodInvocation newFileParentArg = (J.MethodInvocation)newFileInitializer.getArguments().get(0);
+                    if (SYSTEM_PROPERTY_MATCHER.matches(newFileParentArg) && newFileParentArg.getArguments().get(0) instanceof J.Literal) {
+                        if ("java.io.tmpdir".equals(((J.Literal)newFileParentArg.getArguments().get(0)).getValue())) {
+                            getCursor().dropParentUntil(J.Block.class::isInstance).putMessage("TEMP_DIR_FILE_VAR", var);
+                        }
+                    }
+                }
+            }
+            return var;
         }
 
         @Override
@@ -113,7 +137,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
                         if (createFileIdentifier != null && isMatchingCreateFileStatement(createFileStatement, stmt)
                                 && isMethodForIdent(createFileIdentifier, DELETE_MATCHER, statements.get(i + 1))
                                 && isMethodForIdent(createFileIdentifier, MKDIR_MATCHER, statements.get(i + 2))) {
-                            createTempDirectoryStatement = (Statement) new SecureTempFileCreation().visitNonNull(stmt, executionContext, getCursor());
+                            createTempDirectoryStatement = (Statement) new SecureTempDirectoryCreation().visitNonNull(stmt, executionContext, getCursor());
                             statementIndex = i;
                             break;
                         }
@@ -171,9 +195,28 @@ public class UseFilesCreateTempDirectory extends Recipe {
             }
             return null;
         }
+
+        private boolean parentBlockThrowsIOExceptionOrException() {
+            Cursor parent = getCursor().dropParentUntil(j -> j instanceof J.MethodDeclaration || j instanceof J.Try || j instanceof J.ClassDeclaration);
+            J parentValue = parent.getValue();
+            if (parentValue instanceof J.MethodDeclaration) {
+                J.MethodDeclaration md = (J.MethodDeclaration) parentValue;
+                return md.getThrows() != null && md.getThrows().stream().anyMatch(n -> isIOExceptionOrException(TypeUtils.asFullyQualified(n.getType())));
+            } else if (parentValue instanceof J.Try) {
+                J.Try tr = (J.Try) parentValue;
+                return tr.getCatches().stream().anyMatch(n -> isIOExceptionOrException(TypeUtils.asFullyQualified(n.getParameter().getTree().getType())));
+            }
+            return false;
+        }
+
+        private boolean isIOExceptionOrException(@Nullable JavaType.FullyQualified fqCatch) {
+            return fqCatch != null &&
+                    ("java.io.IOException".matches(fqCatch.getFullyQualifiedName())
+                            || "java.lang.Exception".matches(fqCatch.getFullyQualifiedName()));
+        }
     }
 
-    private static class SecureTempFileCreation extends JavaIsoVisitor<ExecutionContext> {
+    private static class SecureTempDirectoryCreation extends JavaIsoVisitor<ExecutionContext> {
         private final JavaTemplate twoArg = JavaTemplate.builder(this::getCursor, "Files.createTempDirectory(#{any(String)} + #{any(String)}).toFile()")
                 .imports("java.nio.file.Files")
                 .build();
