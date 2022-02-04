@@ -70,7 +70,7 @@ public class GenerateWebSecurityConfigurerAdapter {
 
         if (found.get()) {
             return after;
-        } else if(!onlyIfExistingConfig) {
+        } else if (!onlyIfExistingConfig) {
             J.CompilationUnit springBootApp = springBootApplication.get();
             if (springBootApp != null) {
                 J.CompilationUnit generated = JavaParser.fromJavaVersion()
