@@ -94,7 +94,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
                 if (block != null) {
                     J createFileStatement = null;
                     J firstParent = getCursor().dropParentUntil(J.class::isInstance).getValue();
-                    if (firstParent instanceof J.Assignment && ((J.Assignment)firstParent).getVariable() instanceof J.Identifier) {
+                    if (firstParent instanceof J.Assignment && ((J.Assignment) firstParent).getVariable() instanceof J.Identifier) {
                         createFileStatement = firstParent;
                     }
                     if (createFileStatement == null && firstParent instanceof J.VariableDeclarations.NamedVariable) {
