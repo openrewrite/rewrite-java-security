@@ -17,6 +17,7 @@ package org.openrewrite.java.security.spring
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.openrewrite.ExecutionContext
 import org.openrewrite.Recipe
 import org.openrewrite.java.JavaParser
 import org.openrewrite.java.JavaRecipeTest
@@ -30,6 +31,13 @@ class PreventClickjackingTest : JavaRecipeTest {
 
     override val recipe: Recipe
         get() = PreventClickjacking(null)
+
+    override val executionContext: ExecutionContext
+        get() {
+            val ctx = super.executionContext
+            ctx.putMessage(JavaParser.SKIP_SOURCE_SET_TYPE_GENERATION, false)
+            return ctx
+        }
 
     @Suppress("RedundantThrows")
     @Test

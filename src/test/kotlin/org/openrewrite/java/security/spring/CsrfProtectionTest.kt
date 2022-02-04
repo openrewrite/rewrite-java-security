@@ -16,6 +16,7 @@
 package org.openrewrite.java.security.spring
 
 import org.junit.jupiter.api.Test
+import org.openrewrite.ExecutionContext
 import org.openrewrite.Recipe
 import org.openrewrite.java.JavaParser
 import org.openrewrite.java.JavaRecipeTest
@@ -25,6 +26,13 @@ class CsrfProtectionTest : JavaRecipeTest {
         get() = JavaParser.fromJavaVersion()
             .classpath(JavaParser.runtimeClasspath())
             .build()
+
+    override val executionContext: ExecutionContext
+        get() {
+            val ctx = super.executionContext
+            ctx.putMessage(JavaParser.SKIP_SOURCE_SET_TYPE_GENERATION, false)
+            return ctx
+        }
 
     override val recipe: Recipe
         get() = CsrfProtection(null)
