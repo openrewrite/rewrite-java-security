@@ -24,7 +24,8 @@ import org.openrewrite.java.JavaRecipeTest
 class CsrfProtectionTest : JavaRecipeTest {
     override val parser: JavaParser
         get() = JavaParser.fromJavaVersion()
-            .classpath(JavaParser.runtimeClasspath())
+            .classpath("spring-boot-autoconfigure", "spring-security-config", "spring-context", "servlet-api", "spring-beans")
+            .logCompilationWarningsAndErrors(true)
             .build()
 
     override val executionContext: ExecutionContext
