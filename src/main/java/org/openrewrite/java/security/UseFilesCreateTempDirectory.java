@@ -18,6 +18,7 @@ package org.openrewrite.java.security;
 import org.openrewrite.Cursor;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Recipe;
+import org.openrewrite.internal.ListUtils;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.JavaTemplate;
@@ -94,7 +95,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
                 if (block != null) {
                     J createFileStatement = null;
                     J firstParent = getCursor().dropParentUntil(J.class::isInstance).getValue();
-                    if (firstParent instanceof J.Assignment && ((J.Assignment)firstParent).getVariable() instanceof J.Identifier) {
+                    if (firstParent instanceof J.Assignment && ((J.Assignment) firstParent).getVariable() instanceof J.Identifier) {
                         createFileStatement = firstParent;
                     }
                     if (createFileStatement == null && firstParent instanceof J.VariableDeclarations.NamedVariable) {
@@ -117,12 +118,12 @@ public class UseFilesCreateTempDirectory extends Recipe {
         @Override
         public J.VariableDeclarations.NamedVariable visitVariable(J.VariableDeclarations.NamedVariable variable, ExecutionContext executionContext) {
             J.VariableDeclarations.NamedVariable var = super.visitVariable(variable, executionContext);
-            if (TypeUtils.isOfClassType(var.getType(),"java.io.File") && var.getInitializer() != null && var.getInitializer() instanceof J.NewClass) {
-                J.NewClass newFileInitializer = (J.NewClass)var.getInitializer();
+            if (TypeUtils.isOfClassType(var.getType(), "java.io.File") && var.getInitializer() != null && var.getInitializer() instanceof J.NewClass) {
+                J.NewClass newFileInitializer = (J.NewClass) var.getInitializer();
                 if (newFileInitializer.getArguments() != null && !newFileInitializer.getArguments().isEmpty() && newFileInitializer.getArguments().get(0) instanceof J.MethodInvocation) {
-                    J.MethodInvocation newFileParentArg = (J.MethodInvocation)newFileInitializer.getArguments().get(0);
+                    J.MethodInvocation newFileParentArg = (J.MethodInvocation) newFileInitializer.getArguments().get(0);
                     if (SYSTEM_PROPERTY_MATCHER.matches(newFileParentArg) && newFileParentArg.getArguments().get(0) instanceof J.Literal) {
-                        if ("java.io.tmpdir".equals(((J.Literal)newFileParentArg.getArguments().get(0)).getValue())) {
+                        if ("java.io.tmpdir".equals(((J.Literal) newFileParentArg.getArguments().get(0)).getValue())) {
                             getCursor().dropParentUntil(J.Block.class::isInstance).putMessage("TEMP_DIR_FILE_VAR", var);
                         }
                     }
@@ -137,27 +138,29 @@ public class UseFilesCreateTempDirectory extends Recipe {
             List<J> createFileStatements = getCursor().pollMessage("CREATE_FILE_STATEMENT");
             if (createFileStatements != null) {
                 for (J createFileStatement : createFileStatements) {
-                    List<Statement> statements = bl.getStatements();
-                    int statementIndex = -1;
-                    Statement createTempDirectoryStatement = null;
-                    for (int i = 0; i < statements.size() - 2; i++) {
-                        Statement stmt = statements.get(i);
+                    final Map<String, Statement> stmtMap = new HashMap<>();
+                    for (Statement stmt : bl.getStatements()) {
                         J.Identifier createFileIdentifier = getIdent(createFileStatement);
-                        if (createFileIdentifier != null && isMatchingCreateFileStatement(createFileStatement, stmt)
-                                && isMethodForIdent(createFileIdentifier, DELETE_MATCHER, statements.get(i + 1))
-                                && isMethodForIdent(createFileIdentifier, MKDIR_MATCHER, statements.get(i + 2))) {
-                            createTempDirectoryStatement = (Statement) new SecureTempDirectoryCreation().visitNonNull(stmt, executionContext, getCursor());
-                            statementIndex = i;
-                            break;
+                        if (createFileIdentifier != null) {
+                            if (isMatchingCreateFileStatement(createFileStatement, stmt)) {
+                                stmtMap.put("create", stmt);
+                                stmtMap.put("secureCreate", (Statement) new SecureTempDirectoryCreation().visitNonNull(stmt, executionContext, getCursor()));
+                            } else if (isMethodForIdent(createFileIdentifier, DELETE_MATCHER, stmt)) {
+                                stmtMap.put("delete", stmt);
+                            } else if (isMethodForIdent(createFileIdentifier, MKDIR_MATCHER, stmt)) {
+                                stmtMap.put("mkdir", stmt);
+                            }
                         }
                     }
-                    if (createTempDirectoryStatement != null) {
-                        List<Statement> updatedStatements = new ArrayList<>(statements);
-                        updatedStatements.remove(statementIndex);
-                        updatedStatements.remove(statementIndex);
-                        updatedStatements.remove(statementIndex);
-                        updatedStatements.add(statementIndex, createTempDirectoryStatement);
-                        bl = bl.withStatements(updatedStatements);
+                    if (stmtMap.size() == 4) {
+                        bl = bl.withStatements(ListUtils.map(bl.getStatements(), stmt -> {
+                            if (stmt == stmtMap.get("create")) {
+                                return stmtMap.get("secureCreate");
+                            } else if (stmt == stmtMap.get("delete") || stmt == stmtMap.get("mkdir")) {
+                                return null;
+                            }
+                            return stmt;
+                        }));
                         maybeAddImport("java.nio.file.Files");
                     }
                 }
@@ -169,14 +172,9 @@ public class UseFilesCreateTempDirectory extends Recipe {
         private boolean isMatchingCreateFileStatement(J createFileStatement, Statement statement) {
             if (createFileStatement.equals(statement)) {
                 return true;
-            }
-            if (createFileStatement instanceof J.VariableDeclarations.NamedVariable && statement instanceof J.VariableDeclarations) {
+            } else if (createFileStatement instanceof J.VariableDeclarations.NamedVariable && statement instanceof J.VariableDeclarations) {
                 J.VariableDeclarations varDecls = (J.VariableDeclarations) statement;
-                for (J.VariableDeclarations.NamedVariable variable : varDecls.getVariables()) {
-                    if (variable.equals(createFileStatement)) {
-                        return true;
-                    }
-                }
+                return varDecls.getVariables().size() == 1 && varDecls.getVariables().get(0).equals(createFileStatement);
             }
             return false;
         }
@@ -220,8 +218,8 @@ public class UseFilesCreateTempDirectory extends Recipe {
 
         private boolean isIOExceptionOrException(@Nullable JavaType.FullyQualified fqCatch) {
             return fqCatch != null &&
-                    ("java.io.IOException".matches(fqCatch.getFullyQualifiedName())
-                            || "java.lang.Exception".matches(fqCatch.getFullyQualifiedName()));
+                    (TypeUtils.isOfClassType(fqCatch, "java.io.IOException")
+                            || TypeUtils.isOfClassType(fqCatch, "java.lang.Exception"));
         }
     }
 
@@ -241,18 +239,20 @@ public class UseFilesCreateTempDirectory extends Recipe {
                 maybeAddImport("java.nio.file.Files");
                 if (m.getArguments().size() == 2) {
                     // File.createTempFile(String prefix, String suffix)
-                    m = m.withTemplate(twoArg,
-                            m.getCoordinates().replace(),
-                            m.getArguments().get(0),
-                            m.getArguments().get(1)
+                    m = maybeAutoFormat(m, m.withTemplate(twoArg,
+                                    m.getCoordinates().replace(),
+                                    m.getArguments().get(0),
+                                    m.getArguments().get(1)),
+                            executionContext
                     );
                 } else if (m.getArguments().size() == 3) {
                     // File.createTempFile(String prefix, String suffix, File dir)
-                    m = m.withTemplate(threeArg,
-                            m.getCoordinates().replace(),
-                            m.getArguments().get(2),
-                            m.getArguments().get(0),
-                            m.getArguments().get(1)
+                    m = maybeAutoFormat(m, m.withTemplate(threeArg,
+                                    m.getCoordinates().replace(),
+                                    m.getArguments().get(2),
+                                    m.getArguments().get(0),
+                                    m.getArguments().get(1)),
+                            executionContext
                     );
                 }
             }
