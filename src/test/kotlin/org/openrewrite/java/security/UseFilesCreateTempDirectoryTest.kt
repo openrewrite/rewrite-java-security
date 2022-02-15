@@ -162,7 +162,7 @@ class UseFilesCreateTempDirectoryTest : JavaRecipeTest {
 
     @Suppress("RedundantThrows")
     @Test
-    fun `Vulnerable File#mkdir() with tmpdir path param`() = assertChanged(
+    fun `Vulnerable File#mkdir() with tmpdir path param`() = assertUnchanged(
         before = """
             import java.io.File;
             import java.io.IOException;
@@ -171,19 +171,6 @@ class UseFilesCreateTempDirectoryTest : JavaRecipeTest {
                 void vulnerableFileCreateTempFileMkdirTainted() throws IOException {
                     File tempDirChild = new File(System.getProperty("java.io.tmpdir"), "/child");
                     tempDirChild.mkdir();
-                }
-            }
-        """,
-        after = """
-            import java.io.File;
-            import java.io.IOException;
-            import java.nio.file.Files;
-            import java.util.UUID;
-            
-            class T {
-                void vulnerableFileCreateTempFileMkdirTainted() throws IOException {
-                    File tempDirChild = new File(System.getProperty("java.io.tmpdir"), "/child");
-                    Files.createTempDirectory(tempDirChild.toPath(), UUID.randomUUID().toString()).toFile();
                 }
             }
         """
