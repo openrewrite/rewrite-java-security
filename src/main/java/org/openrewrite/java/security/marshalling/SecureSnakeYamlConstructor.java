@@ -24,6 +24,8 @@ import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
 
+import java.time.Duration;
+
 public class SecureSnakeYamlConstructor extends Recipe {
 
     @Override
@@ -34,6 +36,11 @@ public class SecureSnakeYamlConstructor extends Recipe {
     @Override
     public String getDescription() {
         return "See the [paper](https://github.com/mbechler/marshalsec) on this subject.";
+    }
+
+    @Override
+    public Duration getEstimatedEffortPerOccurrence() {
+        return Duration.ofMinutes(5);
     }
 
     @Override

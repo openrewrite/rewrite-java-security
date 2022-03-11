@@ -28,6 +28,7 @@ import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaSourceFile;
 import org.openrewrite.java.tree.JavaType;
 
+import java.time.Duration;
 import java.util.List;
 
 @Value
@@ -42,6 +43,11 @@ public class PreventClickjacking extends Recipe {
     @Override
     public String getDisplayName() {
         return "Prevent clickjacking";
+    }
+
+    @Override
+    public Duration getEstimatedEffortPerOccurrence() {
+        return Duration.ofMinutes(5);
     }
 
     @Override

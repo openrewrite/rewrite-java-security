@@ -24,6 +24,8 @@ import org.openrewrite.java.search.UsesMethod;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
 
+import java.time.Duration;
+
 public class SecureTempFileCreation extends Recipe {
     private static final MethodMatcher matcher = new MethodMatcher("java.io.File createTempFile(..)");
 
@@ -35,6 +37,11 @@ public class SecureTempFileCreation extends Recipe {
     @Override
     public String getDescription() {
         return "`java.io.File.createTempFile()` has exploitable default file permissions. This recipe migrates to the more secure `java.nio.file.Files.createTempFile()`.";
+    }
+
+    @Override
+    public Duration getEstimatedEffortPerOccurrence() {
+        return Duration.ofMinutes(5);
     }
 
     @Override

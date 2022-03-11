@@ -27,6 +27,7 @@ import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaSourceFile;
 import org.openrewrite.java.tree.TypeUtils;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 
@@ -43,6 +44,11 @@ public class SecureRandom extends Recipe {
     @Override
     public String getDescription() {
         return "Use cryptographically secure PRNGs in secure contexts.";
+    }
+
+    @Override
+    public Duration getEstimatedEffortPerOccurrence() {
+        return Duration.ofMinutes(5);
     }
 
     @Override

@@ -27,6 +27,8 @@ import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.java.tree.TypeUtils;
 
+import java.time.Duration;
+
 import static java.util.Collections.emptyList;
 
 public class SecureJacksonDefaultTyping extends Recipe {
@@ -39,6 +41,11 @@ public class SecureJacksonDefaultTyping extends Recipe {
     @Override
     public String getDescription() {
         return "See the [blog post](https://cowtowncoder.medium.com/on-jackson-cves-dont-panic-here-is-what-you-need-to-know-54cd0d6e8062) on this subject.";
+    }
+
+    @Override
+    public Duration getEstimatedEffortPerOccurrence() {
+        return Duration.ofMinutes(5);
     }
 
     @Override
