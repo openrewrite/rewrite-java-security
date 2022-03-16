@@ -100,7 +100,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
                     }
                     if (createFileStatement != null) {
                         getCursor().dropParentUntil(J.Block.class::isInstance)
-                                .computeMessageIfAbsent("CREATE_FILE_STATEMENT", v -> new ArrayList<J>()).add(createFileStatement);
+                                .computeMessageIfAbsent("CREATE_FILE_STATEMENT", v -> new ArrayList<>()).add(createFileStatement);
                     }
                 }
             }
