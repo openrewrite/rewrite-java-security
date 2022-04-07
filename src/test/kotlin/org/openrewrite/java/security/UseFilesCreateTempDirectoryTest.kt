@@ -17,6 +17,7 @@
 
 package org.openrewrite.java.security
 
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.openrewrite.Recipe
 import org.openrewrite.java.JavaRecipeTest
@@ -186,6 +187,82 @@ class UseFilesCreateTempDirectoryTest : JavaRecipeTest {
                 void vulnerableFileCreateTempFileMkdirTainted() {
                     File tempDirChild = new File(System.getProperty("java.io.tmpdir"), "/child");
                     tempDirChild.mkdir();
+                }
+            }
+        """
+    )
+
+    @Test
+    fun `Uses mkdirs recipe assumes is that the directory exists otherwise the existing code would also fail`() = assertChanged(
+        before = """
+            import java.io.File;
+            import java.io.IOException;
+            
+            class T {
+                public void doSomething() throws IOException {
+                    File tmpDir = new File("/some/dumb/thing");
+                    tmpDir.mkdirs();
+                    if (!tmpDir.isDirectory()) {
+                        System.out.println("Mkdirs failed to create " + tmpDir);
+                    }
+                    final File workDir = File.createTempFile("unjar", "", tmpDir);
+                    workDir.delete();
+                    workDir.mkdirs();
+                    if (!workDir.isDirectory()) {
+                        System.out.println("Mkdirs failed to create " + workDir);
+                    }
+                }
+            }
+        """,
+        after = """
+            import java.io.File;
+            import java.io.IOException;
+            import java.nio.file.Files;
+            
+            class T {
+                public void doSomething() throws IOException {
+                    File tmpDir = new File("/some/dumb/thing");
+                    tmpDir.mkdirs();
+                    if (!tmpDir.isDirectory()) {
+                        System.out.println("Mkdirs failed to create " + tmpDir);
+                    }
+                    final File workDir = Files.createTempDirectory(tmpDir.toPath(), "unjar" + "").toFile();
+                    if (!workDir.isDirectory()) {
+                        System.out.println("Mkdirs failed to create " + workDir);
+                    }
+                }
+            }
+        """
+    )
+
+    @Disabled
+    @Test
+    fun `delete wrapped in an if block`() = assertChanged(
+        before = """
+            import java.io.File;
+            import java.io.IOException;
+            import java.nio.file.Files;
+            
+            class A {
+                File testData = Files.createTempDirectory("").toFile();
+                void b() throws IOException {
+                    File tmpDir = File.createTempFile("test", "dir");
+                    if (!tmpDir.delete()) {
+                        System.out.println("Failed to delete directory!");
+                    }
+                    tmpDir.mkdir();
+                }
+            }
+        """,
+        after = """
+            import java.io.File;
+            import java.io.IOException;
+            import java.nio.file.Files;
+            
+            class A {
+                File testData = Files.createTempDirectory("").toFile();
+                void b() throws IOException {
+                    File tmpDir = Files.createTempDirectory(testData.toPath(), "test" + "dir").toFile();
                 }
             }
         """

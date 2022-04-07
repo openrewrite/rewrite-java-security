@@ -61,6 +61,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
             public J visitJavaSourceFile(JavaSourceFile cu, ExecutionContext executionContext) {
                 doAfterVisit(new UsesMethod<>("java.io.File createTempFile(..)"));
                 doAfterVisit(new UsesMethod<>("java.io.File mkdir(..)"));
+                doAfterVisit(new UsesMethod<>("java.io.File mkdirs(..)"));
                 return cu;
             }
         };
@@ -74,6 +75,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
     private static class UsesFilesCreateTempDirVisitor extends JavaIsoVisitor<ExecutionContext> {
         private static final MethodMatcher DELETE_MATCHER = new MethodMatcher("java.io.File delete()");
         private static final MethodMatcher MKDIR_MATCHER = new MethodMatcher("java.io.File mkdir()");
+        private static final MethodMatcher MKDIRS_MATCHER = new MethodMatcher("java.io.File mkdirs()");
 
         @Override
         public JavaSourceFile visitJavaSourceFile(JavaSourceFile cu, ExecutionContext executionContext) {
@@ -122,7 +124,8 @@ public class UseFilesCreateTempDirectory extends Recipe {
                                 stmtMap.put("secureCreate", (Statement) new SecureTempDirectoryCreation().visitNonNull(stmt, executionContext, getCursor()));
                             } else if (isMethodForIdent(createFileIdentifier, DELETE_MATCHER, stmt)) {
                                 stmtMap.put("delete", stmt);
-                            } else if (isMethodForIdent(createFileIdentifier, MKDIR_MATCHER, stmt)) {
+                            } else if (isMethodForIdent(createFileIdentifier, MKDIR_MATCHER, stmt)
+                                || isMethodForIdent(createFileIdentifier, MKDIRS_MATCHER, stmt)) {
                                 stmtMap.put("mkdir", stmt);
                             }
                         }
