@@ -26,7 +26,7 @@ import java.nio.file.Paths
 class PreventClickjackingTest : JavaRecipeTest {
     override val parser: JavaParser
         get() = JavaParser.fromJavaVersion()
-            .classpath("spring-boot-autoconfigure", "spring-security-config")
+            .classpath("spring-boot-autoconfigure", "spring-security-config", "spring-context", "jakarta.servlet-api")
             .build()
 
     override val recipe: Recipe
