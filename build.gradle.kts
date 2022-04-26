@@ -27,7 +27,7 @@ plugins {
     id("nebula.source-jar") version "17.3.2"
     id("nebula.maven-apache-license") version "17.3.2"
 
-    id("org.openrewrite.rewrite") version "latest.integration"
+    id("org.openrewrite.rewrite") version "latest.release"
 }
 
 apply(plugin = "nebula.publish-verification")
@@ -120,7 +120,7 @@ dependencies {
     testRuntimeOnly("org.openrewrite:rewrite-java-11:${rewriteVersion}")
     testRuntimeOnly("org.openrewrite:rewrite-java-8:${rewriteVersion}")
 
-    testRuntimeOnly("com.fasterxml.jackson.core:jackson-databind:latest.integration")
+    testRuntimeOnly("com.fasterxml.jackson.core:jackson-databind:latest.release")
 }
 
 tasks.withType(KotlinCompile::class.java).configureEach {
