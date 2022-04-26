@@ -15,17 +15,19 @@
  */
 package org.openrewrite.java.security;
 
+import lombok.AllArgsConstructor;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Recipe;
+import org.openrewrite.Tree;
 import org.openrewrite.internal.ListUtils;
 import org.openrewrite.internal.lang.Nullable;
-import org.openrewrite.java.JavaIsoVisitor;
-import org.openrewrite.java.JavaTemplate;
-import org.openrewrite.java.JavaVisitor;
-import org.openrewrite.java.MethodMatcher;
+import org.openrewrite.java.*;
+import org.openrewrite.java.cleanup.SimplifyCompoundVisitor;
+import org.openrewrite.java.cleanup.SimplifyConstantIfBranchExecution;
 import org.openrewrite.java.marker.JavaVersion;
 import org.openrewrite.java.search.UsesMethod;
 import org.openrewrite.java.tree.*;
+import org.openrewrite.marker.Markers;
 
 import java.time.Duration;
 import java.util.*;
@@ -109,6 +111,60 @@ public class UseFilesCreateTempDirectory extends Recipe {
             return mi;
         }
 
+        @AllArgsConstructor
+        private static class TempDirHijackingChainFinderVisitor extends JavaIsoVisitor<Map<String, Statement>> {
+            private final J createFileStatement;
+
+            @Override
+            public Statement visitStatement(Statement stmt, Map<String, Statement> stmtMap) {
+                Statement s = super.visitStatement(stmt, stmtMap);
+                J.Identifier createFileIdentifier = getIdent(createFileStatement);
+                if (createFileIdentifier != null) {
+                    if (isMatchingCreateFileStatement(createFileStatement, stmt)) {
+                        stmtMap.put("create", stmt);
+                        stmtMap.put("secureCreate", (Statement) new SecureTempDirectoryCreation<>().visitNonNull(stmt, stmtMap, getCursor().getParentOrThrow()));
+                    } else if (isMethodForIdent(createFileIdentifier, DELETE_MATCHER, stmt)) {
+                        stmtMap.put("delete", stmt);
+                    } else if (isMethodForIdent(createFileIdentifier, MKDIR_MATCHER, stmt)
+                            || isMethodForIdent(createFileIdentifier, MKDIRS_MATCHER, stmt)) {
+                        stmtMap.put("mkdir", stmt);
+                    }
+                }
+                return s;
+            }
+        }
+
+        private static class ReplaceStatement<P> extends JavaVisitor<P> {
+            private final Statement statement;
+            private final Expression replacement;
+
+            public ReplaceStatement(Statement statement, Expression replacement) {
+                this.statement = statement;
+                this.replacement = replacement;
+            }
+
+            @Override
+            public J visitExpression(Expression expression, P p) {
+                // The statement should only be replaced when removing would cause invalid code.
+                if (expression == statement &&
+                        // If the direct parent of this expression is a `J.Block` then it should be removed by `DeleteStatementNonIso`.
+                        !(getCursor().getParentOrThrow(2).getValue() instanceof J.Block)) {
+                    return replacement;
+                }
+                return super.visitExpression(expression, p);
+            }
+        }
+
+        private J.Block deleteOrReplaceStatement(J.Block bl, Statement stmt, Expression replacement, ExecutionContext executionContext) {
+            bl = (J.Block) new DeleteStatement<>(stmt)
+                    .visitNonNull(bl, executionContext, getCursor().getParentOrThrow());
+            bl = (J.Block) new ReplaceStatement<>(
+                    stmt,
+                    replacement
+            ).visitNonNull(bl, executionContext, getCursor().getParentOrThrow());
+            return bl;
+        }
+
         @Override
         public J.Block visitBlock(J.Block block, ExecutionContext executionContext) {
             J.Block bl = super.visitBlock(block, executionContext);
@@ -116,38 +172,47 @@ public class UseFilesCreateTempDirectory extends Recipe {
             if (createFileStatements != null) {
                 for (J createFileStatement : createFileStatements) {
                     final Map<String, Statement> stmtMap = new HashMap<>();
-                    for (Statement stmt : bl.getStatements()) {
-                        J.Identifier createFileIdentifier = getIdent(createFileStatement);
-                        if (createFileIdentifier != null) {
-                            if (isMatchingCreateFileStatement(createFileStatement, stmt)) {
-                                stmtMap.put("create", stmt);
-                                stmtMap.put("secureCreate", (Statement) new SecureTempDirectoryCreation().visitNonNull(stmt, executionContext, getCursor()));
-                            } else if (isMethodForIdent(createFileIdentifier, DELETE_MATCHER, stmt)) {
-                                stmtMap.put("delete", stmt);
-                            } else if (isMethodForIdent(createFileIdentifier, MKDIR_MATCHER, stmt)
-                                || isMethodForIdent(createFileIdentifier, MKDIRS_MATCHER, stmt)) {
-                                stmtMap.put("mkdir", stmt);
-                            }
-                        }
-                    }
+
+                    new TempDirHijackingChainFinderVisitor(createFileStatement)
+                            .visitNonNull(bl, stmtMap, getCursor().getParentOrThrow());
+
                     if (stmtMap.size() == 4) {
                         bl = bl.withStatements(ListUtils.map(bl.getStatements(), stmt -> {
                             if (stmt == stmtMap.get("create")) {
                                 return stmtMap.get("secureCreate");
-                            } else if (stmt == stmtMap.get("delete") || stmt == stmtMap.get("mkdir")) {
-                                return null;
                             }
                             return stmt;
                         }));
                         maybeAddImport("java.nio.file.Files");
+                        Statement delete = stmtMap.get("delete");
+                        bl = deleteOrReplaceStatement(bl, delete, trueLiteral(delete.getPrefix()), executionContext);
+                        Statement mkdir = stmtMap.get("mkdir");
+                        bl = deleteOrReplaceStatement(bl, mkdir, trueLiteral(mkdir.getPrefix()), executionContext);
+                        bl = (J.Block) new SimplifyConstantIfBranchExecution()
+                                .getVisitor()
+                                .visitNonNull(bl, executionContext, getCursor().getParentOrThrow());
+                        bl = (J.Block) new SimplifyCompoundVisitor<>()
+                                .visitNonNull(bl, executionContext, getCursor().getParentOrThrow());
                     }
                 }
             }
             return bl;
         }
 
+        private static J.Literal trueLiteral(Space prefix) {
+            return new J.Literal(
+                    Tree.randomId(),
+                    prefix,
+                    Markers.EMPTY,
+                    true,
+                    "true",
+                    null,
+                    JavaType.Primitive.Boolean
+            );
+        }
 
-        private boolean isMatchingCreateFileStatement(J createFileStatement, Statement statement) {
+
+        private static boolean isMatchingCreateFileStatement(J createFileStatement, Statement statement) {
             if (createFileStatement.equals(statement)) {
                 return true;
             } else if (createFileStatement instanceof J.VariableDeclarations.NamedVariable && statement instanceof J.VariableDeclarations) {
@@ -157,7 +222,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
             return false;
         }
 
-        private boolean isMethodForIdent(J.Identifier ident, MethodMatcher methodMatcher, Statement statement) {
+        private static boolean isMethodForIdent(J.Identifier ident, MethodMatcher methodMatcher, Statement statement) {
             if (statement instanceof J.MethodInvocation) {
                 J.MethodInvocation mi = (J.MethodInvocation) statement;
                 if (mi.getSelect() instanceof J.Identifier && methodMatcher.matches(mi)) {
@@ -170,7 +235,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
         }
 
         @Nullable
-        private J.Identifier getIdent(J createFileStatement) {
+        private static J.Identifier getIdent(J createFileStatement) {
             if (createFileStatement instanceof J.Assignment) {
                 J.Assignment assignment = (J.Assignment) createFileStatement;
                 return (J.Identifier) assignment.getVariable();
@@ -182,7 +247,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
         }
     }
 
-    private static class SecureTempDirectoryCreation extends JavaIsoVisitor<ExecutionContext> {
+    private static class SecureTempDirectoryCreation<P> extends JavaIsoVisitor<P> {
         private final JavaTemplate twoArg = JavaTemplate.builder(this::getCursor, "Files.createTempDirectory(#{any(String)} + #{any(String)}).toFile()")
                 .imports("java.nio.file.Files")
                 .build();
@@ -192,7 +257,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
                 .build();
 
         @Override
-        public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, ExecutionContext executionContext) {
+        public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, P p) {
             J.MethodInvocation m = method;
             if (CREATE_TEMP_FILE_MATCHER.matches(m)) {
                 maybeAddImport("java.nio.file.Files");
@@ -202,7 +267,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
                                     m.getCoordinates().replace(),
                                     m.getArguments().get(0),
                                     m.getArguments().get(1)),
-                            executionContext
+                            p
                     );
                 } else if (m.getArguments().size() == 3) {
                     // File.createTempFile(String prefix, String suffix, File dir)
@@ -211,7 +276,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
                                     m.getArguments().get(2),
                                     m.getArguments().get(0),
                                     m.getArguments().get(1)),
-                            executionContext
+                            p
                     );
                 }
             }
