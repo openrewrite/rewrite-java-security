@@ -57,27 +57,27 @@ class ZipSlipTest: RewriteTest {
     fun fixesZipSlipUsingPath()  = rewriteRun(
         java(
             """
-            import java.io.File;
-            import java.io.FileOutputStream;
+            import java.io.OutputStream;
             import java.io.RandomAccessFile;
             import java.io.FileWriter;
             import java.nio.file.Files;
+            import java.nio.file.Path;
             import java.util.zip.ZipEntry;
 
             public class ZipTest {
               public void m1(ZipEntry entry, Path dir) throws Exception {
                 String name = entry.getName();
                 Path file = dir.resolve(name);
-                FileOutputStream os = Files.newOutputStream(file); // ZipSlip
+                OutputStream os = Files.newOutputStream(file); // ZipSlip
               }
             }
             """,
             """
-            import java.io.FileOutputStream;
+            import java.io.OutputStream;
             import java.io.RandomAccessFile;
             import java.io.FileWriter;
-            import java.io.UncheckedIOException;
             import java.nio.file.Files;
+            import java.nio.file.Path;
             import java.util.zip.ZipEntry;
 
             public class ZipTest {
@@ -87,7 +87,7 @@ class ZipSlipTest: RewriteTest {
                 if (file.startsWith(dir)) {
                     throw new UncheckedIOException("ZipSlip attack detected");
                 }
-                FileOutputStream os = Files.newOutputStream(file); // ZipSlip
+                OutputStream os = Files.newOutputStream(file); // ZipSlip
               }
             }
             """
@@ -103,6 +103,7 @@ class ZipSlipTest: RewriteTest {
             import java.io.RandomAccessFile;
             import java.io.FileWriter;
             import java.nio.file.Files;
+            import java.nio.file.Path;
             import java.util.zip.ZipEntry;
 
             public class ZipTest {
@@ -118,6 +119,7 @@ class ZipSlipTest: RewriteTest {
             import java.io.FileWriter;
             import java.io.UncheckedIOException;
             import java.nio.file.Files;
+            import java.nio.file.Path;
             import java.util.zip.ZipEntry;
 
             public class ZipTest {
@@ -140,6 +142,7 @@ class ZipSlipTest: RewriteTest {
             """
             import java.io.FileOutputStream;
             import java.io.File;
+            import java.nio.file.Path;
             import java.util.zip.ZipEntry;
 
             public class ZipTest {
@@ -161,6 +164,10 @@ class ZipSlipTest: RewriteTest {
     fun safeZipSlipPathNormalizedStartsWith() = rewriteRun(
         java(
             """
+            import java.io.File;
+            import java.io.FileOutputStream;
+            import java.util.zip.ZipEntry;
+
             public class ZipTest {
               public void m3(ZipEntry entry, File dir) throws Exception {
                 String name = entry.getName();
@@ -178,6 +185,10 @@ class ZipSlipTest: RewriteTest {
     fun safeZipSlipValidateMethod() = rewriteRun(
         java(
             """
+            import java.io.File;
+            import java.io.FileOutputStream;
+            import java.util.zip.ZipEntry;
+
             public class ZipTest {
 
               private void validate(File tgtdir, File file) throws Exception {
@@ -201,6 +212,12 @@ class ZipSlipTest: RewriteTest {
     fun safeZipSlipPathAbsoluteNormalizeStartsWith() = rewriteRun(
         java(
             """
+            import java.io.File;
+            import java.io.FileOutputStream;
+            import java.io.OutputStream;
+            import java.nio.file.Path;
+            import java.util.zip.ZipEntry;
+
             public class ZipTest {
 
               public void m5(ZipEntry entry, File dir) throws Exception {
@@ -210,9 +227,9 @@ class ZipSlipTest: RewriteTest {
                 Path absdir = dir.toPath().toAbsolutePath().normalize();
                 if (!absfile.startsWith(absdir))
                   throw new Exception();
-                FileOutputStream os = new FileOutputStream(file); // OK
+                OutputStream os = new FileOutputStream(file); // OK
               }
-              }
+            }
             """
         )
     )
@@ -221,6 +238,12 @@ class ZipSlipTest: RewriteTest {
     fun safeZipSlipSlipCanonicalPath() = rewriteRun(
         java(
             """
+            import java.io.File;
+            import java.io.OutputStream;
+            import java.nio.file.Files;
+            import java.nio.file.Path;
+            import java.util.zip.ZipEntry;
+
             public class ZipTest {
 
               public void m6(ZipEntry entry, Path dir) throws Exception {
