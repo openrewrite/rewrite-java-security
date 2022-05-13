@@ -84,7 +84,7 @@ class ZipSlipTest: RewriteTest {
               public void m1(ZipEntry entry, Path dir) throws Exception {
                 String name = entry.getName();
                 Path file = dir.resolve(name);
-                if (file.startsWith(dir)) {
+                if (!file.startsWith(dir)) {
                     throw new UncheckedIOException("ZipSlip attack detected");
                 }
                 OutputStream os = Files.newOutputStream(file); // ZipSlip
