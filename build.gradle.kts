@@ -3,7 +3,6 @@ import nebula.plugin.contacts.Contact
 import nebula.plugin.contacts.ContactsExtension
 //import nl.javadude.gradle.plugins.license.LicenseExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import java.util.*
 
 plugins {
     `java-library`
@@ -17,7 +16,7 @@ plugins {
 
 //    id("com.github.hierynomus.license") version "0.16.1"
     id("com.github.jk1.dependency-license-report") version "1.16"
-    id("org.owasp.dependencycheck") version "7.0.4.1"
+    id("org.owasp.dependencycheck") version "latest.release"
 
     id("nebula.maven-publish") version "17.3.2"
     id("nebula.contacts") version "5.1.0"
@@ -41,8 +40,12 @@ configure<nebula.plugin.release.git.base.ReleasePluginExtension> {
 }
 
 dependencyCheck {
+    analyzers.nodeAuditEnabled = false
+    analyzers.nodeEnabled = false
     analyzers.assemblyEnabled = false
     failBuildOnCVSS = 9.0F
+    suppressionFile = "suppressions.xml"
+    format = org.owasp.dependencycheck.reporting.ReportGenerator.Format.valueOf(project.properties["dependencyCheckFormat"] as String? ?: "HTML")
 }
 
 group = "org.openrewrite.recipe"
