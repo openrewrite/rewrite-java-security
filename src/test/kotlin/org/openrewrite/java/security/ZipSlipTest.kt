@@ -65,11 +65,11 @@ class ZipSlipTest: RewriteTest {
             import java.util.zip.ZipEntry;
 
             public class ZipTest {
-              public void m1(ZipEntry entry, Path dir) throws Exception {
+                public void m1(ZipEntry entry, Path dir) throws Exception {
                 String name = entry.getName();
                 Path file = dir.resolve(name);
-                OutputStream os = Files.newOutputStream(file); // ZipSlip
-              }
+                OutputStream os = Files.newOutputStream(file);
+                }
             }
             """,
             """
@@ -82,12 +82,11 @@ class ZipSlipTest: RewriteTest {
 
             public class ZipTest {
               public void m1(ZipEntry entry, Path dir) throws Exception {
-                String name = entry.getName();
-                Path file = dir.resolve(name);
-                if (!file.startsWith(dir)) {
-                    throw new UncheckedIOException("ZipSlip attack detected");
-                }
-                OutputStream os = Files.newOutputStream(file); // ZipSlip
+                    String name = entry.getName();
+                    Path file = dir.resolve(name);
+                    if (file.startsWith(dir)) {
+                        OutputStream os = Files.newOutputStream(file);
+                    }
               }
             }
             """
@@ -114,6 +113,7 @@ class ZipSlipTest: RewriteTest {
             }
             """,
             """
+            import java.io.File;
             import java.io.FileOutputStream;
             import java.io.RandomAccessFile;
             import java.io.FileWriter;
@@ -151,8 +151,9 @@ class ZipSlipTest: RewriteTest {
                 File file = new File(dir, name);
                 File canFile = file.getCanonicalFile();
                 String canDir = dir.getCanonicalPath();
-                if (!canFile.toPath().startsWith(canDir))
+                if (!canFile.toPath().startsWith(canDir)) {
                   throw new Exception();
+                }
                 FileOutputStream os = new FileOutputStream(file); // OK
               }
             }

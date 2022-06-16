@@ -13,11 +13,9 @@ import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.Statement;
 
-import javax.swing.plaf.nimbus.State;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.Collections.emptyList;
 
@@ -103,10 +101,24 @@ public class ZipSlip extends Recipe {
          */
         @AllArgsConstructor
         private static class TaintedFileOrPathVisitor<P> extends JavaIsoVisitor<P> {
-            private final JavaTemplate noZipSlipTemplate = JavaTemplate.builder(this::getCursor, "" +
+            private final JavaTemplate noZipSlipFileTemplate = JavaTemplate.builder(this::getCursor, "" +
                     "if (!#{any(java.io.File)}.toPath().normalize().startsWith(#{any(java.io.File)}.toPath())) {\n" +
                     "    throw new Exception(\"Bad zip entry\");\n" +
                     "}").build();
+            private final JavaTemplate noZipSlipPathStartsWithPathTemplate = JavaTemplate.builder(this::getCursor, "" +
+                    "if (!#{any(java.nio.file.Path)}.normalize().startsWith(#{any(java.nio.file.Path)})) {\n" +
+                    "    throw new Exception(\"Bad zip entry\");\n" +
+                    "}").build();
+
+            private final JavaTemplate noZipSlipPathStartsWithFileTemplate = JavaTemplate.builder(this::getCursor, "" +
+                    "if (!#{any(java.nio.file.Path)}.normalize().startsWith(#{any(java.io.File)}.toPath())) {\n" +
+                    "    throw new Exception(\"Bad zip entry\");\n" +
+                    "}").build();
+            private final JavaTemplate noZipSlipPathStartsWithStringTemplate = JavaTemplate.builder(this::getCursor, "" +
+                    "if (!#{any(java.nio.file.Path)}.normalize().startsWith(#{any(String)})) {\n" +
+                    "    throw new Exception(\"Bad zip entry\");\n" +
+                    "}").build();
+
             private final List<Expression> taintedSinks;
 
             @AllArgsConstructor
@@ -115,24 +127,6 @@ public class ZipSlip extends Recipe {
                 Expression parentDir;
                 Expression zipEntry;
             }
-
-//            @Override
-//            public Expression visitExpression(Expression expression, P o) {
-//                if (taintedSinks.contains(expression)) {
-//                    if (dataflow().findSinks(new FileOrPathCreationToVulnerableUsageLocalFlowSpec()).isPresent()) {
-//                        ZipSlipLocalInfo localInfo = new ZipSlipLocalInfo(
-//                                getCursor().firstEnclosing(Statement.class),
-//                                getCursor().firstEnclosing(Expression.class),
-//                                expression
-//                        );
-//                        getCursor()
-//                                .dropParentUntil(J.Block.class::isInstance)
-//                                .putMessage("ZIP SLIP", getCursor().firstEnclosingOrThrow(Statement.class));
-//                    }
-//                }
-//                return expression;
-//            }
-
 
             @Override
             public J.NewClass visitNewClass(J.NewClass newClass, P p) {
@@ -159,11 +153,15 @@ public class ZipSlip extends Recipe {
                 J.Block b = super.visitBlock(block, p);
                 ZipSlipLocalInfo zipSlipLocalInfo = getCursor().getMessage("ZIP SLIP");
                 if (zipSlipLocalInfo != null) {
-                    return b.withTemplate(
-                            noZipSlipTemplate,
-                            zipSlipLocalInfo.statement.getCoordinates().after(),
-                            zipSlipLocalInfo.parentDir,
-                            zipSlipLocalInfo.zipEntry
+                    return maybeAutoFormat(
+                            b,
+                            b.withTemplate(
+                                    noZipSlipFileTemplate,
+                                    zipSlipLocalInfo.statement.getCoordinates().after(),
+                                    zipSlipLocalInfo.parentDir,
+                                    zipSlipLocalInfo.zipEntry
+                            ),
+                            p
                     );
                 }
                 return b;
