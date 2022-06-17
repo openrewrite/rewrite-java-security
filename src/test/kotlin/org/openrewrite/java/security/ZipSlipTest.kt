@@ -1,5 +1,6 @@
 package org.openrewrite.java.security
 
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.openrewrite.test.RecipeSpec
 import org.openrewrite.test.RewriteTest
@@ -20,13 +21,13 @@ class ZipSlipTest: RewriteTest {
             import java.util.zip.ZipEntry;
 
             public class ZipTest {
-              public void m1(ZipEntry entry, File dir) throws Exception {
-                String name = entry.getName();
-                File file = new File(dir, name);
-                FileOutputStream os = new FileOutputStream(file); // ZipSlip
-                RandomAccessFile raf = new RandomAccessFile(file, "rw"); // ZipSlip
-                FileWriter fw = new FileWriter(file); // ZipSlip
-              }
+                public void m1(ZipEntry entry, File dir) throws Exception {
+                    String name = entry.getName();
+                    File file = new File(dir, name);
+                    FileOutputStream os = new FileOutputStream(file); // ZipSlip
+                    RandomAccessFile raf = new RandomAccessFile(file, "rw"); // ZipSlip
+                    FileWriter fw = new FileWriter(file); // ZipSlip
+                }
             }
             """,
             """
@@ -34,20 +35,19 @@ class ZipSlipTest: RewriteTest {
             import java.io.FileOutputStream;
             import java.io.RandomAccessFile;
             import java.io.FileWriter;
-            import java.io.UncheckedIOException;
             import java.util.zip.ZipEntry;
 
             public class ZipTest {
-              public void m1(ZipEntry entry, File dir) throws Exception {
-                String name = entry.getName();
-                File file = new File(dir, name);
-                if (!file.toPath().startsWith(dir.toPath())) {
-                    throw new UncheckedIOException("ZipSlip attack detected");
+                public void m1(ZipEntry entry, File dir) throws Exception {
+                    String name = entry.getName();
+                    File file = new File(dir, name);
+                    if (!file.toPath().normalize().startsWith(dir.toPath())) {
+                        throw new RuntimeException("Bad zip entry");
+                    }
+                    FileOutputStream os = new FileOutputStream(file); // ZipSlip
+                    RandomAccessFile raf = new RandomAccessFile(file, "rw"); // ZipSlip
+                    FileWriter fw = new FileWriter(file); // ZipSlip
                 }
-                FileOutputStream os = new FileOutputStream(file); // ZipSlip
-                RandomAccessFile raf = new RandomAccessFile(file, "rw"); // ZipSlip
-                FileWriter fw = new FileWriter(file); // ZipSlip
-              }
             }
             """
         )
@@ -66,9 +66,9 @@ class ZipSlipTest: RewriteTest {
 
             public class ZipTest {
                 public void m1(ZipEntry entry, Path dir) throws Exception {
-                String name = entry.getName();
-                Path file = dir.resolve(name);
-                OutputStream os = Files.newOutputStream(file);
+                    String name = entry.getName();
+                    Path path = dir.resolve(name);
+                    OutputStream os = Files.newOutputStream(path);
                 }
             }
             """,
@@ -81,13 +81,14 @@ class ZipSlipTest: RewriteTest {
             import java.util.zip.ZipEntry;
 
             public class ZipTest {
-              public void m1(ZipEntry entry, Path dir) throws Exception {
+                public void m1(ZipEntry entry, Path dir) throws Exception {
                     String name = entry.getName();
-                    Path file = dir.resolve(name);
-                    if (file.startsWith(dir)) {
-                        OutputStream os = Files.newOutputStream(file);
+                    Path path = dir.resolve(name);
+                    if (!path.normalize().startsWith(dir)) {
+                        throw new RuntimeException("Bad zip entry");
                     }
-              }
+                    OutputStream os = Files.newOutputStream(path);
+                }
             }
             """
         )
@@ -183,6 +184,7 @@ class ZipSlipTest: RewriteTest {
     )
 
     @Test
+    @Disabled("Need more global data flow and guard tracking")
     fun safeZipSlipValidateMethod() = rewriteRun(
         java(
             """
