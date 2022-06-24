@@ -18,8 +18,6 @@ import org.openrewrite.java.tree.Statement;
 import org.openrewrite.java.tree.TypeUtils;
 
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 
 import static java.util.Collections.emptyList;
 
@@ -210,7 +208,7 @@ public class ZipSlip extends Recipe {
             }
 
             @Override
-            public boolean isBarrierGuard(Guard guard, boolean branch) {
+            public boolean isSanitizerGuard(Guard guard, boolean branch) {
                 return PATH_STARTS_WITH_MATCHER.matches(guard.getExpression()) && branch;
             }
         }
