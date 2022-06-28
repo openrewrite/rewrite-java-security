@@ -121,16 +121,16 @@ class ZipSlipTest: RewriteTest {
             import java.io.UncheckedIOException;
             import java.nio.file.Files;
             import java.nio.file.Path;
-            import java.util.zip.ZipEntry;
+            import java.nio.file.Paths;import java.util.zip.ZipEntry;
 
             public class ZipTest {
               public void m1(ZipEntry entry, File dir) throws Exception {
                 String name = entry.getName();
                 File file = new File(dir, name);
-                if (!file.toPath().startsWith(dir.toPath())) {
-                    throw new UncheckedIOException("ZipSlip attack detected");
+                if (!Paths.get(dir + File.separator + name).normalize().startsWith(dir.toPath())) {
+                    throw new RuntimeException("ZipSlip attack detected");
                 }
-                FileOutputStream os = new FileOutputStream(file.toString()); // ZipSlip
+                FileOutputStream os = new FileOutputStream(dir + File.separator + name); // ZipSlip
               }
             }
             """

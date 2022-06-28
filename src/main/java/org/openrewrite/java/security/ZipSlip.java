@@ -188,7 +188,7 @@ public class ZipSlip extends Recipe {
 
         private static class FileOrPathCreationToVulnerableUsageLocalFlowSpec extends LocalTaintFlowSpec<Expression, Expression> {
             private static final MethodMatcher PATH_STARTS_WITH_MATCHER =
-                    new MethodMatcher("java.nio.file.Path startsWith(..)");
+                    new MethodMatcher("java.nio.file.Path startsWith(..) ");
 
             private static final InvocationMatcher SINK_ARGUMENT_MATCHER = InvocationMatcher.fromInvocationMatchers(
                     new MethodMatcher("java.io.FileOutputStream <constructor>(..)"),
