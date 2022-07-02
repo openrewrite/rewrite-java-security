@@ -286,8 +286,13 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
     )
 
     @Test
+<<<<<<< HEAD
     fun `delete & mkdirs wrapped in an if block`() = rewriteRun(
         java(
+=======
+    fun onlySupportAssignmentToIdentifier() = assertChanged(
+        dependsOn = arrayOf(
+>>>>>>> 3283f0d (Polish)
             """
             import java.io.File;
             import java.io.IOException;

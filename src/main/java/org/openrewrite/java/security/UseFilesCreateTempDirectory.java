@@ -40,7 +40,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
 
     @Override
     public String getDisplayName() {
-        return "Use Files#createTempDirectory";
+        return "Use `Files#createTempDirectory`";
     }
 
     @Override
@@ -298,7 +298,6 @@ public class UseFilesCreateTempDirectory extends Recipe {
             );
         }
 
-
         private static boolean isMatchingCreateFileStatement(J createFileStatement, Statement statement) {
             if (createFileStatement.equals(statement)) {
                 return true;
@@ -360,7 +359,6 @@ public class UseFilesCreateTempDirectory extends Recipe {
         public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, P p) {
             J.MethodInvocation m = method;
             if (CREATE_TEMP_FILE_MATCHER.matches(m)) {
-                maybeAddImport("java.nio.file.Files");
                 if (m.getArguments().size() == 2) {
                     // File.createTempFile(String prefix, String suffix)
                     m = maybeAutoFormat(m, m.withTemplate(twoArg,
@@ -379,6 +377,8 @@ public class UseFilesCreateTempDirectory extends Recipe {
                             p
                     );
                 }
+                maybeAddImport("java.nio.file.Files");
+                maybeRemoveImport("java.io.File");
             }
             return m;
         }
