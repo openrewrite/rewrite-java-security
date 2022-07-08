@@ -47,7 +47,7 @@ public class StringToFileConstructorVisitor<P> extends JavaVisitor<P> {
                         .visitNonNull(
                                 replacementConstructor,
                                 p,
-                                getCursor().getParentOrThrow()
+                                getCursor()
                         );
             }
         }

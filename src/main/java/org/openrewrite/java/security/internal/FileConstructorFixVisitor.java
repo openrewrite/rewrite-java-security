@@ -38,7 +38,7 @@ public class FileConstructorFixVisitor<P> extends JavaIsoVisitor<P> {
                     return n.withTemplate(
                             fileConstructorTemplate,
                             n.getCoordinates().replace(),
-                            binary.getLeft(),
+                            ((J.Binary) binary.getLeft()).getLeft(), // TODO: fix me. Assumes the Left part is always a J.Binary.
                             binary.getRight()
                     );
                 }
