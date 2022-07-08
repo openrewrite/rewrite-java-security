@@ -9,6 +9,7 @@ import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.controlflow.Guard;
+import org.openrewrite.java.dataflow.ExternalSinkModels;
 import org.openrewrite.java.dataflow.LocalFlowSpec;
 import org.openrewrite.java.dataflow.LocalTaintFlowSpec;
 import org.openrewrite.java.dataflow.internal.InvocationMatcher;
@@ -189,13 +190,8 @@ public class ZipSlip extends Recipe {
         private static class FileOrPathCreationToVulnerableUsageLocalFlowSpec extends LocalTaintFlowSpec<Expression, Expression> {
             private static final MethodMatcher PATH_STARTS_WITH_MATCHER =
                     new MethodMatcher("java.nio.file.Path startsWith(..) ");
-
-            private static final InvocationMatcher SINK_ARGUMENT_MATCHER = InvocationMatcher.fromInvocationMatchers(
-                    new MethodMatcher("java.io.FileOutputStream <constructor>(..)"),
-                    new MethodMatcher("java.io.RandomAccessFile <constructor>(..)"),
-                    new MethodMatcher("java.io.FileWriter <constructor>(..)"),
-                    new MethodMatcher("java.nio.file.Files newOutputStream(..)")
-            );
+            private static final MethodMatcher STRING_STARTS_WITH_MATCHER =
+                    new MethodMatcher("java.lang.String startsWith(..) ");
 
             @Override
             public boolean isSource(Expression expression, Cursor cursor) {
@@ -204,12 +200,18 @@ public class ZipSlip extends Recipe {
 
             @Override
             public boolean isSink(Expression expression, Cursor cursor) {
-                return SINK_ARGUMENT_MATCHER.advanced().isAnyArgument(cursor);
+                return ExternalSinkModels.getInstance().isSinkNode(expression, cursor, "create-file");
             }
 
             @Override
             public boolean isSanitizerGuard(Guard guard, boolean branch) {
-                return PATH_STARTS_WITH_MATCHER.matches(guard.getExpression()) && branch;
+                if (branch) {
+                    return PATH_STARTS_WITH_MATCHER.matches(guard.getExpression()) ||
+                            (STRING_STARTS_WITH_MATCHER.matches(guard.getExpression()) &&
+                                    PartialPathTraversalVulnerability.isSafePartialPathExpression(((J.MethodInvocation) guard.getExpression()).getArguments().get(0)));
+                } else {
+                    return false;
+                }
             }
         }
     }

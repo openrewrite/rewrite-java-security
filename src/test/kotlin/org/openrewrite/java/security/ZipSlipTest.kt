@@ -95,6 +95,7 @@ class ZipSlipTest: RewriteTest {
     )
 
     @Test
+    @Disabled("Needs variable extraction")
     fun fixesZipSlipUsingString()  = rewriteRun(
         java(
             """
