@@ -16,7 +16,7 @@ import org.openrewrite.java.tree.Statement;
  */
 public class StringToFileConstructorVisitor<P> extends JavaVisitor<P> {
     private final JavaTemplate fileConstructorTemplate =
-            JavaTemplate.builder(this::getCursor, "new File(#{any(String)})")
+            JavaTemplate.builder(this::getCursor, "new File(#{any(java.lang.String)})")
                     .imports("java.io.File").build();
 
     @Override
@@ -33,14 +33,22 @@ public class StringToFileConstructorVisitor<P> extends JavaVisitor<P> {
                 final JavaCoordinates coordinates;
                 if (expression instanceof J.Identifier) {
                     coordinates = ((J.Identifier) expression).getCoordinates().replace();
-                } else if (expression instanceof Statement){
+                } else if (expression instanceof Statement) {
                     coordinates = ((Statement) expression).getCoordinates().replace();
+                } else if (expression instanceof J.Binary) {
+                    coordinates = ((J.Binary) expression).getCoordinates().replace();
                 } else if (expression instanceof J.Literal) {
                     coordinates = ((J.Literal) expression).getCoordinates().replace();
                 } else {
                     throw new IllegalArgumentException("Unexpected first argument type: " + expression.getClass());
                 }
-                return expression.withTemplate(fileConstructorTemplate, coordinates, expression);
+                Expression replacementConstructor = expression.withTemplate(fileConstructorTemplate, coordinates, expression);
+                return (Expression) new FileConstructorFixVisitor<P>()
+                        .visitNonNull(
+                                replacementConstructor,
+                                p,
+                                getCursor().getParentOrThrow()
+                        );
             }
         }
         return expression;
