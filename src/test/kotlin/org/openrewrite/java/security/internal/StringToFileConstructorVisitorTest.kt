@@ -40,7 +40,7 @@ class StringToFileConstructorVisitorTest: RewriteTest {
     )
 
     @Test
-    fun `FileOutputStream String append`() = rewriteRun(
+    fun `FileOutputStream String appended File#seperator`() = rewriteRun(
         java(
             """
             import java.io.FileOutputStream;
@@ -49,6 +49,36 @@ class StringToFileConstructorVisitorTest: RewriteTest {
                 @SuppressWarnings({"EmptyTryBlock", "RedundantSuppression"})
                 public void test() {
                     try (FileOutputStream fio = new FileOutputStream("base" + File.separator + "test.txt")) {
+                       // do something
+                    }
+                }
+            }
+            """,
+            """
+            import java.io.FileOutputStream;
+            import java.io.File;
+            public class Test {
+                @SuppressWarnings({"EmptyTryBlock", "RedundantSuppression"})
+                public void test() {
+                    try (FileOutputStream fio = new FileOutputStream(new File("base", "test.txt"))) {
+                       // do something
+                    }
+                }
+            }
+            """
+        )
+    )
+
+    @Test
+    fun `FileOutputStream String appended File#separatorChar`() = rewriteRun(
+        java(
+            """
+            import java.io.FileOutputStream;
+            import java.io.File;
+            public class Test {
+                @SuppressWarnings({"EmptyTryBlock", "RedundantSuppression"})
+                public void test() {
+                    try (FileOutputStream fio = new FileOutputStream("base" + File.separatorChar + "test.txt")) {
                        // do something
                     }
                 }

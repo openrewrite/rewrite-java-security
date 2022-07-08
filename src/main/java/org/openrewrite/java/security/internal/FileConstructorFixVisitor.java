@@ -35,12 +35,23 @@ public class FileConstructorFixVisitor<P> extends JavaIsoVisitor<P> {
             if (argument instanceof J.Binary) {
                 J.Binary binary = (J.Binary) argument;
                 if (binary.getOperator() == J.Binary.Type.Addition) {
-                    return n.withTemplate(
-                            fileConstructorTemplate,
-                            n.getCoordinates().replace(),
-                            ((J.Binary) binary.getLeft()).getLeft(), // TODO: fix me. Assumes the Left part is always a J.Binary.
-                            binary.getRight()
-                    );
+                    Expression newFirstArgument = null;
+                    if (binary.getLeft() instanceof J.Binary) {
+                        J.Binary left = (J.Binary) binary.getLeft();
+                        if (left.getOperator() == J.Binary.Type.Addition) {
+                            newFirstArgument = left.getLeft();
+                        }
+                    } else {
+                        newFirstArgument = binary.getLeft();
+                    }
+                    if (newFirstArgument != null) {
+                        return n.withTemplate(
+                                fileConstructorTemplate,
+                                n.getCoordinates().replace(),
+                                newFirstArgument,
+                                binary.getRight()
+                        );
+                    }
                 }
             }
         }
