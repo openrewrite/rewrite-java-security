@@ -1,12 +1,18 @@
 package org.openrewrite.java.security.internal;
 
+import lombok.Value;
+import lombok.With;
+import org.openrewrite.Tree;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.MethodMatcher;
-import org.openrewrite.java.tree.Expression;
-import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.*;
+import org.openrewrite.marker.Markers;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Fixes the {@link java.io.File#File(String)} constructor call to use the multi-argument constructor when relevant.
@@ -26,35 +32,60 @@ public class FileConstructorFixVisitor<P> extends JavaIsoVisitor<P> {
             JavaTemplate.builder(this::getCursor, "new File(#{any(java.lang.String)}, #{any(java.lang.String)})")
                     .imports("java.io.File")
                     .build();
+    private final JavaTemplate stringAppendTemplate =
+            JavaTemplate.builder(this::getCursor, "#{any()} + #{any(java.lang.String)}")
+                    .build();
 
     @Override
     public J.NewClass visitNewClass(J.NewClass newClass, P p) {
         J.NewClass n = super.visitNewClass(newClass, p);
         if (FILE_CONSTRUCTOR.matches(n)) {
-            Expression argument = Objects.requireNonNull(n.getArguments()).get(0);
+            Expression argument = n.getArguments().get(0);
             if (argument instanceof J.Binary) {
                 J.Binary binary = (J.Binary) argument;
-                if (binary.getOperator() == J.Binary.Type.Addition) {
-                    Expression newFirstArgument = null;
-                    if (binary.getLeft() instanceof J.Binary) {
-                        J.Binary left = (J.Binary) binary.getLeft();
-                        if (left.getOperator() == J.Binary.Type.Addition) {
-                            newFirstArgument = left.getLeft();
-                        }
-                    } else {
-                        newFirstArgument = binary.getLeft();
-                    }
-                    if (newFirstArgument != null) {
-                        return n.withTemplate(
+                return computeNewArguments(binary)
+                        .map(newArguments -> n.<J.NewClass>withTemplate(
                                 fileConstructorTemplate,
                                 n.getCoordinates().replace(),
-                                newFirstArgument,
-                                binary.getRight()
-                        );
-                    }
-                }
+                                newArguments.first,
+                                newArguments.second
+                        ))
+                        .orElse(n);
             }
         }
         return n;
+    }
+
+    @Value
+    @With
+    static class NewArguments {
+        Expression first, second;
+    }
+
+    private Optional<NewArguments> computeNewArguments(J.Binary binary) {
+        Expression newFirstArgument = null;
+        if (binary.getLeft() instanceof J.Binary) {
+            J.Binary left = (J.Binary) binary.getLeft();
+            if (left.getOperator() == J.Binary.Type.Addition) {
+                if (FileSeperatorUtil.isFileSeperatorExpression(left.getRight())) {
+                    newFirstArgument = left.getLeft();
+                } else if (left.getLeft() instanceof J.Binary) {
+                    return computeNewArguments(left)
+                            .map(leftLeftNewArguments ->
+                                    leftLeftNewArguments.withSecond(
+                                            binary.withTemplate(
+                                                    stringAppendTemplate,
+                                                    binary.getCoordinates().replace(),
+                                                    leftLeftNewArguments.second,
+                                                    binary.getRight()
+                                            )
+                                    ));
+                }
+            }
+        } else {
+            newFirstArgument = binary.getLeft();
+        }
+        return Optional.ofNullable(newFirstArgument)
+                .map(first -> new NewArguments(first, binary.getRight()));
     }
 }

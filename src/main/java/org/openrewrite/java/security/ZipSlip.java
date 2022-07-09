@@ -1,10 +1,8 @@
 package org.openrewrite.java.security;
 
 import lombok.AllArgsConstructor;
-import org.openrewrite.Cursor;
-import org.openrewrite.ExecutionContext;
-import org.openrewrite.Recipe;
-import org.openrewrite.TreeVisitor;
+import org.openrewrite.*;
+import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.MethodMatcher;
@@ -13,19 +11,34 @@ import org.openrewrite.java.dataflow.ExternalSinkModels;
 import org.openrewrite.java.dataflow.LocalFlowSpec;
 import org.openrewrite.java.dataflow.LocalTaintFlowSpec;
 import org.openrewrite.java.dataflow.internal.InvocationMatcher;
-import org.openrewrite.java.tree.Expression;
-import org.openrewrite.java.tree.J;
-import org.openrewrite.java.tree.Statement;
-import org.openrewrite.java.tree.TypeUtils;
+import org.openrewrite.java.search.UsesMethod;
+import org.openrewrite.java.tree.*;
 
 import java.util.List;
 
 import static java.util.Collections.emptyList;
 
 public class ZipSlip extends Recipe {
+    private static final MethodMatcher ZIP_ENTRY_GET_NAME_METHOD_MATCHER =
+            new MethodMatcher("java.util.zip.ZipEntry getName()", true);
+    private static final MethodMatcher ZIP_ARCHIVE_ENTRY_GET_NAME_METHOD_MATCHER =
+            new MethodMatcher("org.apache.commons.compress.archivers.zip.ZipArchiveEntry getName()", true);
+
     @Override
     public String getDisplayName() {
         return "Zip Slip";
+    }
+
+    @Override
+    protected @Nullable TreeVisitor<?, ExecutionContext> getSingleSourceApplicableTest() {
+        return new JavaIsoVisitor<ExecutionContext>() {
+            @Override
+            public JavaSourceFile visitJavaSourceFile(JavaSourceFile cu, ExecutionContext executionContext) {
+                doAfterVisit(new UsesMethod<>(ZIP_ENTRY_GET_NAME_METHOD_MATCHER));
+                doAfterVisit(new UsesMethod<>(ZIP_ARCHIVE_ENTRY_GET_NAME_METHOD_MATCHER));
+                return cu;
+            }
+        };
     }
 
     @Override
@@ -35,8 +48,8 @@ public class ZipSlip extends Recipe {
 
     private static class ZipSlipVisitor<P> extends JavaIsoVisitor<P> {
         private static final InvocationMatcher ZIP_ENTRY_GET_NAME = InvocationMatcher.fromInvocationMatchers(
-                new MethodMatcher("java.util.zip.ZipEntry getName()", true),
-                new MethodMatcher("org.apache.commons.compress.archivers.zip.ZipArchiveEntry getName()", true)
+                ZIP_ENTRY_GET_NAME_METHOD_MATCHER,
+                ZIP_ARCHIVE_ENTRY_GET_NAME_METHOD_MATCHER
         );
         private static final InvocationMatcher FILE_CREATE = InvocationMatcher.fromMethodMatcher(
                 new MethodMatcher("java.io.File <constructor>(.., java.lang.String)")
@@ -48,17 +61,6 @@ public class ZipSlip extends Recipe {
         private static boolean isFileOrPathCreationExpression(Expression expression, Cursor cursor) {
             return FILE_CREATE.advanced().isParameter(cursor, 1) ||
                     PATH_RESOLVE.advanced().isFirstParameter(cursor);
-        }
-
-        private static List<Expression> getArgumentsForCallable(Expression callable) {
-            if (callable instanceof J.NewClass) {
-                List<Expression> arguments = ((J.NewClass) callable).getArguments();
-                return arguments == null ? emptyList() : arguments;
-            } else if (callable instanceof J.MethodInvocation) {
-                return ((J.MethodInvocation) callable).getArguments();
-            } else {
-                throw new IllegalArgumentException("Expected NewClass or MethodInvocation, got " + callable);
-            }
         }
 
         private static class ZipEntryToFileOrPathCreationLocalFlowSpec extends LocalFlowSpec<J.MethodInvocation, Expression> {
@@ -118,9 +120,9 @@ public class ZipSlip extends Recipe {
 
             @Override
             public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, P p) {
-                if (getArgumentsForCallable(method).stream().anyMatch(taintedSinks::contains)
+                if (method.getArguments().stream().anyMatch(taintedSinks::contains)
                         && dataflow().findSinks(new FileOrPathCreationToVulnerableUsageLocalFlowSpec()).isPresent()) {
-                    J.Block firstEnclosingBlock = getCursor().firstEnclosing(J.Block.class);
+                    J.Block firstEnclosingBlock = getCursor().firstEnclosingOrThrow(J.Block.class);
                     Statement enclosingStatement = getCursor()
                             .dropParentUntil(value -> firstEnclosingBlock.getStatements().contains(value))
                             .getValue();
@@ -140,9 +142,9 @@ public class ZipSlip extends Recipe {
 
             @Override
             public J.NewClass visitNewClass(J.NewClass newClass, P p) {
-                if (getArgumentsForCallable(newClass).stream().anyMatch(taintedSinks::contains)
+                if (newClass.getArguments().stream().anyMatch(taintedSinks::contains)
                         && dataflow().findSinks(new FileOrPathCreationToVulnerableUsageLocalFlowSpec()).isPresent()) {
-                    J.Block firstEnclosingBlock = getCursor().firstEnclosing(J.Block.class);
+                    J.Block firstEnclosingBlock = getCursor().firstEnclosingOrThrow(J.Block.class);
                     Statement enclosingStatement = getCursor()
                             .dropParentUntil(value -> firstEnclosingBlock.getStatements().contains(value))
                             .getValue();

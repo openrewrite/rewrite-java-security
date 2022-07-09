@@ -5,8 +5,6 @@ import org.openrewrite.java.JavaVisitor;
 import org.openrewrite.java.dataflow.ExternalSinkModels;
 import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
-import org.openrewrite.java.tree.JavaCoordinates;
-import org.openrewrite.java.tree.Statement;
 
 /**
  * Replaces constructor calls like
@@ -21,28 +19,15 @@ public class StringToFileConstructorVisitor<P> extends JavaVisitor<P> {
 
     @Override
     public Expression visitExpression(Expression expression, P p) {
-        if (getCursor().firstEnclosing(J.Block.class) == null) {
-            // Temporary bug fix: https://github.com/openrewrite/rewrite/pull/2023
-            return expression;
-        }
         if (ExternalSinkModels.getInstance().isSinkNode(expression, getCursor(), "create-file")) {
             J.NewClass parentConstructor = getCursor().firstEnclosing(J.NewClass.class);
             if (parentConstructor != null &&
-                    parentConstructor.getArguments() != null &&
                     parentConstructor.getArguments().get(0) == expression) {
-                final JavaCoordinates coordinates;
-                if (expression instanceof J.Identifier) {
-                    coordinates = ((J.Identifier) expression).getCoordinates().replace();
-                } else if (expression instanceof Statement) {
-                    coordinates = ((Statement) expression).getCoordinates().replace();
-                } else if (expression instanceof J.Binary) {
-                    coordinates = ((J.Binary) expression).getCoordinates().replace();
-                } else if (expression instanceof J.Literal) {
-                    coordinates = ((J.Literal) expression).getCoordinates().replace();
-                } else {
-                    throw new IllegalArgumentException("Unexpected first argument type: " + expression.getClass());
-                }
-                Expression replacementConstructor = expression.withTemplate(fileConstructorTemplate, coordinates, expression);
+                Expression replacementConstructor = expression.withTemplate(
+                        fileConstructorTemplate,
+                        expression.getCoordinates().replace(),
+                        expression
+                );
                 return (Expression) new FileConstructorFixVisitor<P>()
                         .visitNonNull(
                                 replacementConstructor,
