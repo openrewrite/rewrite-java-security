@@ -5,6 +5,7 @@ import org.openrewrite.java.JavaVisitor;
 import org.openrewrite.java.dataflow.ExternalSinkModels;
 import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.TypeUtils;
 
 /**
  * Replaces constructor calls like
@@ -22,7 +23,9 @@ public class StringToFileConstructorVisitor<P> extends JavaVisitor<P> {
         if (ExternalSinkModels.getInstance().isSinkNode(expression, getCursor(), "create-file")) {
             J.NewClass parentConstructor = getCursor().firstEnclosing(J.NewClass.class);
             if (parentConstructor != null &&
-                    parentConstructor.getArguments().get(0) == expression) {
+                    parentConstructor.getArguments().get(0) == expression &&
+                    TypeUtils.isString(expression.getType())
+            ) {
                 Expression replacementConstructor = expression.withTemplate(
                         fileConstructorTemplate,
                         expression.getCoordinates().replace(),
