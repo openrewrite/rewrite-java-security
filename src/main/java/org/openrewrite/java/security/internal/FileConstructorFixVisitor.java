@@ -78,8 +78,14 @@ public class FileConstructorFixVisitor<P> extends JavaIsoVisitor<P> {
                                     ));
                 }
             }
-        } else {
-            newFirstArgument = binary.getLeft();
+        } else if (binary.getLeft() instanceof J.Literal) {
+            J.Literal left = (J.Literal) binary.getLeft();
+            if (left.getValue() instanceof String) {
+                String leftValue = (String) left.getValue();
+                if (leftValue.endsWith("/") || leftValue.endsWith("\\")) {
+                    newFirstArgument = left;
+                }
+            }
         }
         return Optional.ofNullable(newFirstArgument)
                 .map(first -> new NewArguments(first, binary.getRight()));
