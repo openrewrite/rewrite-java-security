@@ -18,7 +18,9 @@ package org.openrewrite.java.security
 import org.junit.jupiter.api.Test
 import org.openrewrite.Recipe
 import org.openrewrite.java.JavaRecipeTest
-import org.openrewrite.java.security.FindTextDirectionChanges.*
+import org.openrewrite.java.security.FindTextDirectionChanges.LRI
+import org.openrewrite.java.security.FindTextDirectionChanges.PDI
+import org.openrewrite.java.security.FindTextDirectionChanges.RLO
 
 class FindTextDirectionChangesTest : JavaRecipeTest {
 

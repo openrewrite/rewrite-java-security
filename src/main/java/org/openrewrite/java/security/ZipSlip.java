@@ -1,42 +1,68 @@
 package org.openrewrite.java.security;
 
 import lombok.AllArgsConstructor;
-import org.openrewrite.Cursor;
-import org.openrewrite.ExecutionContext;
-import org.openrewrite.Recipe;
-import org.openrewrite.TreeVisitor;
-import org.openrewrite.java.JavaIsoVisitor;
-import org.openrewrite.java.JavaTemplate;
-import org.openrewrite.java.MethodMatcher;
+import org.openrewrite.*;
+import org.openrewrite.internal.lang.Nullable;
+import org.openrewrite.java.*;
 import org.openrewrite.java.controlflow.Guard;
 import org.openrewrite.java.dataflow.ExternalSinkModels;
 import org.openrewrite.java.dataflow.LocalFlowSpec;
 import org.openrewrite.java.dataflow.LocalTaintFlowSpec;
 import org.openrewrite.java.dataflow.internal.InvocationMatcher;
-import org.openrewrite.java.tree.Expression;
-import org.openrewrite.java.tree.J;
-import org.openrewrite.java.tree.Statement;
-import org.openrewrite.java.tree.TypeUtils;
+import org.openrewrite.java.search.UsesMethod;
+import org.openrewrite.java.security.internal.FileConstructorFixVisitor;
+import org.openrewrite.java.security.internal.StringToFileConstructorVisitor;
+import org.openrewrite.java.tree.*;
+import org.openrewrite.marker.Markers;
 
 import java.util.List;
-
-import static java.util.Collections.emptyList;
+import java.util.Optional;
+import java.util.function.Function;
 
 public class ZipSlip extends Recipe {
+    private static final MethodMatcher ZIP_ENTRY_GET_NAME_METHOD_MATCHER =
+            new MethodMatcher("java.util.zip.ZipEntry getName()", true);
+    private static final MethodMatcher ZIP_ARCHIVE_ENTRY_GET_NAME_METHOD_MATCHER =
+            new MethodMatcher("org.apache.commons.compress.archivers.zip.ZipArchiveEntry getName()", true);
+
     @Override
     public String getDisplayName() {
         return "Zip Slip";
     }
 
     @Override
+    protected @Nullable TreeVisitor<?, ExecutionContext> getSingleSourceApplicableTest() {
+        return new JavaIsoVisitor<ExecutionContext>() {
+            @Override
+            public JavaSourceFile visitJavaSourceFile(JavaSourceFile cu, ExecutionContext executionContext) {
+                doAfterVisit(new UsesMethod<>(ZIP_ENTRY_GET_NAME_METHOD_MATCHER));
+                doAfterVisit(new UsesMethod<>(ZIP_ARCHIVE_ENTRY_GET_NAME_METHOD_MATCHER));
+                return cu;
+            }
+        };
+    }
+
+    @Override
     protected TreeVisitor<?, ExecutionContext> getVisitor() {
-        return new ZipSlipVisitor<>();
+        return new JavaIsoVisitor<ExecutionContext>() {
+            @Override
+            public J.Block visitBlock(J.Block block, ExecutionContext executionContext) {
+                J.Block b = super.visitBlock(block, executionContext);
+                b = (J.Block) new FileConstructorFixVisitor<>()
+                        .visitNonNull(b, executionContext, getCursor().getParentOrThrow());
+                b = (J.Block) new StringToFileConstructorVisitor<>()
+                        .visitNonNull(b, executionContext, getCursor().getParentOrThrow());
+                b = (J.Block) new ZipSlipVisitor<>()
+                        .visitNonNull(b, executionContext, getCursor().getParentOrThrow());
+                return b;
+            }
+        };
     }
 
     private static class ZipSlipVisitor<P> extends JavaIsoVisitor<P> {
         private static final InvocationMatcher ZIP_ENTRY_GET_NAME = InvocationMatcher.fromInvocationMatchers(
-                new MethodMatcher("java.util.zip.ZipEntry getName()", true),
-                new MethodMatcher("org.apache.commons.compress.archivers.zip.ZipArchiveEntry getName()", true)
+                ZIP_ENTRY_GET_NAME_METHOD_MATCHER,
+                ZIP_ARCHIVE_ENTRY_GET_NAME_METHOD_MATCHER
         );
         private static final InvocationMatcher FILE_CREATE = InvocationMatcher.fromMethodMatcher(
                 new MethodMatcher("java.io.File <constructor>(.., java.lang.String)")
@@ -48,17 +74,6 @@ public class ZipSlip extends Recipe {
         private static boolean isFileOrPathCreationExpression(Expression expression, Cursor cursor) {
             return FILE_CREATE.advanced().isParameter(cursor, 1) ||
                     PATH_RESOLVE.advanced().isFirstParameter(cursor);
-        }
-
-        private static List<Expression> getArgumentsForCallable(Expression callable) {
-            if (callable instanceof J.NewClass) {
-                List<Expression> arguments = ((J.NewClass) callable).getArguments();
-                return arguments == null ? emptyList() : arguments;
-            } else if (callable instanceof J.MethodInvocation) {
-                return ((J.MethodInvocation) callable).getArguments();
-            } else {
-                throw new IllegalArgumentException("Expected NewClass or MethodInvocation, got " + callable);
-            }
         }
 
         private static class ZipEntryToFileOrPathCreationLocalFlowSpec extends LocalFlowSpec<J.MethodInvocation, Expression> {
@@ -87,11 +102,11 @@ public class ZipSlip extends Recipe {
          * objects that have been tainted by zip entry getName() calls.
          */
         @AllArgsConstructor
-        private static class TaintedFileOrPathVisitor<P> extends JavaIsoVisitor<P> {
+        private static class TaintedFileOrPathVisitor<P> extends JavaVisitor<P> {
             private final JavaTemplate noZipSlipFileTemplate = JavaTemplate.builder(this::getCursor, "" +
-                    "if (!#{any(java.io.File)}.toPath().normalize().startsWith(#{any(java.io.File)}.toPath())) {\n" +
-                    "    throw new RuntimeException(\"Bad zip entry\");\n" +
-                    "}")
+                            "if (!#{any(java.io.File)}.toPath().normalize().startsWith(#{any(java.io.File)}.toPath())) {\n" +
+                            "    throw new RuntimeException(\"Bad zip entry\");\n" +
+                            "}")
                     .build();
             private final JavaTemplate noZipSlipPathStartsWithPathTemplate = JavaTemplate.builder(this::getCursor, "" +
                     "if (!#{any(java.nio.file.Path)}.normalize().startsWith(#{any(java.nio.file.Path)})) {\n" +
@@ -110,77 +125,150 @@ public class ZipSlip extends Recipe {
             private final List<Expression> taintedSinks;
 
             @AllArgsConstructor
-            private static class ZipSlipLocalInfo {
+            private static class ZipSlipSimpleInjectGuardInfo {
+                static String CURSOR_KEY = "ZipSlipSimpleInjectGuardInfo";
+                /**
+                 * The statement to create the guard after.
+                 */
                 Statement statement;
+                /**
+                 * The parent directory expression to create the guard for.
+                 */
                 Expression parentDir;
+                /**
+                 * The child file created with the zip entry to create the guard for.
+                 */
                 Expression zipEntry;
             }
 
-            @Override
-            public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, P p) {
-                if (getArgumentsForCallable(method).stream().anyMatch(taintedSinks::contains)
-                        && dataflow().findSinks(new FileOrPathCreationToVulnerableUsageLocalFlowSpec()).isPresent()) {
-                    J.Block firstEnclosingBlock = getCursor().firstEnclosing(J.Block.class);
-                    Statement enclosingStatement = getCursor()
-                            .dropParentUntil(value -> firstEnclosingBlock.getStatements().contains(value))
-                            .getValue();
-                    // TODO: Test this
-                    J.Identifier newFileVariableName = getCursor().firstEnclosing(J.VariableDeclarations.NamedVariable.class).getName();
-                    ZipSlipLocalInfo zipSlipLocalInfo = new ZipSlipLocalInfo(
-                            enclosingStatement,
-                            method.getSelect(),
-                            newFileVariableName
-                    );
-                    getCursor()
-                            .dropParentUntil(J.Block.class::isInstance)
-                            .putMessage("ZIP SLIP", zipSlipLocalInfo);
-                }
-                return super.visitMethodInvocation(method, p);
+            @AllArgsConstructor
+            public static class ZipSlipCreateNewVariableInfo {
+                static String CURSOR_KEY = "ZipSlipCreateNewVariableInfo";
+                String newVariableName;
+                /**
+                 * The statement to extract the new variable to before.
+                 */
+                Statement statement;
+                /**
+                 * The expression that needs to be extracted to a new variable.
+                 */
+                MethodCall extractToVariable;
             }
 
             @Override
-            public J.NewClass visitNewClass(J.NewClass newClass, P p) {
-                if (getArgumentsForCallable(newClass).stream().anyMatch(taintedSinks::contains)
+            public J visitMethodInvocation(J.MethodInvocation method, P p) {
+                return visitMethodCall(method, J.MethodInvocation::getSelect)
+                        .<J>map(Function.identity())
+                        .orElseGet(() -> super.visitMethodInvocation(method, p));
+            }
+
+            @Override
+            public J visitNewClass(J.NewClass newClass, P p) {
+                return visitMethodCall(newClass, n -> n.getArguments().get(0))
+                        .<J>map(Function.identity())
+                        .orElseGet(() -> super.visitNewClass(newClass, p));
+            }
+
+            private <M extends MethodCall> Optional<J.Identifier> visitMethodCall(M methodCall, Function<M, Expression> parentDirExtractor) {
+                if (methodCall.getArguments().stream().anyMatch(taintedSinks::contains)
                         && dataflow().findSinks(new FileOrPathCreationToVulnerableUsageLocalFlowSpec()).isPresent()) {
-                    J.Block firstEnclosingBlock = getCursor().firstEnclosing(J.Block.class);
+                    J.Block firstEnclosingBlock = getCursor().firstEnclosingOrThrow(J.Block.class);
+                    @SuppressWarnings("SuspiciousMethodCalls")
                     Statement enclosingStatement = getCursor()
                             .dropParentUntil(value -> firstEnclosingBlock.getStatements().contains(value))
                             .getValue();
-                    // TODO: Test this
-                    J.Identifier newFileVariableName = getCursor().firstEnclosing(J.VariableDeclarations.NamedVariable.class).getName();
-                    ZipSlipLocalInfo zipSlipLocalInfo = new ZipSlipLocalInfo(
-                            enclosingStatement,
-                            newClass.getArguments().get(0),
-                            newFileVariableName
-                    );
-                    getCursor()
-                            .dropParentUntil(J.Block.class::isInstance)
-                            .putMessage("ZIP SLIP", zipSlipLocalInfo);
+
+                    J.VariableDeclarations.NamedVariable enclosingVariable =
+                            getCursor().firstEnclosing(J.VariableDeclarations.NamedVariable.class);
+
+                    if (enclosingVariable != null && unwrapNullable(enclosingVariable.getInitializer()) == methodCall) {
+                        final ZipSlipSimpleInjectGuardInfo zipSlipSimpleInjectGuardInfo =
+                                new ZipSlipSimpleInjectGuardInfo(
+                                        enclosingStatement,
+                                        parentDirExtractor.apply(methodCall),
+                                        enclosingVariable.getName()
+                                );
+                        getCursor()
+                                .dropParentUntil(J.Block.class::isInstance)
+                                .putMessage(
+                                        ZipSlipSimpleInjectGuardInfo.CURSOR_KEY,
+                                        zipSlipSimpleInjectGuardInfo
+                                );
+                    } else {
+                        String newVariableName = VariableNameUtils.generateVariableName(
+                                "zipEntryFile",
+                                getCursor(),
+                                VariableNameUtils.GenerationStrategy.INCREMENT_NUMBER
+                        );
+                        final ZipSlipCreateNewVariableInfo zipSlipCreateNewVariableInfo =
+                                new ZipSlipCreateNewVariableInfo(
+                                        newVariableName,
+                                        enclosingStatement,
+                                        methodCall
+                                );
+                        getCursor()
+                                .dropParentUntil(J.Block.class::isInstance)
+                                .putMessage(
+                                        ZipSlipCreateNewVariableInfo.CURSOR_KEY,
+                                        zipSlipCreateNewVariableInfo
+                                );
+                        return Optional.of(new J.Identifier(
+                                Tree.randomId(),
+                                Space.EMPTY,
+                                Markers.EMPTY,
+                                newVariableName,
+                                methodCall.getType(),
+                                null
+                        ));
+                    }
                 }
-                return super.visitNewClass(newClass, p);
+                return Optional.empty();
+            }
+
+            @Nullable
+            private static Expression unwrapNullable(@Nullable Expression expression) {
+                if (expression == null) {
+                    return null;
+                }
+                if (expression instanceof J.Parentheses) {
+                    //noinspection unchecked
+                    return unwrapNullable(((J.Parentheses<Expression>) expression).getTree());
+                } else {
+                    return expression;
+                }
             }
 
             @Override
             public J.Block visitBlock(J.Block block, P p) {
-                J.Block b = super.visitBlock(block, p);
-                ZipSlipLocalInfo zipSlipLocalInfo = getCursor().getMessage("ZIP SLIP");
-                if (zipSlipLocalInfo != null) {
+                J.Block b = (J.Block) super.visitBlock(block, p);
+                ZipSlipCreateNewVariableInfo zipSlipCreateNewVariableInfo = getCursor().pollMessage(ZipSlipCreateNewVariableInfo.CURSOR_KEY);
+                if (zipSlipCreateNewVariableInfo != null) {
+                    JavaTemplate newVariableTemplate = JavaTemplate
+                            .builder(
+                                    this::getCursor,
+                                    "final File " + zipSlipCreateNewVariableInfo.newVariableName + " = #{any(java.io.File)};"
+                            )
+                            .imports("java.io.File")
+                            .build();
+                    return b.withTemplate(
+                            newVariableTemplate,
+                            zipSlipCreateNewVariableInfo.statement.getCoordinates().before(),
+                            zipSlipCreateNewVariableInfo.extractToVariable
+                    );
+                }
+                ZipSlipSimpleInjectGuardInfo zipSlipSimpleInjectGuardInfo = getCursor().pollMessage(ZipSlipSimpleInjectGuardInfo.CURSOR_KEY);
+                if (zipSlipSimpleInjectGuardInfo != null) {
                     JavaTemplate template;
-                    if (TypeUtils.isOfClassType(zipSlipLocalInfo.zipEntry.getType(), "java.io.File")) {
+                    if (TypeUtils.isOfClassType(zipSlipSimpleInjectGuardInfo.zipEntry.getType(), "java.io.File")) {
                         template = noZipSlipFileTemplate;
                     } else {
                         template = noZipSlipPathStartsWithPathTemplate;
                     }
-                    return maybeAutoFormat(
-                            b,
-                            b.withTemplate(
-                                    template,
-                                    zipSlipLocalInfo.statement.getCoordinates().after(),
-                                    zipSlipLocalInfo.zipEntry,
-                                    zipSlipLocalInfo.parentDir
-                            ),
-                            p,
-                            getCursor().getParentOrThrow()
+                    return b.withTemplate(
+                            template,
+                            zipSlipSimpleInjectGuardInfo.statement.getCoordinates().after(),
+                            zipSlipSimpleInjectGuardInfo.zipEntry,
+                            zipSlipSimpleInjectGuardInfo.parentDir
                     );
                 }
                 return b;

@@ -17,7 +17,6 @@ package org.openrewrite.java.security
 
 import org.junit.jupiter.api.Test
 import org.openrewrite.Recipe
-import org.openrewrite.java.JavaParser
 import org.openrewrite.java.JavaRecipeTest
 
 class SecureRandomTest : JavaRecipeTest {
@@ -28,7 +27,7 @@ class SecureRandomTest : JavaRecipeTest {
     fun secureContext() = assertChanged(
         before = """
             import java.util.Random;
-            
+
             public class A {
                 String generateSecretToken() {
                     Random r = new Random();
@@ -39,7 +38,7 @@ class SecureRandomTest : JavaRecipeTest {
         after = """
             import java.security.SecureRandom;
             import java.util.Random;
-            
+
             public class A {
                 String generateSecretToken() {
                     Random r = new SecureRandom();
