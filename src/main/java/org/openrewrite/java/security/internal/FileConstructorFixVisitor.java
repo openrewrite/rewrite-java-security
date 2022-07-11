@@ -2,21 +2,17 @@ package org.openrewrite.java.security.internal;
 
 import lombok.Value;
 import lombok.With;
-import org.openrewrite.Tree;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.MethodMatcher;
-import org.openrewrite.java.tree.*;
-import org.openrewrite.marker.Markers;
+import org.openrewrite.java.tree.Expression;
+import org.openrewrite.java.tree.J;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
  * Fixes the {@link java.io.File#File(String)} constructor call to use the multi-argument constructor when relevant.
- * <p/>
+ * <p>
  * For example:
  * <ul>
  *     <li>{@code new File("base" + File.separator + "test.txt")} becomes {@code new File("base", "test.txt")}</li>
