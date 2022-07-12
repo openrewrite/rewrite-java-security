@@ -7,6 +7,8 @@ import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.TypeUtils;
 
+import java.util.function.Supplier;
+
 /**
  * Replaces constructor calls like
  * {@link java.io.FileOutputStream#FileOutputStream(String)} with
@@ -17,6 +19,16 @@ public class StringToFileConstructorVisitor<P> extends JavaVisitor<P> {
     private final JavaTemplate fileConstructorTemplate =
             JavaTemplate.builder(this::getCursor, "new File(#{any(java.lang.String)})")
                     .imports("java.io.File").build();
+
+    private final Supplier<FileConstructorFixVisitor<P>> fileConstructorFixVisitorFactory;
+
+    public StringToFileConstructorVisitor(Supplier<FileConstructorFixVisitor<P>> fileConstructorFixVisitorFactory) {
+        this.fileConstructorFixVisitorFactory = fileConstructorFixVisitorFactory;
+    }
+
+    public StringToFileConstructorVisitor() {
+        this(FileConstructorFixVisitor::new);
+    }
 
     @Override
     public Expression visitExpression(Expression expression, P p) {
@@ -31,7 +43,8 @@ public class StringToFileConstructorVisitor<P> extends JavaVisitor<P> {
                         expression.getCoordinates().replace(),
                         expression
                 );
-                return (Expression) new FileConstructorFixVisitor<P>()
+                return (Expression) fileConstructorFixVisitorFactory
+                        .get()
                         .visitNonNull(
                                 replacementConstructor,
                                 p,

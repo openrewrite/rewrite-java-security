@@ -11,7 +11,7 @@ import org.openrewrite.java.tree.TypeUtils;
 public final class FileSeperatorUtil {
 
     public static boolean isFileSeperatorExpression(Expression e) {
-        Expression expression = unwrap(e);
+        Expression expression = Expression.unwrap(e);
         if (expression instanceof J.FieldAccess || expression instanceof J.Identifier) {
             // CASE:
             // - File.separator
@@ -59,14 +59,5 @@ public final class FileSeperatorUtil {
             }
         }
         return false;
-    }
-
-    private static Expression unwrap(Expression expression) {
-        if (expression instanceof J.Parentheses) {
-            //noinspection unchecked
-            return unwrap(((J.Parentheses<Expression>) expression).getTree());
-        } else {
-            return expression;
-        }
     }
 }

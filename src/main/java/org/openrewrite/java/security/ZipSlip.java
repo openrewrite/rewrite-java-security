@@ -10,20 +10,29 @@ import org.openrewrite.java.dataflow.LocalFlowSpec;
 import org.openrewrite.java.dataflow.LocalTaintFlowSpec;
 import org.openrewrite.java.dataflow.internal.InvocationMatcher;
 import org.openrewrite.java.search.UsesMethod;
+import org.openrewrite.java.security.internal.CursorUtil;
 import org.openrewrite.java.security.internal.FileConstructorFixVisitor;
 import org.openrewrite.java.security.internal.StringToFileConstructorVisitor;
 import org.openrewrite.java.tree.*;
 import org.openrewrite.marker.Markers;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class ZipSlip extends Recipe {
     private static final MethodMatcher ZIP_ENTRY_GET_NAME_METHOD_MATCHER =
             new MethodMatcher("java.util.zip.ZipEntry getName()", true);
     private static final MethodMatcher ZIP_ARCHIVE_ENTRY_GET_NAME_METHOD_MATCHER =
             new MethodMatcher("org.apache.commons.compress.archivers.zip.ZipArchiveEntry getName()", true);
+
+    private static final InvocationMatcher ZIP_ENTRY_GET_NAME = InvocationMatcher.fromInvocationMatchers(
+            ZIP_ENTRY_GET_NAME_METHOD_MATCHER,
+            ZIP_ARCHIVE_ENTRY_GET_NAME_METHOD_MATCHER
+    );
 
     @Override
     public String getDisplayName() {
@@ -48,22 +57,53 @@ public class ZipSlip extends Recipe {
             @Override
             public J.Block visitBlock(J.Block block, ExecutionContext executionContext) {
                 J.Block b = super.visitBlock(block, executionContext);
-                b = (J.Block) new FileConstructorFixVisitor<>()
+                Set<Expression> zipEntryExpressions = computeZipEntryExpressions();
+                Supplier<FileConstructorFixVisitor<ExecutionContext>> fileConstructorFixVisitorSupplier =
+                        () -> new FileConstructorFixVisitor<>(zipEntryExpressions::contains);
+                b = (J.Block) fileConstructorFixVisitorSupplier.get()
                         .visitNonNull(b, executionContext, getCursor().getParentOrThrow());
-                b = (J.Block) new StringToFileConstructorVisitor<>()
+                b = (J.Block) new StringToFileConstructorVisitor<>(fileConstructorFixVisitorSupplier)
                         .visitNonNull(b, executionContext, getCursor().getParentOrThrow());
                 b = (J.Block) new ZipSlipVisitor<>()
                         .visitNonNull(b, executionContext, getCursor().getParentOrThrow());
                 return b;
             }
+
+            /**
+             * Compute the set of Expressions that will have been assigned to by a
+             * ZipEntry.getName() call.
+             */
+            private Set<Expression> computeZipEntryExpressions() {
+                return CursorUtil.findOuterExecutableBlock(getCursor()).map(outerExecutable -> outerExecutable.computeMessageIfAbsent("computed-zip-entry-expresions", __ -> {
+                    Set<Expression> zipEntryExpressions = new HashSet<>();
+                    new JavaIsoVisitor<Set<Expression>>() {
+                        @Override
+                        public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, Set<Expression> zipEntryExpressionsInternal) {
+                            dataflow().findSinks(new ZipEntryToAnyLocalFlowSpec()).ifPresent(sinkFlow -> {
+                                zipEntryExpressionsInternal.addAll(sinkFlow.getSinks());
+                            });
+                            return super.visitMethodInvocation(method, zipEntryExpressionsInternal);
+                        }
+                    }.visit(outerExecutable.getValue(), zipEntryExpressions, outerExecutable.getParentOrThrow());
+                    return zipEntryExpressions;
+                })).orElseGet(HashSet::new);
+            }
         };
     }
 
-    private static class ZipSlipVisitor<P> extends JavaIsoVisitor<P> {
-        private static final InvocationMatcher ZIP_ENTRY_GET_NAME = InvocationMatcher.fromInvocationMatchers(
-                ZIP_ENTRY_GET_NAME_METHOD_MATCHER,
-                ZIP_ARCHIVE_ENTRY_GET_NAME_METHOD_MATCHER
-        );
+    private static class ZipEntryToAnyLocalFlowSpec extends LocalFlowSpec<J.MethodInvocation, Expression> {
+        @Override
+        public boolean isSource(J.MethodInvocation methodInvocation, Cursor cursor) {
+            return ZIP_ENTRY_GET_NAME.matches(methodInvocation);
+        }
+
+        @Override
+        public boolean isSink(Expression expression, Cursor cursor) {
+            return true;
+        }
+    }
+
+    private static class ZipEntryToFileOrPathCreationLocalFlowSpec extends LocalFlowSpec<J.MethodInvocation, Expression> {
         private static final InvocationMatcher FILE_CREATE = InvocationMatcher.fromMethodMatcher(
                 new MethodMatcher("java.io.File <constructor>(.., java.lang.String)")
         );
@@ -71,23 +111,19 @@ public class ZipSlip extends Recipe {
                 new MethodMatcher("java.nio.file.Path resolve(..)")
         );
 
-        private static boolean isFileOrPathCreationExpression(Expression expression, Cursor cursor) {
+        @Override
+        public boolean isSource(J.MethodInvocation methodInvocation, Cursor cursor) {
+            return ZIP_ENTRY_GET_NAME.matches(methodInvocation);
+        }
+
+        @Override
+        public boolean isSink(Expression expression, Cursor cursor) {
             return FILE_CREATE.advanced().isParameter(cursor, 1) ||
                     PATH_RESOLVE.advanced().isFirstParameter(cursor);
         }
+    }
 
-        private static class ZipEntryToFileOrPathCreationLocalFlowSpec extends LocalFlowSpec<J.MethodInvocation, Expression> {
-
-            @Override
-            public boolean isSource(J.MethodInvocation methodInvocation, Cursor cursor) {
-                return ZIP_ENTRY_GET_NAME.matches(methodInvocation);
-            }
-
-            @Override
-            public boolean isSink(Expression expression, Cursor cursor) {
-                return isFileOrPathCreationExpression(expression, cursor);
-            }
-        }
+    private static class ZipSlipVisitor<P> extends JavaIsoVisitor<P> {
 
         @Override
         public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, P p) {
@@ -181,7 +217,7 @@ public class ZipSlip extends Recipe {
                     J.VariableDeclarations.NamedVariable enclosingVariable =
                             getCursor().firstEnclosing(J.VariableDeclarations.NamedVariable.class);
 
-                    if (enclosingVariable != null && unwrapNullable(enclosingVariable.getInitializer()) == methodCall) {
+                    if (enclosingVariable != null && Expression.unwrap(enclosingVariable.getInitializer()) == methodCall) {
                         final ZipSlipSimpleInjectGuardInfo zipSlipSimpleInjectGuardInfo =
                                 new ZipSlipSimpleInjectGuardInfo(
                                         enclosingStatement,
@@ -223,19 +259,6 @@ public class ZipSlip extends Recipe {
                     }
                 }
                 return Optional.empty();
-            }
-
-            @Nullable
-            private static Expression unwrapNullable(@Nullable Expression expression) {
-                if (expression == null) {
-                    return null;
-                }
-                if (expression instanceof J.Parentheses) {
-                    //noinspection unchecked
-                    return unwrapNullable(((J.Parentheses<Expression>) expression).getTree());
-                } else {
-                    return expression;
-                }
             }
 
             @Override

@@ -9,6 +9,7 @@ import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 
 import java.util.Optional;
+import java.util.function.Predicate;
 
 /**
  * Fixes the {@link java.io.File#File(String)} constructor call to use the multi-argument constructor when relevant.
@@ -31,6 +32,16 @@ public class FileConstructorFixVisitor<P> extends JavaIsoVisitor<P> {
     private final JavaTemplate stringAppendTemplate =
             JavaTemplate.builder(this::getCursor, "#{any()} + #{any(java.lang.String)}")
                     .build();
+
+    private final Predicate<Expression> overrideShouldBreakBefore;
+
+    public FileConstructorFixVisitor(Predicate<Expression> overrideShouldBreakBefore) {
+        this.overrideShouldBreakBefore = overrideShouldBreakBefore;
+    }
+
+    public FileConstructorFixVisitor() {
+        this(e -> false);
+    }
 
     @Override
     public J.NewClass visitNewClass(J.NewClass newClass, P p) {
@@ -60,6 +71,9 @@ public class FileConstructorFixVisitor<P> extends JavaIsoVisitor<P> {
 
     private Optional<NewArguments> computeNewArguments(J.Binary binary) {
         Expression newFirstArgument = null;
+        if (overrideShouldBreakBefore.test(binary.getRight())) {
+            newFirstArgument = binary.getLeft();
+        }
         if (binary.getLeft() instanceof J.Binary) {
             J.Binary left = (J.Binary) binary.getLeft();
             if (left.getOperator() == J.Binary.Type.Addition) {
