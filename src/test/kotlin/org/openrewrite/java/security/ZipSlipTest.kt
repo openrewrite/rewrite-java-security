@@ -612,4 +612,126 @@ class ZipSlipTest: RewriteTest {
             """
         )
     )
+
+    @Test
+    fun `example infowangxin_springmvc`() = rewriteRun(
+        java(
+            """
+            import java.io.BufferedInputStream;
+            import java.io.BufferedOutputStream;
+            import java.io.File;
+            import java.io.FileInputStream;
+            import java.io.FileOutputStream;
+            import java.io.IOException;
+            import java.io.InputStream;
+            import java.io.OutputStream;
+            import java.util.Enumeration;
+            import java.util.List;
+            import java.util.zip.CRC32;
+            import java.util.zip.CheckedOutputStream;
+            import java.util.zip.Deflater;
+            import java.util.zip.ZipEntry;
+            import java.util.zip.ZipFile;
+            import java.util.zip.ZipOutputStream;
+
+            class ZipUtil {
+                    /**
+                     * 解压缩
+                     *
+                     * @param zipfile
+                     *            File 需要解压缩的文件
+                     * @param descDir
+                     *            String 解压后的目标目录
+                     */
+                    @SuppressWarnings({ "rawtypes", "resource" })
+                    public static void unZipFiles(File zipfile, String descDir) {
+                        try {
+                            ZipFile zf = new ZipFile(zipfile);
+                            ZipEntry entry = null;
+                            String zipEntryName = null;
+                            InputStream in = null;
+                            OutputStream out = null;
+                            byte[] buf1 = null;
+                            int len;
+                            for (Enumeration entries = zf.entries(); entries.hasMoreElements();) {
+                                entry = ((ZipEntry) entries.nextElement());
+                                zipEntryName = entry.getName();
+                                in = zf.getInputStream(entry);
+                                out = new FileOutputStream(descDir + zipEntryName);
+                                buf1 = new byte[1024];
+                                len = 0;
+                                while ((len = in.read(buf1)) > 0) {
+                                    out.write(buf1, 0, len);
+                                }
+                                in.close();
+                                out.close();
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+            }
+            """,
+            """
+            import java.io.BufferedInputStream;
+            import java.io.BufferedOutputStream;
+            import java.io.File;
+            import java.io.FileInputStream;
+            import java.io.FileOutputStream;
+            import java.io.IOException;
+            import java.io.InputStream;
+            import java.io.OutputStream;
+            import java.util.Enumeration;
+            import java.util.List;
+            import java.util.zip.CRC32;
+            import java.util.zip.CheckedOutputStream;
+            import java.util.zip.Deflater;
+            import java.util.zip.ZipEntry;
+            import java.util.zip.ZipFile;
+            import java.util.zip.ZipOutputStream;
+
+            class ZipUtil {
+                    /**
+                     * 解压缩
+                     *
+                     * @param zipfile
+                     *            File 需要解压缩的文件
+                     * @param descDir
+                     *            String 解压后的目标目录
+                     */
+                    @SuppressWarnings({ "rawtypes", "resource" })
+                    public static void unZipFiles(File zipfile, String descDir) {
+                        try {
+                            ZipFile zf = new ZipFile(zipfile);
+                            ZipEntry entry = null;
+                            String zipEntryName = null;
+                            InputStream in = null;
+                            OutputStream out = null;
+                            byte[] buf1 = null;
+                            int len;
+                            for (Enumeration entries = zf.entries(); entries.hasMoreElements();) {
+                                entry = ((ZipEntry) entries.nextElement());
+                                zipEntryName = entry.getName();
+                                in = zf.getInputStream(entry);
+                                final File zipEntryFile = new File(descDir, zipEntryName);
+                                if (!zipEntryFile.toPath().normalize().startsWith(descDir.toPath())) {
+                                    throw new RuntimeException("Bad zip entry");
+                                }
+                                out = new FileOutputStream(zipEntryFile);
+                                buf1 = new byte[1024];
+                                len = 0;
+                                while ((len = in.read(buf1)) > 0) {
+                                    out.write(buf1, 0, len);
+                                }
+                                in.close();
+                                out.close();
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+            }
+            """
+        )
+    )
 }
