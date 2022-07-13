@@ -359,7 +359,8 @@ public class UseFilesCreateTempDirectory extends Recipe {
         public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, P p) {
             J.MethodInvocation m = method;
             if (CREATE_TEMP_FILE_MATCHER.matches(m)) {
-                if (m.getArguments().size() == 2) {
+                if (m.getArguments().size() == 2
+                    || (m.getArguments().size() == 3 && m.getArguments().get(2).getType() == JavaType.Primitive.Null)) {
                     // File.createTempFile(String prefix, String suffix)
                     m = maybeAutoFormat(m, m.withTemplate(twoArg,
                                     m.getCoordinates().replace(),
@@ -377,6 +378,24 @@ public class UseFilesCreateTempDirectory extends Recipe {
                             p
                     );
                 }
+                J.MethodInvocation select = (J.MethodInvocation) m.getSelect();
+                //noinspection ConstantConditions
+                select = select.withArguments(ListUtils.map(select.getArguments(), arg -> {
+                    if (arg instanceof J.Binary) {
+                        J.Binary binaryArg = (J.Binary)arg;
+                        Expression rightArg = binaryArg.getRight();
+                        if (rightArg.getType() == JavaType.Primitive.Null) {
+                            return binaryArg.getLeft();
+                        } else if (rightArg instanceof J.Literal) {
+                            J.Literal literalRight = (J.Literal)rightArg;
+                            if (literalRight.getValueSource() != null && ((J.Literal) rightArg).getValueSource().equals("\"\"")) {
+                                return binaryArg.getLeft();
+                            }
+                        }
+                    }
+                    return arg;
+                }));
+                m = maybeAutoFormat(m, m.withSelect(select), p);
                 maybeAddImport("java.nio.file.Files");
                 maybeRemoveImport("java.io.File");
             }

@@ -241,7 +241,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                             if (!tmpDir.isDirectory()) {
                                 System.out.println("Mkdirs failed to create " + tmpDir);
                             }
-                            final File workDir = Files.createTempDirectory(tmpDir.toPath(), "unjar" + "").toFile();
+                            final File workDir = Files.createTempDirectory(tmpDir.toPath(), "unjar").toFile();
                             if (!workDir.isDirectory()) {
                                 System.out.println("Mkdirs failed to create " + workDir);
                             }
@@ -424,6 +424,43 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                 }
             }
         """
+        )
+    )
+
+    @Test
+    fun `prevent creating a new NPE and empty string concatenation`() = rewriteRun(
+        java(
+            """
+                import java.io.File;
+                import java.io.IOException;
+                class T {
+                    private void initTmpDir() {
+                        try {
+                            File temporaryDirectory = File.createTempFile("benchmark-reports", "", null);
+                            if (!temporaryDirectory.delete() || !temporaryDirectory.mkdir()) {
+                                throw new IOException("Unable to create temporary directory.\n" + temporaryDirectory.getCanonicalPath());
+                            }
+                        } catch (IOException e) {
+                           e.printStackTrace();
+                        }
+                    }
+                }
+            """,
+            """
+                import java.io.File;
+                import java.io.IOException;
+                import java.nio.file.Files;
+                
+                class T {
+                    private void initTmpDir() {
+                        try {
+                            File temporaryDirectory = Files.createTempDirectory("benchmark-reports").toFile();
+                        } catch (IOException e) {
+                           e.printStackTrace();
+                        }
+                    }
+                }
+            """
         )
     )
 }
