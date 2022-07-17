@@ -57,6 +57,13 @@ public class ZipSlip extends Recipe {
             @Override
             public J.Block visitBlock(J.Block block, ExecutionContext executionContext) {
                 J.Block b = super.visitBlock(block, executionContext);
+                J.Block superB = b;
+                J.Block bPartialPathFix =
+                        (J.Block) new PartialPathTraversalVulnerability.PartialPathTraversalVulnerabilityVisitor<>()
+                                .visitNonNull(b, executionContext, getCursor().getParentOrThrow());
+                if (b != bPartialPathFix) {
+                    return bPartialPathFix;
+                }
                 Set<Expression> zipEntryExpressions = computeZipEntryExpressions();
                 Supplier<FileConstructorFixVisitor<ExecutionContext>> fileConstructorFixVisitorSupplier =
                         () -> new FileConstructorFixVisitor<>(zipEntryExpressions::contains);
@@ -64,9 +71,14 @@ public class ZipSlip extends Recipe {
                         .visitNonNull(b, executionContext, getCursor().getParentOrThrow());
                 b = (J.Block) new StringToFileConstructorVisitor<>(fileConstructorFixVisitorSupplier)
                         .visitNonNull(b, executionContext, getCursor().getParentOrThrow());
+                J.Block before = b;
                 b = (J.Block) new ZipSlipVisitor<>()
                         .visitNonNull(b, executionContext, getCursor().getParentOrThrow());
-                return b;
+                if (before != b) {
+                    return b;
+                } else {
+                    return superB;
+                }
             }
 
             /**
