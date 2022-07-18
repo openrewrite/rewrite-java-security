@@ -18,5 +18,13 @@
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/org\.springframework\.security/spring\-security\-crypto@.*$</packageUrl>
         <vulnerabilityName>CVE-2020-5408</vulnerabilityName>
-     </suppress>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+   false positive -
+   @see https://github.com/jeremylong/DependencyCheck/issues/4675
+   file name: jakarta.servlet-api-4.0.4.jar
+   ]]></notes>
+        <cve>CVE-2022-31569</cve>
+    </suppress>
 </suppressions>
