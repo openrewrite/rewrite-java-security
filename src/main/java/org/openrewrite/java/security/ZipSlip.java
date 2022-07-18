@@ -1,7 +1,10 @@
 package org.openrewrite.java.security;
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Value;
 import org.openrewrite.*;
+import org.openrewrite.internal.lang.NonNull;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.*;
 import org.openrewrite.java.controlflow.Guard;
@@ -16,6 +19,7 @@ import org.openrewrite.java.security.internal.StringToFileConstructorVisitor;
 import org.openrewrite.java.tree.*;
 import org.openrewrite.marker.Markers;
 
+import java.lang.reflect.Type;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +27,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+@Value
+@EqualsAndHashCode(callSuper = true)
 public class ZipSlip extends Recipe {
     private static final MethodMatcher ZIP_ENTRY_GET_NAME_METHOD_MATCHER =
             new MethodMatcher("java.util.zip.ZipEntry getName()", true);
@@ -33,6 +39,11 @@ public class ZipSlip extends Recipe {
             ZIP_ENTRY_GET_NAME_METHOD_MATCHER,
             ZIP_ARCHIVE_ENTRY_GET_NAME_METHOD_MATCHER
     );
+
+    @Option(displayName = "Debug",
+            description = "Debug and output intermediate results.",
+            example = "true")
+    boolean debug;
 
     @Override
     public String getDisplayName() {
@@ -74,7 +85,7 @@ public class ZipSlip extends Recipe {
                 J.Block before = b;
                 b = (J.Block) new ZipSlipVisitor<>()
                         .visitNonNull(b, executionContext, getCursor().getParentOrThrow());
-                if (before != b) {
+                if (before != b || debug) {
                     return b;
                 } else {
                     return superB;
@@ -91,9 +102,8 @@ public class ZipSlip extends Recipe {
                     new JavaIsoVisitor<Set<Expression>>() {
                         @Override
                         public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, Set<Expression> zipEntryExpressionsInternal) {
-                            dataflow().findSinks(new ZipEntryToAnyLocalFlowSpec()).ifPresent(sinkFlow -> {
-                                zipEntryExpressionsInternal.addAll(sinkFlow.getSinks());
-                            });
+                            dataflow().findSinks(new ZipEntryToAnyLocalFlowSpec()).ifPresent(sinkFlow ->
+                                    zipEntryExpressionsInternal.addAll(sinkFlow.getSinks()));
                             return super.visitMethodInvocation(method, zipEntryExpressionsInternal);
                         }
                     }.visit(outerExecutable.getValue(), zipEntryExpressions, outerExecutable.getParentOrThrow());
@@ -139,9 +149,9 @@ public class ZipSlip extends Recipe {
 
         @Override
         public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, P p) {
-            dataflow().findSinks(new ZipEntryToFileOrPathCreationLocalFlowSpec()).ifPresent(sinkFlow -> {
-                doAfterVisit(new TaintedFileOrPathVisitor<>(sinkFlow.getSinks()));
-            });
+            dataflow().findSinks(new ZipEntryToFileOrPathCreationLocalFlowSpec()).ifPresent(sinkFlow ->
+                    doAfterVisit(new TaintedFileOrPathVisitor<>(sinkFlow.getSinks()))
+            );
             return super.visitMethodInvocation(method, p);
         }
 
@@ -156,17 +166,14 @@ public class ZipSlip extends Recipe {
                             "    throw new RuntimeException(\"Bad zip entry\");\n" +
                             "}")
                     .build();
+
+            private final JavaTemplate noZipSlipFileWithStringTemplate = JavaTemplate.builder(this::getCursor, "" +
+                            "if (!#{any(java.io.File)}.toPath().normalize().startsWith(#{any(String)})) {\n" +
+                            "    throw new RuntimeException(\"Bad zip entry\");\n" +
+                            "}")
+                    .build();
             private final JavaTemplate noZipSlipPathStartsWithPathTemplate = JavaTemplate.builder(this::getCursor, "" +
                     "if (!#{any(java.nio.file.Path)}.normalize().startsWith(#{any(java.nio.file.Path)})) {\n" +
-                    "    throw new RuntimeException(\"Bad zip entry\");\n" +
-                    "}").build();
-
-            private final JavaTemplate noZipSlipPathStartsWithFileTemplate = JavaTemplate.builder(this::getCursor, "" +
-                    "if (!#{any(java.nio.file.Path)}.normalize().startsWith(#{any(java.io.File)}.toPath())) {\n" +
-                    "    throw new RuntimeException(\"Bad zip entry\");\n" +
-                    "}").build();
-            private final JavaTemplate noZipSlipPathStartsWithStringTemplate = JavaTemplate.builder(this::getCursor, "" +
-                    "if (!#{any(java.nio.file.Path)}.normalize().startsWith(#{any(String)})) {\n" +
                     "    throw new RuntimeException(\"Bad zip entry\");\n" +
                     "}").build();
 
@@ -189,6 +196,7 @@ public class ZipSlip extends Recipe {
                 Expression zipEntry;
             }
 
+            @NonNull
             @AllArgsConstructor
             public static class ZipSlipCreateNewVariableInfo {
                 static String CURSOR_KEY = "ZipSlipCreateNewVariableInfo";
@@ -243,8 +251,16 @@ public class ZipSlip extends Recipe {
                                         zipSlipSimpleInjectGuardInfo
                                 );
                     } else {
+                        String newVariableBaseName;
+                        if (isTypePath(methodCall.getType())) {
+                            newVariableBaseName = "zipEntryPath";
+                        } else {
+                            assert isTypeFile(methodCall.getType()) :
+                                    "Expected method call to be of type `java.io.File` or `java.nio.file.Path` but was `" + methodCall.getType() + "`";
+                            newVariableBaseName = "zipEntryFile";
+                        }
                         String newVariableName = VariableNameUtils.generateVariableName(
-                                "zipEntryFile",
+                                newVariableBaseName,
                                 getCursor(),
                                 VariableNameUtils.GenerationStrategy.INCREMENT_NUMBER
                         );
@@ -278,13 +294,27 @@ public class ZipSlip extends Recipe {
                 J.Block b = (J.Block) super.visitBlock(block, p);
                 ZipSlipCreateNewVariableInfo zipSlipCreateNewVariableInfo = getCursor().pollMessage(ZipSlipCreateNewVariableInfo.CURSOR_KEY);
                 if (zipSlipCreateNewVariableInfo != null) {
-                    JavaTemplate newVariableTemplate = JavaTemplate
-                            .builder(
-                                    this::getCursor,
-                                    "final File " + zipSlipCreateNewVariableInfo.newVariableName + " = #{any(java.io.File)};"
-                            )
-                            .imports("java.io.File")
-                            .build();
+                    JavaTemplate newVariableTemplate;
+                    if (isTypePath(zipSlipCreateNewVariableInfo.extractToVariable.getType())) {
+                        newVariableTemplate = JavaTemplate
+                                .builder(
+                                        this::getCursor,
+                                        "final Path " + zipSlipCreateNewVariableInfo.newVariableName + " = #{any(java.nio.file.Path)};"
+                                )
+                                .imports("java.nio.file.Path")
+                                .build();
+                        maybeAddImport("java.nio.file.Path");
+                    } else {
+                        assert isTypeFile(zipSlipCreateNewVariableInfo.extractToVariable.getType());
+                        newVariableTemplate = JavaTemplate
+                                .builder(
+                                        this::getCursor,
+                                        "final File " + zipSlipCreateNewVariableInfo.newVariableName + " = #{any(java.io.File)};"
+                                )
+                                .imports("java.io.File")
+                                .build();
+                        maybeAddImport("java.io.File");
+                    }
                     return b.withTemplate(
                             newVariableTemplate,
                             zipSlipCreateNewVariableInfo.statement.getCoordinates().before(),
@@ -294,9 +324,15 @@ public class ZipSlip extends Recipe {
                 ZipSlipSimpleInjectGuardInfo zipSlipSimpleInjectGuardInfo = getCursor().pollMessage(ZipSlipSimpleInjectGuardInfo.CURSOR_KEY);
                 if (zipSlipSimpleInjectGuardInfo != null) {
                     JavaTemplate template;
-                    if (TypeUtils.isOfClassType(zipSlipSimpleInjectGuardInfo.zipEntry.getType(), "java.io.File")) {
-                        template = noZipSlipFileTemplate;
+                    if (isTypeFile(zipSlipSimpleInjectGuardInfo.zipEntry.getType())) {
+                        if (isTypeFile(zipSlipSimpleInjectGuardInfo.parentDir.getType())) {
+                            template = noZipSlipFileTemplate;
+                        } else {
+                            assert TypeUtils.isString(zipSlipSimpleInjectGuardInfo.parentDir.getType());
+                            template = noZipSlipFileWithStringTemplate;
+                        }
                     } else {
+                        assert isTypePath(zipSlipSimpleInjectGuardInfo.zipEntry.getType());
                         template = noZipSlipPathStartsWithPathTemplate;
                     }
                     return b.withTemplate(
@@ -337,5 +373,13 @@ public class ZipSlip extends Recipe {
                 }
             }
         }
+    }
+
+    private static boolean isTypeFile(@Nullable JavaType type) {
+        return TypeUtils.isOfClassType(type, "java.io.File");
+    }
+
+    private static boolean isTypePath(@Nullable JavaType type) {
+        return TypeUtils.isOfClassType(type, "java.nio.file.Path");
     }
 }
