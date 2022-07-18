@@ -7,7 +7,7 @@ import org.openrewrite.test.RewriteTest
 
 class ZipSlipTest: RewriteTest {
     override fun defaults(spec: RecipeSpec) {
-        spec.recipe(ZipSlip())
+        spec.recipe(ZipSlip(false))
     }
 
     @Test
@@ -54,7 +54,7 @@ class ZipSlipTest: RewriteTest {
     )
 
     @Test
-    fun fixesZipSlipUsingPath()  = rewriteRun(
+    fun `fixes Zip Slip using Path`()  = rewriteRun(
         java(
             """
             import java.io.OutputStream;
@@ -88,6 +88,46 @@ class ZipSlipTest: RewriteTest {
                         throw new RuntimeException("Bad zip entry");
                     }
                     OutputStream os = Files.newOutputStream(path);
+                }
+            }
+            """
+        )
+    )
+
+    @Test
+    fun `fixes Zip Slip using Path when creating a variable is required`()  = rewriteRun(
+        java(
+            """
+            import java.io.OutputStream;
+            import java.io.RandomAccessFile;
+            import java.io.FileWriter;
+            import java.nio.file.Files;
+            import java.nio.file.Path;
+            import java.util.zip.ZipEntry;
+
+            public class ZipTest {
+                public void m1(ZipEntry entry, Path dir) throws Exception {
+                    String name = entry.getName();
+                    OutputStream os = Files.newOutputStream(dir.resolve(name));
+                }
+            }
+            """,
+            """
+            import java.io.OutputStream;
+            import java.io.RandomAccessFile;
+            import java.io.FileWriter;
+            import java.nio.file.Files;
+            import java.nio.file.Path;
+            import java.util.zip.ZipEntry;
+
+            public class ZipTest {
+                public void m1(ZipEntry entry, Path dir) throws Exception {
+                    String name = entry.getName();
+                    final Path zipEntryPath = dir.resolve(name);
+                    if (!zipEntryPath.normalize().startsWith(dir)) {
+                        throw new RuntimeException("Bad zip entry");
+                    }
+                    OutputStream os = Files.newOutputStream(zipEntryPath);
                 }
             }
             """
@@ -366,7 +406,7 @@ class ZipSlipTest: RewriteTest {
                                 OutputStream os = null;
                                 try {
                                     final File zipEntryFile = new File(destDir, entry.getName());
-                                    if (!zipEntryFile.toPath().normalize().startsWith(destDir.toPath())) {
+                                    if (!zipEntryFile.toPath().normalize().startsWith(destDir)) {
                                         throw new RuntimeException("Bad zip entry");
                                     }
                                     os = new BufferedOutputStream(new FileOutputStream(zipEntryFile), BUFFER_SIZE);
@@ -479,7 +519,7 @@ class ZipSlipTest: RewriteTest {
 
                     while ((entry = zis.getNextEntry()) != null) {
                         File outputFile = new File(outputFolder.getCanonicalPath(), entry.getName());
-                        if (!outputFile.toPath().normalize().startsWith(outputFolder.getCanonicalPath().toPath())) {
+                        if (!outputFile.toPath().normalize().startsWith(outputFolder.getCanonicalPath())) {
                             throw new RuntimeException("Bad zip entry");
                         }
                         File outputParent = new File(outputFile.getParent());
@@ -583,7 +623,7 @@ class ZipSlipTest: RewriteTest {
                                 dir.mkdirs();
                             } else {
                                 File targetFile = new File(destDirPath, entry.getName());
-                                if (!targetFile.toPath().normalize().startsWith(destDirPath.toPath())) {
+                                if (!targetFile.toPath().normalize().startsWith(destDirPath)) {
                                     throw new RuntimeException("Bad zip entry");
                                 }
                                 if (!targetFile.getParentFile().exists()) {
@@ -714,7 +754,7 @@ class ZipSlipTest: RewriteTest {
                                 zipEntryName = entry.getName();
                                 in = zf.getInputStream(entry);
                                 final File zipEntryFile = new File(descDir, zipEntryName);
-                                if (!zipEntryFile.toPath().normalize().startsWith(descDir.toPath())) {
+                                if (!zipEntryFile.toPath().normalize().startsWith(descDir)) {
                                     throw new RuntimeException("Bad zip entry");
                                 }
                                 out = new FileOutputStream(zipEntryFile);
@@ -860,6 +900,101 @@ class ZipSlipTest: RewriteTest {
 
             }
             """
+        )
+    )
+
+    @Test
+    @Disabled("Generates an unexpected diff")
+    fun `example kindling`() = rewriteRun(
+        java(
+            """
+            import java.io.File;
+            import java.io.InputStream;
+            import java.io.FileInputStream;
+            import java.io.FileNotFoundException;
+            import java.io.FileOutputStream;
+            import java.io.IOException;
+            import java.io.OutputStream;
+            import java.util.Enumeration;
+            import java.util.zip.ZipFile;
+            import java.util.zip.ZipEntry;
+            import java.util.zip.ZipInputStream;
+
+            class Test {
+              static final int BUFFER = 2048;
+
+              private void extractZip(String src, String dest) throws Exception {
+            	  ZipFile zf = new ZipFile(src);
+            	  try {
+            		  for (Enumeration<? extends ZipEntry> e = zf.entries(); e.hasMoreElements();) {
+            			  ZipEntry ze = e.nextElement();
+            			  String name = ze.getName();
+            			  if (name.endsWith(".html") || name.endsWith(".htm") || name.endsWith(".png") || name.endsWith(".css")) {
+            				  InputStream in = zf.getInputStream(ze);
+            				  OutputStream out = new FileOutputStream(dest+name);
+
+            				  byte data[] = new byte[BUFFER];
+            				  int count;
+            				  while((count = in.read(data, 0, BUFFER)) != -1) {
+            					  out.write(data, 0, count);
+            				  }
+
+            				  out.close();
+            				  in.close();
+            			  }
+            		  }
+            	  } finally {
+            		  zf.close();
+            	  }
+              }
+            }
+            """.trimIndent(),
+            """
+            import java.io.File;
+            import java.io.InputStream;
+            import java.io.FileInputStream;
+            import java.io.FileNotFoundException;
+            import java.io.FileOutputStream;
+            import java.io.IOException;
+            import java.io.OutputStream;
+            import java.util.Enumeration;
+            import java.util.zip.ZipFile;
+            import java.util.zip.ZipEntry;
+            import java.util.zip.ZipInputStream;
+
+            class Test {
+              static final int BUFFER = 2048;
+
+              private void extractZip(String src, String dest) throws Exception {
+            	  ZipFile zf = new ZipFile(src);
+            	  try {
+            		  for (Enumeration<? extends ZipEntry> e = zf.entries(); e.hasMoreElements();) {
+            			  ZipEntry ze = e.nextElement();
+            			  String name = ze.getName();
+            			  if (name.endsWith(".html") || name.endsWith(".htm") || name.endsWith(".png") || name.endsWith(".css")) {
+            				  InputStream in = zf.getInputStream(ze);
+            				  final File zipEntryFile = new File(dest, name);
+            				  if (!zipEntryFile.toPath().normalize().startsWith(dest)) {
+            					  throw new RuntimeException("Bad zip entry");
+            				  }
+            				  OutputStream out = new FileOutputStream(zipEntryFile);
+
+            				  byte data[] = new byte[BUFFER];
+            				  int count;
+            				  while((count = in.read(data, 0, BUFFER)) != -1) {
+            					  out.write(data, 0, count);
+            				  }
+
+            				  out.close();
+            				  in.close();
+            			  }
+            		  }
+            	  } finally {
+            		  zf.close();
+            	  }
+              }
+            }
+            """.trimIndent()
         )
     )
 }
