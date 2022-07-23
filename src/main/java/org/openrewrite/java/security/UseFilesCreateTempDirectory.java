@@ -23,6 +23,7 @@ import org.openrewrite.Tree;
 import org.openrewrite.internal.ListUtils;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.*;
+import org.openrewrite.java.cleanup.RemoveUnneededAssertion;
 import org.openrewrite.java.cleanup.SimplifyCompoundVisitor;
 import org.openrewrite.java.cleanup.SimplifyConstantIfBranchExecution;
 import org.openrewrite.java.marker.JavaVersion;
@@ -280,6 +281,8 @@ public class UseFilesCreateTempDirectory extends Recipe {
                                 .visitNonNull(bl, executionContext, getCursor().getParentOrThrow());
                         bl = (J.Block) new SimplifyCompoundVisitor<>()
                                 .visitNonNull(bl, executionContext, getCursor().getParentOrThrow());
+                        // Remove any silly assertions that may be lingering like `assertTrue(true)`
+                        doAfterVisit(new RemoveUnneededAssertion());
                     }
                 }
             }
