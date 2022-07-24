@@ -487,4 +487,35 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
             """.trimIndent()
         )
     )
+
+    @Test
+    fun `remove if block when both delete and mkdir is removed`() = rewriteRun(
+        java(
+            """
+            import java.io.File;
+            import java.io.IOException;
+
+            class Test {
+                private File createTmpDir() throws IOException {
+                    File dir = File.createTempFile("artifact", "copy");
+                    if (!(dir.delete() && dir.mkdirs())) {
+                        throw new IOException("Failed to create temporary directory " + dir.getPath());
+                    }
+                    return dir;
+                }
+            }
+            """.trimIndent(), """
+            import java.io.File;
+            import java.io.IOException;
+            import java.nio.file.Files;
+
+            class Test {
+                private File createTmpDir() throws IOException {
+                    File dir = Files.createTempDirectory("artifact" + "copy").toFile();
+                    return dir;
+                }
+            }
+            """.trimIndent()
+        )
+    )
 }
