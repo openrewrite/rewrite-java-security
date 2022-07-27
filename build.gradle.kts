@@ -122,6 +122,7 @@ dependencies {
 
     testRuntimeOnly("org.openrewrite:rewrite-java-11:${rewriteVersion}")
     testRuntimeOnly("org.openrewrite:rewrite-java-8:${rewriteVersion}")
+    testRuntimeOnly("junit:junit:latest.release")
 
     testRuntimeOnly("com.fasterxml.jackson.core:jackson-databind:latest.release")
 }

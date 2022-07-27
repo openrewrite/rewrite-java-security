@@ -126,6 +126,72 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
     )
 
     @Test
+    fun `useFilesCreateTempDirectoryWith junit4 Asserts`() = rewriteRun(
+        { spec -> spec.parser(JavaParser.fromJavaVersion().classpath("junit").build()) }, java(
+            """
+            import java.io.File;
+            import java.io.IOException;
+            import static org.junit.Assert.assertTrue;
+
+            class A {
+                void b() throws IOException {
+                    File tempDir;
+                    tempDir = File.createTempFile("OverridesTest", "dir");
+                    assertTrue(tempDir.delete());
+                    assertTrue(tempDir.mkdir());
+                    System.out.println(tempDir.getAbsolutePath());
+                }
+            }
+            """.trimIndent(), """
+            import java.io.File;
+            import java.io.IOException;
+            import java.nio.file.Files;
+
+            class A {
+                void b() throws IOException {
+                    File tempDir;
+                    tempDir = Files.createTempDirectory("OverridesTest" + "dir").toFile();
+                    System.out.println(tempDir.getAbsolutePath());
+                }
+            }
+        """.trimIndent()
+        )
+    )
+
+    @Test
+    fun `useFilesCreateTempDirectoryWith junit4 asserts with messages`() = rewriteRun(
+        { spec -> spec.parser(JavaParser.fromJavaVersion().classpath("junit").build()) }, java(
+            """
+            import java.io.File;
+            import java.io.IOException;
+            import static org.junit.Assert.assertTrue;
+
+            class A {
+                void b() throws IOException {
+                    File tempDir;
+                    tempDir = File.createTempFile("OverridesTest", "dir");
+                    assertTrue("delete", tempDir.delete());
+                    assertTrue("mkdir", tempDir.mkdir());
+                    System.out.println(tempDir.getAbsolutePath());
+                }
+            }
+            """.trimIndent(), """
+            import java.io.File;
+            import java.io.IOException;
+            import java.nio.file.Files;
+
+            class A {
+                void b() throws IOException {
+                    File tempDir;
+                    tempDir = Files.createTempDirectory("OverridesTest" + "dir").toFile();
+                    System.out.println(tempDir.getAbsolutePath());
+                }
+            }
+        """.trimIndent()
+        )
+    )
+
+    @Test
     fun useFilesCreateTempDirectoryWithParentDir() = rewriteRun(
         java(
             """
