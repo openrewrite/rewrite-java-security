@@ -93,6 +93,39 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
     )
 
     @Test
+    fun `useFilesCreateTempDirectoryWithAsserts fully qualified`() = rewriteRun(
+        { spec -> spec.parser(JavaParser.fromJavaVersion().classpath("junit-jupiter").build()) }, java(
+            """
+            import java.io.File;
+            import java.io.IOException;
+            import org.junit.jupiter.api.Assertions;
+
+            class A {
+                void b() throws IOException {
+                    File tempDir;
+                    tempDir = File.createTempFile("OverridesTest", "dir");
+                    Assertions.assertTrue(tempDir.delete());
+                    Assertions.assertTrue(tempDir.mkdir());
+                    System.out.println(tempDir.getAbsolutePath());
+                }
+            }
+            """.trimIndent(), """
+            import java.io.File;
+            import java.io.IOException;
+            import java.nio.file.Files;
+
+            class A {
+                void b() throws IOException {
+                    File tempDir;
+                    tempDir = Files.createTempDirectory("OverridesTest" + "dir").toFile();
+                    System.out.println(tempDir.getAbsolutePath());
+                }
+            }
+        """.trimIndent()
+        )
+    )
+
+    @Test
     fun useFilesCreateTempDirectoryWithParentDir() = rewriteRun(
         java(
             """
