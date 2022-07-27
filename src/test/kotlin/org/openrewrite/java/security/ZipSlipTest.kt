@@ -5,13 +5,13 @@ import org.junit.jupiter.api.Test
 import org.openrewrite.test.RecipeSpec
 import org.openrewrite.test.RewriteTest
 
-class ZipSlipTest: RewriteTest {
+class ZipSlipTest : RewriteTest {
     override fun defaults(spec: RecipeSpec) {
         spec.recipe(ZipSlip(false))
     }
 
     @Test
-    fun fixesZipSlipUsingFile()  = rewriteRun(
+    fun fixesZipSlipUsingFile() = rewriteRun(
         java(
             """
             import java.io.File;
@@ -29,8 +29,7 @@ class ZipSlipTest: RewriteTest {
                     FileWriter fw = new FileWriter(file); // ZipSlip
                 }
             }
-            """,
-            """
+            """, """
             import java.io.File;
             import java.io.FileOutputStream;
             import java.io.RandomAccessFile;
@@ -54,7 +53,7 @@ class ZipSlipTest: RewriteTest {
     )
 
     @Test
-    fun `fixes Zip Slip using Path`()  = rewriteRun(
+    fun `fixes Zip Slip using Path`() = rewriteRun(
         java(
             """
             import java.io.OutputStream;
@@ -71,8 +70,7 @@ class ZipSlipTest: RewriteTest {
                     OutputStream os = Files.newOutputStream(path);
                 }
             }
-            """,
-            """
+            """, """
             import java.io.OutputStream;
             import java.io.RandomAccessFile;
             import java.io.FileWriter;
@@ -95,7 +93,7 @@ class ZipSlipTest: RewriteTest {
     )
 
     @Test
-    fun `fixes Zip Slip using Path when creating a variable is required`()  = rewriteRun(
+    fun `fixes Zip Slip using Path when creating a variable is required`() = rewriteRun(
         java(
             """
             import java.io.OutputStream;
@@ -111,8 +109,7 @@ class ZipSlipTest: RewriteTest {
                     OutputStream os = Files.newOutputStream(dir.resolve(name));
                 }
             }
-            """,
-            """
+            """, """
             import java.io.OutputStream;
             import java.io.RandomAccessFile;
             import java.io.FileWriter;
@@ -135,7 +132,7 @@ class ZipSlipTest: RewriteTest {
     )
 
     @Test
-    fun fixesZipSlipUsingString()  = rewriteRun(
+    fun fixesZipSlipUsingString() = rewriteRun(
         java(
             """
             import java.io.File;
@@ -150,8 +147,7 @@ class ZipSlipTest: RewriteTest {
                     FileOutputStream os = new FileOutputStream(dir + File.separator + name); // ZipSlip
                 }
             }
-            """,
-            """
+            """, """
             import java.io.File;
             import java.io.FileOutputStream;
             import java.io.RandomAccessFile;
@@ -364,8 +360,7 @@ class ZipSlipTest: RewriteTest {
                 }
 
             }
-            """,
-            """
+            """, """
             import java.io.File;
             import java.io.FileInputStream;
             import java.io.FileOutputStream;
@@ -488,8 +483,7 @@ class ZipSlipTest: RewriteTest {
                     }
                 }
             }
-            """,
-            """
+            """, """
             import java.io.File;
             import java.io.FileOutputStream;
             import java.io.IOException;
@@ -596,8 +590,7 @@ class ZipSlipTest: RewriteTest {
                     return null;
                 }
             }
-            """,
-            """
+            """, """
             package org.yzr.utils.file;
 
             import java.io.File;
@@ -711,8 +704,7 @@ class ZipSlipTest: RewriteTest {
                         }
                     }
             }
-            """,
-            """
+            """, """
             import java.io.BufferedInputStream;
             import java.io.BufferedOutputStream;
             import java.io.File;
@@ -838,8 +830,7 @@ class ZipSlipTest: RewriteTest {
                 }
 
             }
-            """,
-            """
+            """, """
             import java.io.File;
             import java.io.FileInputStream;
             import java.io.FileNotFoundException;
@@ -948,8 +939,7 @@ class ZipSlipTest: RewriteTest {
             	  }
               }
             }
-            """.trimIndent(),
-            """
+            """.trimIndent(), """
             import java.io.File;
             import java.io.InputStream;
             import java.io.FileInputStream;
@@ -993,6 +983,243 @@ class ZipSlipTest: RewriteTest {
             		  zf.close();
             	  }
               }
+            }
+            """.trimIndent()
+        )
+    )
+
+    @Test
+    fun `example xmlbeans`() = rewriteRun(
+        java(
+            """
+            import java.io.*;
+            import java.util.jar.JarEntry;
+            import java.util.jar.JarInputStream;
+            import java.util.jar.JarOutputStream;
+
+            class JarHelper {
+                    private static final int BUFFER_SIZE = 2156;
+                    private boolean mVerbose = false;
+                    /**
+                     * Given an InputStream on a jar file, unjars the contents into the given
+                     * directory.
+                     */
+                    public void unjar(InputStream in, File destDir) throws IOException {
+                        try (JarInputStream jis = new JarInputStream(in)) {
+                            JarEntry entry;
+                            while ((entry = jis.getNextJarEntry()) != null) {
+                                if (entry.isDirectory()) {
+                                    File dir = new File(destDir, entry.getName());
+                                    String canonicalDestinationPath = dir.getCanonicalPath();
+                                    if (!canonicalDestinationPath.startsWith(destDir.getCanonicalPath())) {
+                                        throw new IOException("Entry is outside of the target directory " + entry.getName());
+                                    }
+                                    dir.mkdir();
+                                    if (entry.getTime() != -1) {
+                                        dir.setLastModified(entry.getTime());
+                                    }
+                                    continue;
+                                }
+                                int count;
+                                byte[] data = new byte[BUFFER_SIZE];
+                                File destFile = new File(destDir, entry.getName());
+                                String canonicalDestinationPath = destFile.getCanonicalPath();
+                                if (!canonicalDestinationPath.startsWith(destDir.getCanonicalPath())) {
+                                    throw new IOException("Entry is outside of the target directory: " + entry.getName());
+                                }
+                                if (mVerbose) {
+                                    System.out.println("unjarring " + destFile +
+                                                       " from " + entry.getName());
+                                }
+
+                                try (
+                                        FileOutputStream fos = new FileOutputStream(destFile);
+                                        BufferedOutputStream dest = new BufferedOutputStream(fos, BUFFER_SIZE)
+                                ) {
+                                    while ((count = jis.read(data, 0, BUFFER_SIZE)) != -1) {
+                                        dest.write(data, 0, count);
+                                    }
+                                    dest.flush();
+                                }
+                                if (entry.getTime() != -1) {
+                                    destFile.setLastModified(entry.getTime());
+                                }
+                            }
+                        }
+                    }
+            }
+            """.trimIndent(), """
+            import java.io.*;
+            import java.util.jar.JarEntry;
+            import java.util.jar.JarInputStream;
+            import java.util.jar.JarOutputStream;
+
+            class JarHelper {
+                    private static final int BUFFER_SIZE = 2156;
+                    private boolean mVerbose = false;
+                    /**
+                     * Given an InputStream on a jar file, unjars the contents into the given
+                     * directory.
+                     */
+                    public void unjar(InputStream in, File destDir) throws IOException {
+                        try (JarInputStream jis = new JarInputStream(in)) {
+                            JarEntry entry;
+                            while ((entry = jis.getNextJarEntry()) != null) {
+                                if (entry.isDirectory()) {
+                                    File dir = new File(destDir, entry.getName());
+                                    if (!dir.getCanonicalFile().toPath().startsWith(destDir.getCanonicalFile().toPath())) {
+                                        throw new IOException("Entry is outside of the target directory " + entry.getName());
+                                    }
+                                    dir.mkdir();
+                                    if (entry.getTime() != -1) {
+                                        dir.setLastModified(entry.getTime());
+                                    }
+                                    continue;
+                                }
+                                int count;
+                                byte[] data = new byte[BUFFER_SIZE];
+                                File destFile = new File(destDir, entry.getName());
+                                if (!destFile.getCanonicalFile().toPath().startsWith(destDir.getCanonicalFile().toPath())) {
+                                    throw new IOException("Entry is outside of the target directory: " + entry.getName());
+                                }
+                                if (mVerbose) {
+                                    System.out.println("unjarring " + destFile +
+                                                       " from " + entry.getName());
+                                }
+
+                                try (
+                                        FileOutputStream fos = new FileOutputStream(destFile);
+                                        BufferedOutputStream dest = new BufferedOutputStream(fos, BUFFER_SIZE)
+                                ) {
+                                    while ((count = jis.read(data, 0, BUFFER_SIZE)) != -1) {
+                                        dest.write(data, 0, count);
+                                    }
+                                    dest.flush();
+                                }
+                                if (entry.getTime() != -1) {
+                                    destFile.setLastModified(entry.getTime());
+                                }
+                            }
+                        }
+                    }
+            }
+            """.trimIndent()
+        )
+    )
+
+    @Test
+    fun `example xmlbeans intermediate`() = rewriteRun(
+        java(
+            """
+            import java.io.*;
+            import java.util.jar.JarEntry;
+            import java.util.jar.JarInputStream;
+            import java.util.jar.JarOutputStream;
+
+            class JarHelper {
+                    private static final int BUFFER_SIZE = 2156;
+                    private boolean mVerbose = false;
+                    /**
+                     * Given an InputStream on a jar file, unjars the contents into the given
+                     * directory.
+                     */
+                    public void unjar(InputStream in, File destDir) throws IOException {
+                        try (JarInputStream jis = new JarInputStream(in)) {
+                            JarEntry entry;
+                            while ((entry = jis.getNextJarEntry()) != null) {
+                                if (entry.isDirectory()) {
+                                    File dir = new File(destDir, entry.getName());
+                                    String canonicalDestinationPath = dir.getCanonicalPath();
+                                    if (!canonicalDestinationPath.startsWith(destDir.getCanonicalPath())) {
+                                        throw new IOException("Entry is outside of the target directory " + entry.getName());
+                                    }
+                                    dir.mkdir();
+                                    if (entry.getTime() != -1) {
+                                        dir.setLastModified(entry.getTime());
+                                    }
+                                    continue;
+                                }
+                                int count;
+                                byte[] data = new byte[BUFFER_SIZE];
+                                File destFile = new File(destDir, entry.getName());
+                                if (!destFile.getCanonicalFile().toPath().startsWith(destDir.getCanonicalFile().toPath())) {
+                                    throw new IOException("Entry is outside of the target directory: " + entry.getName());
+                                }
+                                if (mVerbose) {
+                                    System.out.println("unjarring " + destFile +
+                                                       " from " + entry.getName());
+                                }
+
+                                try (
+                                        FileOutputStream fos = new FileOutputStream(destFile);
+                                        BufferedOutputStream dest = new BufferedOutputStream(fos, BUFFER_SIZE)
+                                ) {
+                                    while ((count = jis.read(data, 0, BUFFER_SIZE)) != -1) {
+                                        dest.write(data, 0, count);
+                                    }
+                                    dest.flush();
+                                }
+                                if (entry.getTime() != -1) {
+                                    destFile.setLastModified(entry.getTime());
+                                }
+                            }
+                        }
+                    }
+            }
+            """.trimIndent(), """
+            import java.io.*;
+            import java.util.jar.JarEntry;
+            import java.util.jar.JarInputStream;
+            import java.util.jar.JarOutputStream;
+
+            class JarHelper {
+                    private static final int BUFFER_SIZE = 2156;
+                    private boolean mVerbose = false;
+                    /**
+                     * Given an InputStream on a jar file, unjars the contents into the given
+                     * directory.
+                     */
+                    public void unjar(InputStream in, File destDir) throws IOException {
+                        try (JarInputStream jis = new JarInputStream(in)) {
+                            JarEntry entry;
+                            while ((entry = jis.getNextJarEntry()) != null) {
+                                if (entry.isDirectory()) {
+                                    File dir = new File(destDir, entry.getName());
+                                    if (!dir.getCanonicalFile().toPath().startsWith(destDir.getCanonicalFile().toPath())) {
+                                        throw new IOException("Entry is outside of the target directory " + entry.getName());
+                                    }
+                                    dir.mkdir();
+                                    if (entry.getTime() != -1) {
+                                        dir.setLastModified(entry.getTime());
+                                    }
+                                    continue;
+                                }
+                                int count;
+                                byte[] data = new byte[BUFFER_SIZE];
+                                File destFile = new File(destDir, entry.getName());
+                                if (!destFile.getCanonicalFile().toPath().startsWith(destDir.getCanonicalFile().toPath())) {
+                                    throw new IOException("Entry is outside of the target directory: " + entry.getName());
+                                }
+                                if (mVerbose) {
+                                    System.out.println("unjarring " + destFile +
+                                                       " from " + entry.getName());
+                                }
+
+                                try (
+                                        FileOutputStream fos = new FileOutputStream(destFile);
+                                        BufferedOutputStream dest = new BufferedOutputStream(fos, BUFFER_SIZE)
+                                ) {
+                                    while ((count = jis.read(data, 0, BUFFER_SIZE)) != -1) {
+                                        dest.write(data, 0, count);
+                                    }
+                                    dest.flush();
+                                }
+                                if (entry.getTime() != -1) {
+                                    destFile.setLastModified(entry.getTime());
+                                }
+                            }
+                        }
+                    }
             }
             """.trimIndent()
         )

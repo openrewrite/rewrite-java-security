@@ -65,16 +65,19 @@ public class ZipSlip extends Recipe {
     @Override
     protected TreeVisitor<?, ExecutionContext> getVisitor() {
         return new JavaIsoVisitor<ExecutionContext>() {
+
             @Override
             public J.Block visitBlock(J.Block block, ExecutionContext executionContext) {
-                J.Block b = super.visitBlock(block, executionContext);
-                J.Block superB = b;
+                // Fix partial-path first before attempting to fix Zip Slip
                 J.Block bPartialPathFix =
                         (J.Block) new PartialPathTraversalVulnerability.PartialPathTraversalVulnerabilityVisitor<>()
-                                .visitNonNull(b, executionContext, getCursor().getParentOrThrow());
-                if (b != bPartialPathFix) {
+                                .visitNonNull(block, executionContext, getCursor().getParentOrThrow());
+                if (block != bPartialPathFix) {
                     return bPartialPathFix;
                 }
+                // Partial-path fix didn't change the block, so we can continue with fixing Zip Slip
+                J.Block b = super.visitBlock(block, executionContext);
+                J.Block superB = b;
                 Set<Expression> zipEntryExpressions = computeZipEntryExpressions();
                 Supplier<FileConstructorFixVisitor<ExecutionContext>> fileConstructorFixVisitorSupplier =
                         () -> new FileConstructorFixVisitor<>(zipEntryExpressions::contains);
@@ -86,6 +89,7 @@ public class ZipSlip extends Recipe {
                 b = (J.Block) new ZipSlipVisitor<>()
                         .visitNonNull(b, executionContext, getCursor().getParentOrThrow());
                 if (before != b || debug) {
+                    // Only actually make the change if Zip Slip actually fixes a vulnerability
                     return b;
                 } else {
                     return superB;
@@ -97,7 +101,7 @@ public class ZipSlip extends Recipe {
              * ZipEntry.getName() call.
              */
             private Set<Expression> computeZipEntryExpressions() {
-                return CursorUtil.findOuterExecutableBlock(getCursor()).map(outerExecutable -> outerExecutable.computeMessageIfAbsent("computed-zip-entry-expresions", __ -> {
+                return CursorUtil.findOuterExecutableBlock(getCursor()).map(outerExecutable -> outerExecutable.computeMessageIfAbsent("computed-zip-entry-expressions", __ -> {
                     Set<Expression> zipEntryExpressions = new HashSet<>();
                     new JavaIsoVisitor<Set<Expression>>() {
                         @Override
