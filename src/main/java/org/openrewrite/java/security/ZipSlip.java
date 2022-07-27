@@ -47,7 +47,17 @@ public class ZipSlip extends Recipe {
 
     @Override
     public String getDisplayName() {
-        return "Zip Slip";
+        return "Zip slip";
+    }
+    
+    @Override
+    public String getDescription() {
+        return "Zip slip is an arbitrary file overwrite critical vulnerability, which typically results in remote command execution. A fuller description of this vulnerability is available in the [Snyk documentation](https://snyk.io/research/zip-slip-vulnerability) on it."
+    }
+    
+    @Override
+    public Duration getEstimatedEffortPerOccurrence() {
+        return Duration.ofMinutes(15);
     }
 
     @Override
