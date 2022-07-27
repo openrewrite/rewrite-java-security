@@ -76,58 +76,65 @@ public class ZipSlip extends Recipe {
 
     @Override
     protected TreeVisitor<?, ExecutionContext> getVisitor() {
-        return new JavaIsoVisitor<ExecutionContext>() {
+        return new ZipSlipComplete<>(true, debug);
+    }
 
-            @Override
-            public J.Block visitBlock(J.Block block, ExecutionContext executionContext) {
+    @AllArgsConstructor
+    static class ZipSlipComplete<P> extends JavaIsoVisitor<P> {
+        boolean fixPartialPathTraversal;
+        boolean debug;
+
+        @Override
+        public J.Block visitBlock(J.Block block, P p) {
+            if (fixPartialPathTraversal) {
                 // Fix partial-path first before attempting to fix Zip Slip
                 J.Block bPartialPathFix =
                         (J.Block) new PartialPathTraversalVulnerability.PartialPathTraversalVulnerabilityVisitor<>()
-                                .visitNonNull(block, executionContext, getCursor().getParentOrThrow());
+                                .visitNonNull(block, p, getCursor().getParentOrThrow());
                 if (block != bPartialPathFix) {
                     return bPartialPathFix;
                 }
-                // Partial-path fix didn't change the block, so we can continue with fixing Zip Slip
-                J.Block b = super.visitBlock(block, executionContext);
-                J.Block superB = b;
-                Set<Expression> zipEntryExpressions = computeZipEntryExpressions();
-                Supplier<FileConstructorFixVisitor<ExecutionContext>> fileConstructorFixVisitorSupplier =
-                        () -> new FileConstructorFixVisitor<>(zipEntryExpressions::contains);
-                b = (J.Block) fileConstructorFixVisitorSupplier.get()
-                        .visitNonNull(b, executionContext, getCursor().getParentOrThrow());
-                b = (J.Block) new StringToFileConstructorVisitor<>(fileConstructorFixVisitorSupplier)
-                        .visitNonNull(b, executionContext, getCursor().getParentOrThrow());
-                J.Block before = b;
-                b = (J.Block) new ZipSlipVisitor<>()
-                        .visitNonNull(b, executionContext, getCursor().getParentOrThrow());
-                if (before != b || debug) {
-                    // Only actually make the change if Zip Slip actually fixes a vulnerability
-                    return b;
-                } else {
-                    return superB;
-                }
             }
+            // Partial-path fix didn't change the block, so we can continue with fixing Zip Slip
+            J.Block b = super.visitBlock(block, p);
+            J.Block superB = b;
+            Set<Expression> zipEntryExpressions = computeZipEntryExpressions();
+            Supplier<FileConstructorFixVisitor<P>> fileConstructorFixVisitorSupplier =
+                    () -> new FileConstructorFixVisitor<>(zipEntryExpressions::contains);
+            b = (J.Block) fileConstructorFixVisitorSupplier.get()
+                    .visitNonNull(b, p, getCursor().getParentOrThrow());
+            b = (J.Block) new StringToFileConstructorVisitor<>(fileConstructorFixVisitorSupplier)
+                    .visitNonNull(b, p, getCursor().getParentOrThrow());
+            J.Block before = b;
+            b = (J.Block) new ZipSlipVisitor<>()
+                    .visitNonNull(b, p, getCursor().getParentOrThrow());
+            if (before != b || debug) {
+                // Only actually make the change if Zip Slip actually fixes a vulnerability
+                return b;
+            } else {
+                return superB;
+            }
+        }
 
-            /**
-             * Compute the set of Expressions that will have been assigned to by a
-             * ZipEntry.getName() call.
-             */
-            private Set<Expression> computeZipEntryExpressions() {
-                return CursorUtil.findOuterExecutableBlock(getCursor()).map(outerExecutable -> outerExecutable.computeMessageIfAbsent("computed-zip-entry-expressions", __ -> {
-                    Set<Expression> zipEntryExpressions = new HashSet<>();
-                    new JavaIsoVisitor<Set<Expression>>() {
-                        @Override
-                        public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, Set<Expression> zipEntryExpressionsInternal) {
-                            dataflow().findSinks(new ZipEntryToAnyLocalFlowSpec()).ifPresent(sinkFlow ->
-                                    zipEntryExpressionsInternal.addAll(sinkFlow.getSinks()));
-                            return super.visitMethodInvocation(method, zipEntryExpressionsInternal);
-                        }
-                    }.visit(outerExecutable.getValue(), zipEntryExpressions, outerExecutable.getParentOrThrow());
-                    return zipEntryExpressions;
-                })).orElseGet(HashSet::new);
-            }
-        };
-    }
+        /**
+         * Compute the set of Expressions that will have been assigned to by a
+         * ZipEntry.getName() call.
+         */
+        private Set<Expression> computeZipEntryExpressions() {
+            return CursorUtil.findOuterExecutableBlock(getCursor()).map(outerExecutable -> outerExecutable.computeMessageIfAbsent("computed-zip-entry-expressions", __ -> {
+                Set<Expression> zipEntryExpressions = new HashSet<>();
+                new JavaIsoVisitor<Set<Expression>>() {
+                    @Override
+                    public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, Set<Expression> zipEntryExpressionsInternal) {
+                        dataflow().findSinks(new ZipEntryToAnyLocalFlowSpec()).ifPresent(sinkFlow ->
+                                zipEntryExpressionsInternal.addAll(sinkFlow.getSinks()));
+                        return super.visitMethodInvocation(method, zipEntryExpressionsInternal);
+                    }
+                }.visit(outerExecutable.getValue(), zipEntryExpressions, outerExecutable.getParentOrThrow());
+                return zipEntryExpressions;
+            })).orElseGet(HashSet::new);
+        }
+    };
 
     private static class ZipEntryToAnyLocalFlowSpec extends LocalFlowSpec<J.MethodInvocation, Expression> {
         @Override
