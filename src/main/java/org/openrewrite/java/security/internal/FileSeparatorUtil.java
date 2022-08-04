@@ -9,28 +9,28 @@ import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.java.tree.TypeUtils;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public final class FileSeperatorUtil {
+public final class FileSeparatorUtil {
 
-    public static boolean isFileSeperatorExpression(@Nullable Expression e) {
+    public static boolean isFileSeparatorExpression(@Nullable Expression e) {
         Expression expression = Expression.unwrap(e);
         if (expression instanceof J.FieldAccess || expression instanceof J.Identifier) {
             // CASE:
             // - File.separator
-            // - File.seperatorChar
+            // - File.separatorChar
             // - separator
-            // - seperatorChar
+            // - separatorChar
             J.Identifier nameIdentifier;
             JavaType type;
             if (expression instanceof J.FieldAccess) {
                 // CASE:
                 // - File.separator
-                // - File.seperatorChar
+                // - File.separatorChar
                 nameIdentifier = ((J.FieldAccess) expression).getName();
                 type = ((J.FieldAccess) expression).getTarget().getType();
             } else {
                 // CASE:
                 // - separator statically imported from java.io.File
-                // - seperatorChar statically imported from java.io.File
+                // - separatorChar statically imported from java.io.File
                 if (((J.Identifier) expression).getFieldType() == null) {
                     return false;
                 }

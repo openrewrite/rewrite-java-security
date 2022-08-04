@@ -77,7 +77,7 @@ public class FileConstructorFixVisitor<P> extends JavaIsoVisitor<P> {
         if (binary.getLeft() instanceof J.Binary) {
             J.Binary left = (J.Binary) binary.getLeft();
             if (left.getOperator() == J.Binary.Type.Addition) {
-                if (FileSeperatorUtil.isFileSeperatorExpression(left.getRight())) {
+                if (FileSeparatorUtil.isFileSeparatorExpression(left.getRight())) {
                     newFirstArgument = left.getLeft();
                 } else if (left.getLeft() instanceof J.Binary) {
                     return computeNewArguments(left)
