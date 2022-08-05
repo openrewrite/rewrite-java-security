@@ -8,6 +8,7 @@ import org.openrewrite.internal.lang.NonNull;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.*;
 import org.openrewrite.java.controlflow.Guard;
+import org.openrewrite.java.dataflow.Dataflow;
 import org.openrewrite.java.dataflow.ExternalSinkModels;
 import org.openrewrite.java.dataflow.LocalFlowSpec;
 import org.openrewrite.java.dataflow.LocalTaintFlowSpec;
@@ -126,7 +127,7 @@ public class ZipSlip extends Recipe {
                 new JavaIsoVisitor<Set<Expression>>() {
                     @Override
                     public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, Set<Expression> zipEntryExpressionsInternal) {
-                        dataflow().findSinks(new ZipEntryToAnyLocalFlowSpec()).ifPresent(sinkFlow ->
+                        Dataflow.startingAt(getCursor()).findSinks(new ZipEntryToAnyLocalFlowSpec()).ifPresent(sinkFlow ->
                                 zipEntryExpressionsInternal.addAll(sinkFlow.getSinks()));
                         return super.visitMethodInvocation(method, zipEntryExpressionsInternal);
                     }
@@ -172,7 +173,7 @@ public class ZipSlip extends Recipe {
 
         @Override
         public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, P p) {
-            dataflow().findSinks(new ZipEntryToFileOrPathCreationLocalFlowSpec()).ifPresent(sinkFlow ->
+            Dataflow.startingAt(getCursor()).findSinks(new ZipEntryToFileOrPathCreationLocalFlowSpec()).ifPresent(sinkFlow ->
                     doAfterVisit(new TaintedFileOrPathVisitor<>(sinkFlow.getSinks()))
             );
             return super.visitMethodInvocation(method, p);
@@ -250,7 +251,7 @@ public class ZipSlip extends Recipe {
 
             private <M extends MethodCall> Optional<J.Identifier> visitMethodCall(M methodCall, Function<M, Expression> parentDirExtractor) {
                 if (methodCall.getArguments().stream().anyMatch(taintedSinks::contains)
-                        && dataflow().findSinks(new FileOrPathCreationToVulnerableUsageLocalFlowSpec()).isPresent()) {
+                        && Dataflow.startingAt(getCursor()).findSinks(new FileOrPathCreationToVulnerableUsageLocalFlowSpec()).isPresent()) {
                     J.Block firstEnclosingBlock = getCursor().firstEnclosingOrThrow(J.Block.class);
                     @SuppressWarnings("SuspiciousMethodCalls")
                     Statement enclosingStatement = getCursor()
