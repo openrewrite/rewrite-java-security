@@ -64,6 +64,11 @@ public class ZipSlip extends Recipe {
     }
 
     @Override
+    public boolean causesAnotherCycle() {
+        return true;
+    }
+
+    @Override
     protected @Nullable TreeVisitor<?, ExecutionContext> getSingleSourceApplicableTest() {
         return new JavaIsoVisitor<ExecutionContext>() {
             @Override
