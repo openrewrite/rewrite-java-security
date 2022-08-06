@@ -236,6 +236,15 @@ public class ZipSlip extends Recipe {
             }
 
             @Override
+            public J visitAssignment(J.Assignment assignment, P p) {
+                J newAssignment = super.visitAssignment(assignment, p);
+                if (assignment != newAssignment) {
+                    return maybeAutoFormat(assignment, newAssignment, p, getCursor().getParentOrThrow());
+                }
+                return newAssignment;
+            }
+
+            @Override
             public J visitMethodInvocation(J.MethodInvocation method, P p) {
                 return visitMethodCall(method, J.MethodInvocation::getSelect)
                         .<J>map(Function.identity())

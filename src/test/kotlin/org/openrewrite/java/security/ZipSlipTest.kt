@@ -1224,4 +1224,95 @@ class ZipSlipTest : RewriteTest {
             """.trimIndent()
         )
     )
+
+    @Test
+    fun `example commons-compress rewritten`() = rewriteRun(
+        java(
+            """
+            import java.io.*;
+            import java.nio.file.Files;
+            import java.util.Enumeration;
+            import java.util.zip.ZipEntry;
+            import java.util.zip.ZipFile;
+
+            class Test {
+                File dir;
+                private File getFilesToZip(File originalZipFile) throws IOException {
+                    try (ZipFile zipFile = new ZipFile(originalZipFile)) {
+                        final Enumeration<? extends ZipEntry> zipEntries = zipFile.entries();
+                        ZipEntry zipEntry;
+                        File outputFile;
+                        byte[] buffer;
+                        int readLen;
+
+                        while (zipEntries.hasMoreElements()) {
+                            zipEntry = zipEntries.nextElement();
+                            if (zipEntry.isDirectory()) {
+                                continue;
+                            }
+
+                            outputFile = new File(dir, zipEntry.getName());
+                            if (!outputFile.getParentFile().exists()) {
+                                outputFile.getParentFile().mkdirs();
+                            }
+                            outputFile = new File(dir, zipEntry.getName());
+
+                            try (InputStream inputStream = zipFile.getInputStream(zipEntry);
+                                 OutputStream outputStream = Files.newOutputStream(outputFile.toPath())) {
+                                buffer = new byte[(int) zipEntry.getSize()];
+                                while ((readLen = inputStream.read(buffer)) > 0) {
+                                    outputStream.write(buffer, 0, readLen);
+                                }
+                            }
+                        }
+                    }
+                    return dir.listFiles()[0];
+                }
+
+            }
+            """,
+            """
+            import java.io.*;
+            import java.nio.file.Files;
+            import java.util.Enumeration;
+            import java.util.zip.ZipEntry;
+            import java.util.zip.ZipFile;
+            class Test {
+                File dir;
+                private File getFilesToZip(File originalZipFile) throws IOException {
+                    try (ZipFile zipFile = new ZipFile(originalZipFile)) {
+                        final Enumeration<? extends ZipEntry> zipEntries = zipFile.entries();
+                        ZipEntry zipEntry;
+                        File outputFile;
+                        byte[] buffer;
+                        int readLen;
+                        while (zipEntries.hasMoreElements()) {
+                            zipEntry = zipEntries.nextElement();
+                            if (zipEntry.isDirectory()) {
+                                continue;
+                            }
+                            outputFile = new File(dir, zipEntry.getName());
+                            if (!outputFile.getParentFile().exists()) {
+                                outputFile.getParentFile().mkdirs();
+                            }
+                            final File zipEntryFile = new File(dir, zipEntry.getName());
+                            if (!zipEntryFile.toPath().normalize().startsWith(dir.toPath().normalize())) {
+                                throw new RuntimeException("Bad zip entry");
+                            }
+                            outputFile = zipEntryFile;
+                            try (InputStream inputStream = zipFile.getInputStream(zipEntry);
+                                 OutputStream outputStream = Files.newOutputStream(outputFile.toPath())) {
+                                buffer = new byte[(int) zipEntry.getSize()];
+                                while ((readLen = inputStream.read(buffer)) > 0) {
+                                    outputStream.write(buffer, 0, readLen);
+                                }
+                            }
+                        }
+                    }
+                    return dir.listFiles()[0];
+                }
+            }
+            """
+        )
+    )
 }
