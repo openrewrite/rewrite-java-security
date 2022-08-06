@@ -94,6 +94,7 @@ class ZipSlipTest : RewriteTest {
 
     @Test
     fun `fixes Zip Slip using Path when creating a variable is required`() = rewriteRun(
+        { spec -> spec.expectedCyclesThatMakeChanges(2) },
         java(
             """
             import java.io.OutputStream;
@@ -133,6 +134,7 @@ class ZipSlipTest : RewriteTest {
 
     @Test
     fun fixesZipSlipUsingString() = rewriteRun(
+        { spec -> spec.expectedCyclesThatMakeChanges(2) },
         java(
             """
             import java.io.File;
@@ -295,6 +297,7 @@ class ZipSlipTest : RewriteTest {
 
     @Test
     fun `example data-label-system-backend`() = rewriteRun(
+        { spec -> spec.expectedCyclesThatMakeChanges(2) },
         java(
             """
             import java.io.File;
@@ -648,6 +651,7 @@ class ZipSlipTest : RewriteTest {
 
     @Test
     fun `example infowangxin_springmvc`() = rewriteRun(
+        { spec -> spec.expectedCyclesThatMakeChanges(2) },
         java(
             """
             import java.io.BufferedInputStream;
@@ -1227,6 +1231,7 @@ class ZipSlipTest : RewriteTest {
 
     @Test
     fun `example commons-compress rewritten`() = rewriteRun(
+        { spec -> spec.expectedCyclesThatMakeChanges(2) },
         java(
             """
             import java.io.*;
@@ -1310,6 +1315,87 @@ class ZipSlipTest : RewriteTest {
                         }
                     }
                     return dir.listFiles()[0];
+                }
+            }
+            """
+        )
+    )
+
+    @Test
+    fun `example ComicClean`() = rewriteRun(
+        java(
+            """
+            import java.io.File;
+            import java.io.FileInputStream;
+            import java.io.FileOutputStream;
+            import java.io.IOException;
+            import java.io.InputStream;
+            import java.io.OutputStream;
+            import java.util.ArrayList;
+            import java.util.Enumeration;
+            import java.util.List;
+            import java.util.zip.ZipEntry;
+            import java.util.zip.ZipFile;
+            import java.util.zip.ZipOutputStream;
+
+
+            public class CbzIo {
+
+                public void read(File file, File workDir) throws IOException {
+                    ZipEntry entry = null;
+                    ZipFile zipFile = null;
+
+                    try {
+                        zipFile = new ZipFile(file);
+                        Enumeration<? extends ZipEntry> en = zipFile.entries();
+                        for (; en.hasMoreElements(); entry = en.nextElement()) {
+
+                            File imageFile = new File(workDir, entry.getName());
+
+                            // Standard un-zip...
+                            OutputStream fos = new FileOutputStream(imageFile);
+                        }
+                    } finally {
+                        if (zipFile != null) {
+                            zipFile.close();
+                        }
+                    }
+                }
+            }
+            """,
+            """
+            import java.io.File;
+            import java.io.FileInputStream;
+            import java.io.FileOutputStream;
+            import java.io.IOException;
+            import java.io.InputStream;
+            import java.io.OutputStream;
+            import java.util.ArrayList;
+            import java.util.Enumeration;
+            import java.util.List;
+            import java.util.zip.ZipEntry;
+            import java.util.zip.ZipFile;
+            import java.util.zip.ZipOutputStream;
+            public class CbzIo {
+                public void read(File file, File workDir) throws IOException {
+                    ZipEntry entry = null;
+                    ZipFile zipFile = null;
+                    try {
+                        zipFile = new ZipFile(file);
+                        Enumeration<? extends ZipEntry> en = zipFile.entries();
+                        for (; en.hasMoreElements(); entry = en.nextElement()) {
+                            File imageFile = new File(workDir, entry.getName());
+                            if (!imageFile.toPath().normalize().startsWith(workDir.toPath().normalize())) {
+                                throw new RuntimeException("Bad zip entry");
+                            }
+                            // Standard un-zip...
+                            OutputStream fos = new FileOutputStream(imageFile);
+                        }
+                    } finally {
+                        if (zipFile != null) {
+                            zipFile.close();
+                        }
+                    }
                 }
             }
             """

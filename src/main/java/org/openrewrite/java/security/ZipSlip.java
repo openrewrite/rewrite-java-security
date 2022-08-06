@@ -98,6 +98,11 @@ public class ZipSlip extends Recipe {
             }
             // Partial-path fix didn't change the block, so we can continue with fixing Zip Slip
             J.Block b = super.visitBlock(block, p);
+            if (b != block) {
+                // Sometimes this visitor will need to be run multiple times to complete it's work
+                // That's okay, just return the new block, we'll run this visitor again later if needed
+                return b;
+            }
             J.Block superB = b;
             Set<Expression> zipEntryExpressions = computeZipEntryExpressions();
             Supplier<FileConstructorFixVisitor<P>> fileConstructorFixVisitorSupplier =
@@ -184,6 +189,7 @@ public class ZipSlip extends Recipe {
          * objects that have been tainted by zip entry getName() calls.
          */
         @AllArgsConstructor
+        @EqualsAndHashCode(callSuper = false, onlyExplicitlyIncluded = true)
         private static class TaintedFileOrPathVisitor<P> extends JavaVisitor<P> {
             private final JavaTemplate noZipSlipFileTemplate = JavaTemplate.builder(this::getCursor, "" +
                             "if (!#{any(java.io.File)}.toPath().normalize().startsWith(#{any(java.io.File)}.toPath().normalize())) {\n" +
@@ -201,6 +207,7 @@ public class ZipSlip extends Recipe {
                     "    throw new RuntimeException(\"Bad zip entry\");\n" +
                     "}").build();
 
+            @EqualsAndHashCode.Include
             private final List<Expression> taintedSinks;
 
             @AllArgsConstructor
