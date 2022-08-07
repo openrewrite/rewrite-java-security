@@ -2,6 +2,7 @@ package org.openrewrite.java.security
 
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import org.openrewrite.Issue
 import org.openrewrite.test.RecipeSpec
 import org.openrewrite.test.RewriteTest
 
@@ -1396,6 +1397,140 @@ class ZipSlipTest : RewriteTest {
                             zipFile.close();
                         }
                     }
+                }
+            }
+            """
+        )
+    )
+
+    @Test
+    @Issue("https://github.com/openrewrite/rewrite/issues/2118")
+    fun `example MCLauncher`() = rewriteRun(
+        java(
+            """
+            import java.io.*;
+            import java.util.Enumeration;
+            import java.util.jar.JarEntry;
+            import java.util.jar.JarFile;
+
+            class Test {
+                public static void extractJAR(File file, File dest, int min, int max) throws Exception
+                {
+                    JarFile jar = null;
+                    try
+                    {
+                        jar = new JarFile(file);
+                    }
+                    catch (final IOException e)
+                    {
+                        e.printStackTrace();
+                    }
+
+                    Enumeration<JarEntry> entries = jar.entries();
+
+                    int total = 0;
+                    while (entries.hasMoreElements())
+                    {
+                        final JarEntry entry = entries.nextElement();
+
+                        if (!entry.isDirectory()
+                                && !entry.getName().equalsIgnoreCase("MANIFEST.MF"))
+                        {
+                            total += entry.getSize();
+                        }
+                    }
+
+                    entries = jar.entries();
+                    final int current = 0;
+
+                    while (entries.hasMoreElements())
+                    {
+                        final JarEntry entry = entries.nextElement();
+
+                        if (entry.isDirectory())
+                        {
+                            final File dir = new File(dest, entry.getName());
+                            if (!dir.exists()
+                                    && !dir.getName().equalsIgnoreCase("META-INF"))
+                            {
+                                dir.mkdirs();
+                            }
+                        }
+                        else
+                        {
+                            final File e = new File(dest, entry.getName());
+                            if (!e.getParent().contains("META-INF"))
+                            {
+                                copyStream( jar.getInputStream(entry), new FileOutputStream(e), current, total, min, max);
+                            }
+                        }
+                    }
+                }
+
+                private static void copyStream(InputStream in, OutputStream out, int current, int total, int min, int max) throws Exception
+                {
+                    // No-op
+                }
+            }
+            """,
+            """
+            import java.io.*;
+            import java.util.Enumeration;
+            import java.util.jar.JarEntry;
+            import java.util.jar.JarFile;
+            class Test {
+                public static void extractJAR(File file, File dest, int min, int max) throws Exception
+                {
+                    JarFile jar = null;
+                    try
+                    {
+                        jar = new JarFile(file);
+                    }
+                    catch (final IOException e)
+                    {
+                        e.printStackTrace();
+                    }
+                    Enumeration<JarEntry> entries = jar.entries();
+                    int total = 0;
+                    while (entries.hasMoreElements())
+                    {
+                        final JarEntry entry = entries.nextElement();
+                        if (!entry.isDirectory()
+                                && !entry.getName().equalsIgnoreCase("MANIFEST.MF"))
+                        {
+                            total += entry.getSize();
+                        }
+                    }
+                    entries = jar.entries();
+                    final int current = 0;
+                    while (entries.hasMoreElements())
+                    {
+                        final JarEntry entry = entries.nextElement();
+                        if (entry.isDirectory())
+                        {
+                            final File dir = new File(dest, entry.getName());
+                            if (!dir.exists()
+                                    && !dir.getName().equalsIgnoreCase("META-INF"))
+                            {
+                                dir.mkdirs();
+                            }
+                        }
+                        else
+                        {
+                            final File e = new File(dest, entry.getName());
+                            if (!e.toPath().normalize().startsWith(dest.toPath().normalize())) {
+                                throw new RuntimeException("Bad zip entry");
+                            }
+                            if (!e.getParent().contains("META-INF"))
+                            {
+                                copyStream( jar.getInputStream(entry), new FileOutputStream(e), current, total, min, max);
+                            }
+                        }
+                    }
+                }
+                private static void copyStream(InputStream in, OutputStream out, int current, int total, int min, int max) throws Exception
+                {
+                    // No-op
                 }
             }
             """

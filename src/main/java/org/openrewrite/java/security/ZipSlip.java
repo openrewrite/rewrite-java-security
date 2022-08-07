@@ -215,7 +215,8 @@ public class ZipSlip extends Recipe {
             @EqualsAndHashCode.Include
             private final List<Expression> taintedSinks;
 
-            @AllArgsConstructor
+            @Value
+            @NonNull
             private static class ZipSlipSimpleInjectGuardInfo {
                 static String CURSOR_KEY = "ZipSlipSimpleInjectGuardInfo";
                 /**
@@ -232,8 +233,8 @@ public class ZipSlip extends Recipe {
                 Expression zipEntry;
             }
 
+            @Value
             @NonNull
-            @AllArgsConstructor
             public static class ZipSlipCreateNewVariableInfo {
                 static String CURSOR_KEY = "ZipSlipCreateNewVariableInfo";
                 String newVariableName;
@@ -283,11 +284,20 @@ public class ZipSlip extends Recipe {
                             getCursor().firstEnclosing(J.VariableDeclarations.NamedVariable.class);
 
                     if (enclosingVariable != null && Expression.unwrap(enclosingVariable.getInitializer()) == methodCall) {
+                        J.VariableDeclarations variableDeclarations = getCursor().firstEnclosing(J.VariableDeclarations.class);
+                        J.Identifier enclosingVariableIdentifier;
+                        if (variableDeclarations != null && variableDeclarations.getVariables().contains(enclosingVariable)) {
+                            // Bug fix for https://github.com/openrewrite/rewrite/issues/2118
+                            enclosingVariableIdentifier = enclosingVariable.getName().withType(variableDeclarations.getType());
+                        } else {
+                            enclosingVariableIdentifier = enclosingVariable.getName();
+                        }
+
                         final ZipSlipSimpleInjectGuardInfo zipSlipSimpleInjectGuardInfo =
                                 new ZipSlipSimpleInjectGuardInfo(
                                         enclosingStatement,
                                         parentDirExtractor.apply(methodCall),
-                                        enclosingVariable.getName()
+                                        enclosingVariableIdentifier
                                 );
                         getCursor()
                                 .dropParentUntil(J.Block.class::isInstance)
