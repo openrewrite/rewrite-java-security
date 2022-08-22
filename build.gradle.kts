@@ -117,6 +117,7 @@ dependencies {
     testRuntimeOnly("org.springframework.boot:spring-boot-starter:latest.release")
 
     testImplementation("org.openrewrite:rewrite-test:${rewriteVersion}")
+    testImplementation("org.openrewrite:rewrite-java-tck:${rewriteVersion}")
 
     testImplementation("org.assertj:assertj-core:latest.release")
 

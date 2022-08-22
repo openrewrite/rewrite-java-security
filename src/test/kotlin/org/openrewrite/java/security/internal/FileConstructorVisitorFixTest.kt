@@ -1,6 +1,7 @@
 package org.openrewrite.java.security.internal
 
 import org.junit.jupiter.api.Test
+import org.openrewrite.java.Assertions.java
 import org.openrewrite.test.RecipeSpec
 import org.openrewrite.test.RewriteTest
 
