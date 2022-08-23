@@ -17,6 +17,7 @@ import org.openrewrite.java.search.UsesMethod;
 import org.openrewrite.java.security.internal.CursorUtil;
 import org.openrewrite.java.security.internal.FileConstructorFixVisitor;
 import org.openrewrite.java.security.internal.StringToFileConstructorVisitor;
+import org.openrewrite.java.security.internal.TypeGenerator;
 import org.openrewrite.java.tree.*;
 import org.openrewrite.marker.Markers;
 
@@ -28,6 +29,7 @@ import java.util.function.Supplier;
 @Value
 @EqualsAndHashCode(callSuper = true)
 public class ZipSlip extends Recipe {
+    private static final String ZIP_SLIP_IMPORT_REQUIRED_MESSAGE = "ZIP_SLIP_IMPORT_REQUIRED";
     private static final MethodMatcher ZIP_ENTRY_GET_NAME_METHOD_MATCHER =
             new MethodMatcher("java.util.zip.ZipEntry getName()", true);
     private static final MethodMatcher ZIP_ARCHIVE_ENTRY_GET_NAME_METHOD_MATCHER =
@@ -87,6 +89,18 @@ public class ZipSlip extends Recipe {
         boolean debug;
 
         @Override
+        public J.CompilationUnit visitCompilationUnit(J.CompilationUnit cu, P p) {
+            J.CompilationUnit compilationUnit = super.visitCompilationUnit(cu, p);
+            if (compilationUnit != cu) {
+                List<String> requiredImports = getCursor().pollMessage(ZIP_SLIP_IMPORT_REQUIRED_MESSAGE);
+                if (requiredImports != null) {
+                    requiredImports.forEach(this::maybeAddImport);
+                }
+            }
+            return compilationUnit;
+        }
+
+        @Override
         public J.Block visitBlock(J.Block block, P p) {
             if (fixPartialPathTraversal) {
                 // Fix partial-path first before attempting to fix Zip Slip
@@ -143,8 +157,6 @@ public class ZipSlip extends Recipe {
         }
     }
 
-    ;
-
     private static class ZipEntryToAnyLocalFlowSpec extends LocalFlowSpec<J.MethodInvocation, Expression> {
         @Override
         public boolean isSource(J.MethodInvocation methodInvocation, Cursor cursor) {
@@ -195,9 +207,16 @@ public class ZipSlip extends Recipe {
         @EqualsAndHashCode(callSuper = false, onlyExplicitlyIncluded = true)
         private static class TaintedFileOrPathVisitor<P> extends JavaVisitor<P> {
             private static final String IO_EXCEPTION_FQN = "java.io.IOException";
-            private static final JavaType IO_EXCEPTION = JavaType.buildType(IO_EXCEPTION_FQN);
             private static final String RUNTIME_EXCEPTION_THROW_LINE = "    throw new RuntimeException(\"Bad zip entry\");\n";
             private static final String IO_EXCEPTION_THROW_LINE = "    throw new IOException(\"Bad zip entry\");\n";
+
+            private final JavaType ioException = TypeGenerator.generate(IO_EXCEPTION_FQN);
+
+            private void maybeAddImportIOException() {
+                getCursor()
+                        .dropParentUntil(J.CompilationUnit.class::isInstance)
+                        .computeMessageIfAbsent(ZIP_SLIP_IMPORT_REQUIRED_MESSAGE, __ -> Collections.singletonList(IO_EXCEPTION_FQN));
+            }
 
             private JavaTemplate noZipSlipFileTemplate() {
                 boolean canSupportIoException = canSupportIoException();
@@ -208,6 +227,7 @@ public class ZipSlip extends Recipe {
                         "}");
                 if (canSupportIoException) {
                     noZipSlipFileTemplate.imports(IO_EXCEPTION_FQN);
+                    maybeAddImportIOException();
                 }
                 return noZipSlipFileTemplate.build();
             }
@@ -221,6 +241,7 @@ public class ZipSlip extends Recipe {
                         "}");
                 if (canSupportIoException) {
                     noZipSlipFileWithStringTemplate.imports(IO_EXCEPTION_FQN);
+                    maybeAddImportIOException();
                 }
                 return noZipSlipFileWithStringTemplate.build();
             }
@@ -234,6 +255,7 @@ public class ZipSlip extends Recipe {
                         "}");
                 if (canSupportIoException) {
                     noZipSlipPathStartsWithPathTemplate.imports(IO_EXCEPTION_FQN);
+                    maybeAddImportIOException();
                 }
                 return noZipSlipPathStartsWithPathTemplate.build();
             }
@@ -254,14 +276,14 @@ public class ZipSlip extends Recipe {
                         J.Try tryBlock = cursor.getValue();
                         if (tryBlock.getCatches().stream().anyMatch(catchClause ->
                                 catchClause.getParameter().getTree().getVariables().stream().anyMatch(v ->
-                                        TypeUtils.isAssignableTo(v.getType(), IO_EXCEPTION)))) {
+                                        TypeUtils.isAssignableTo(v.getType(), ioException)))) {
                             return true;
                         }
                     } else if (cursor.getValue() instanceof J.MethodDeclaration) {
                         J.MethodDeclaration methodDeclaration = cursor.getValue();
                         if (methodDeclaration.getThrows() != null &&
                                 methodDeclaration.getThrows().stream().anyMatch(throwsClause ->
-                                        TypeUtils.isAssignableTo(throwsClause.getType(), IO_EXCEPTION))) {
+                                        TypeUtils.isAssignableTo(throwsClause.getType(), ioException))) {
                             return true;
                         }
                     }
