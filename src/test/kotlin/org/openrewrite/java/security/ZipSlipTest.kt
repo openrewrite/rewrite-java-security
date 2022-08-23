@@ -31,11 +31,8 @@ class ZipSlipTest : RewriteTest {
                     FileWriter fw = new FileWriter(file); // ZipSlip
                 }
             }
-            """, """
-            import java.io.File;
-            import java.io.FileOutputStream;
-            import java.io.RandomAccessFile;
-            import java.io.FileWriter;
+            """.trimIndent(), """
+            import java.io.*;
             import java.util.zip.ZipEntry;
 
             public class ZipTest {
@@ -43,14 +40,48 @@ class ZipSlipTest : RewriteTest {
                     String name = entry.getName();
                     File file = new File(dir, name);
                     if (!file.toPath().normalize().startsWith(dir.toPath().normalize())) {
-                        throw new RuntimeException("Bad zip entry");
+                        throw new IOException("Bad zip entry");
                     }
                     FileOutputStream os = new FileOutputStream(file); // ZipSlip
                     RandomAccessFile raf = new RandomAccessFile(file, "rw"); // ZipSlip
                     FileWriter fw = new FileWriter(file); // ZipSlip
                 }
             }
+            """.trimIndent()
+        )
+    )
+
+    @Test
+    fun fixesZipSlipFileWhenRuntimeExceptionIsRequired() = rewriteRun(
+        java(
             """
+            import java.io.*;
+            import java.util.zip.ZipEntry;
+
+            public class ZipTest {
+                public void m1(ZipEntry entry, File dir) throws FileNotFoundException {
+                    String name = entry.getName();
+                    File file = new File(dir, name);
+                    FileOutputStream os = new FileOutputStream(file); // ZipSlip
+                    RandomAccessFile raf = new RandomAccessFile(file, "rw"); // ZipSlip
+                }
+            }
+            """.trimIndent(), """
+            import java.io.*;
+            import java.util.zip.ZipEntry;
+
+            public class ZipTest {
+                public void m1(ZipEntry entry, File dir) throws FileNotFoundException {
+                    String name = entry.getName();
+                    File file = new File(dir, name);
+                    if (!file.toPath().normalize().startsWith(dir.toPath().normalize())) {
+                        throw new RuntimeException("Bad zip entry");
+                    }
+                    FileOutputStream os = new FileOutputStream(file); // ZipSlip
+                    RandomAccessFile raf = new RandomAccessFile(file, "rw"); // ZipSlip
+                }
+            }
+            """.trimIndent()
         )
     )
 
@@ -72,10 +103,11 @@ class ZipSlipTest : RewriteTest {
                     OutputStream os = Files.newOutputStream(path);
                 }
             }
-            """, """
+            """.trimIndent(), """
             import java.io.OutputStream;
             import java.io.RandomAccessFile;
             import java.io.FileWriter;
+            import java.io.IOException;
             import java.nio.file.Files;
             import java.nio.file.Path;
             import java.util.zip.ZipEntry;
@@ -85,19 +117,18 @@ class ZipSlipTest : RewriteTest {
                     String name = entry.getName();
                     Path path = dir.resolve(name);
                     if (!path.normalize().startsWith(dir.normalize())) {
-                        throw new RuntimeException("Bad zip entry");
+                        throw new IOException("Bad zip entry");
                     }
                     OutputStream os = Files.newOutputStream(path);
                 }
             }
-            """
+            """.trimIndent()
         )
     )
 
     @Test
     fun `fixes Zip Slip using Path when creating a variable is required`() = rewriteRun(
-        { spec -> spec.expectedCyclesThatMakeChanges(2) },
-        java(
+        { spec -> spec.expectedCyclesThatMakeChanges(2) }, java(
             """
             import java.io.OutputStream;
             import java.io.RandomAccessFile;
@@ -112,10 +143,11 @@ class ZipSlipTest : RewriteTest {
                     OutputStream os = Files.newOutputStream(dir.resolve(name));
                 }
             }
-            """, """
+            """.trimIndent(), """
             import java.io.OutputStream;
             import java.io.RandomAccessFile;
             import java.io.FileWriter;
+            import java.io.IOException;
             import java.nio.file.Files;
             import java.nio.file.Path;
             import java.util.zip.ZipEntry;
@@ -125,19 +157,18 @@ class ZipSlipTest : RewriteTest {
                     String name = entry.getName();
                     final Path zipEntryPath = dir.resolve(name);
                     if (!zipEntryPath.normalize().startsWith(dir.normalize())) {
-                        throw new RuntimeException("Bad zip entry");
+                        throw new IOException("Bad zip entry");
                     }
                     OutputStream os = Files.newOutputStream(zipEntryPath);
                 }
             }
-            """
+            """.trimIndent()
         )
     )
 
     @Test
     fun fixesZipSlipUsingString() = rewriteRun(
-        { spec -> spec.expectedCyclesThatMakeChanges(2) },
-        java(
+        { spec -> spec.expectedCyclesThatMakeChanges(2) }, java(
             """
             import java.io.File;
             import java.io.FileOutputStream;
@@ -151,9 +182,10 @@ class ZipSlipTest : RewriteTest {
                     FileOutputStream os = new FileOutputStream(dir + File.separator + name); // ZipSlip
                 }
             }
-            """, """
+            """.trimIndent(), """
             import java.io.File;
             import java.io.FileOutputStream;
+            import java.io.IOException;
             import java.io.RandomAccessFile;
             import java.nio.file.Files;
             import java.util.zip.ZipEntry;
@@ -163,12 +195,12 @@ class ZipSlipTest : RewriteTest {
                     String name = entry.getName();
                     final File zipEntryFile = new File(dir, name);
                     if (!zipEntryFile.toPath().normalize().startsWith(dir.toPath().normalize())) {
-                        throw new RuntimeException("Bad zip entry");
+                        throw new IOException("Bad zip entry");
                     }
                     FileOutputStream os = new FileOutputStream(zipEntryFile); // ZipSlip
                 }
             }
-            """
+            """.trimIndent()
         )
     )
 
@@ -299,8 +331,7 @@ class ZipSlipTest : RewriteTest {
 
     @Test
     fun `example data-label-system-backend`() = rewriteRun(
-        { spec -> spec.expectedCyclesThatMakeChanges(2) },
-        java(
+        { spec -> spec.expectedCyclesThatMakeChanges(2) }, java(
             """
             import java.io.File;
             import java.io.FileInputStream;
@@ -407,7 +438,7 @@ class ZipSlipTest : RewriteTest {
                                 try {
                                     final File zipEntryFile = new File(destDir, entry.getName());
                                     if (!zipEntryFile.toPath().normalize().startsWith(destDir)) {
-                                        throw new RuntimeException("Bad zip entry");
+                                        throw new IOException("Bad zip entry");
                                     }
                                     os = new BufferedOutputStream(new FileOutputStream(zipEntryFile), BUFFER_SIZE);
                                     copy(is, os);
@@ -595,11 +626,12 @@ class ZipSlipTest : RewriteTest {
                     return null;
                 }
             }
-            """, """
+            """.trimIndent(), """
             package org.yzr.utils.file;
 
             import java.io.File;
             import java.io.FileOutputStream;
+            import java.io.IOException;
             import java.io.InputStream;
             import java.util.Enumeration;
             import java.util.zip.ZipEntry;
@@ -622,7 +654,7 @@ class ZipSlipTest : RewriteTest {
                             } else {
                                 File targetFile = new File(destDirPath, entry.getName());
                                 if (!targetFile.toPath().normalize().startsWith(destDirPath)) {
-                                    throw new RuntimeException("Bad zip entry");
+                                    throw new IOException("Bad zip entry");
                                 }
                                 if (!targetFile.getParentFile().exists()) {
                                     targetFile.getParentFile().mkdirs();
@@ -647,14 +679,13 @@ class ZipSlipTest : RewriteTest {
                     return null;
                 }
             }
-            """
+            """.trimIndent()
         )
     )
 
     @Test
     fun `example infowangxin_springmvc`() = rewriteRun(
-        { spec -> spec.expectedCyclesThatMakeChanges(2) },
-        java(
+        { spec -> spec.expectedCyclesThatMakeChanges(2) }, java(
             """
             import java.io.BufferedInputStream;
             import java.io.BufferedOutputStream;
@@ -1233,8 +1264,7 @@ class ZipSlipTest : RewriteTest {
 
     @Test
     fun `example commons-compress rewritten`() = rewriteRun(
-        { spec -> spec.expectedCyclesThatMakeChanges(2) },
-        java(
+        { spec -> spec.expectedCyclesThatMakeChanges(2) }, java(
             """
             import java.io.*;
             import java.nio.file.Files;
@@ -1277,8 +1307,7 @@ class ZipSlipTest : RewriteTest {
                 }
 
             }
-            """,
-            """
+            """, """
             import java.io.*;
             import java.nio.file.Files;
             import java.util.Enumeration;
@@ -1364,8 +1393,7 @@ class ZipSlipTest : RewriteTest {
                     }
                 }
             }
-            """,
-            """
+            """, """
             import java.io.File;
             import java.io.FileInputStream;
             import java.io.FileOutputStream;
@@ -1473,8 +1501,7 @@ class ZipSlipTest : RewriteTest {
                     // No-op
                 }
             }
-            """,
-            """
+            """, """
             import java.io.*;
             import java.util.Enumeration;
             import java.util.jar.JarEntry;
@@ -1520,7 +1547,7 @@ class ZipSlipTest : RewriteTest {
                         {
                             final File e = new File(dest, entry.getName());
                             if (!e.toPath().normalize().startsWith(dest.toPath().normalize())) {
-                                throw new RuntimeException("Bad zip entry");
+                                throw new IOException("Bad zip entry");
                             }
                             if (!e.getParent().contains("META-INF"))
                             {
