@@ -18,12 +18,15 @@ package org.openrewrite.java.security.spring
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.openrewrite.ExecutionContext
+import org.openrewrite.InMemoryExecutionContext
 import org.openrewrite.Recipe
 import org.openrewrite.java.JavaParser
 import org.openrewrite.java.JavaRecipeTest
+import org.openrewrite.test.RecipeSpec
+import org.openrewrite.test.RewriteTest
 import java.nio.file.Paths
 
-class PreventClickjackingTest : JavaRecipeTest {
+class PreventClickjackingTest : RewriteTest, JavaRecipeTest {
     override val parser: JavaParser
         get() = JavaParser.fromJavaVersion()
             .classpath("spring-boot-autoconfigure", "spring-security-config", "spring-context", "jakarta.servlet-api")
@@ -38,6 +41,13 @@ class PreventClickjackingTest : JavaRecipeTest {
             ctx.putMessage(JavaParser.SKIP_SOURCE_SET_TYPE_GENERATION, false)
             return ctx
         }
+
+    override fun defaults(spec: RecipeSpec) {
+        spec.recipe(PreventClickjacking(null))
+            .parser(JavaParser.fromJavaVersion()
+                .classpath("spring-boot-autoconfigure", "spring-security-config", "spring-context", "jakarta.servlet-api"))
+            .executionContext(InMemoryExecutionContext().apply { putMessage(JavaParser.SKIP_SOURCE_SET_TYPE_GENERATION, false) })
+    }
 
     @Suppress("RedundantThrows")
     @Test
@@ -88,9 +98,9 @@ class PreventClickjackingTest : JavaRecipeTest {
             }
         """.trimIndent()).map { it.withSourcePath(Paths.get("src/main/java/org/openrewrite/Application.java")) }
 
-        val results = recipe.run(cus)
+        val results = recipe.run(cus).results
 
-        assertThat(results.size).isEqualTo(1)
+        assertThat(results).isEqualTo(1)
         assertThat(results[0].after!!.sourcePath).isEqualTo(Paths.get("src/main/java/org/openrewrite/SecurityConfig.java"))
 
         //language=java

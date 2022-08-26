@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("ResultOfMethodCallIgnored")
+@file:Suppress("ResultOfMethodCallIgnored", "UnnecessaryLocalVariable")
 
 package org.openrewrite.java.security
 
@@ -44,7 +44,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     System.out.println(tempDir.getAbsolutePath());
                 }
             }
-            """.trimIndent(), """
+            """, """
             import java.io.File;
             import java.io.IOException;
             import java.nio.file.Files;
@@ -56,14 +56,14 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     System.out.println(tempDir.getAbsolutePath());
                 }
             }
-        """.trimIndent()
+        """
         )
     )
 
     @Test
     fun useFilesCreateTempDirectoryWithAsserts() = rewriteRun(
-        { spec -> spec.parser(JavaParser.fromJavaVersion().classpath("junit-jupiter").build()) }, java(
-            """
+        { spec -> spec.parser(JavaParser.fromJavaVersion().classpath("junit-jupiter")) },
+        java("""
             import java.io.File;
             import java.io.IOException;
             import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -77,7 +77,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     System.out.println(tempDir.getAbsolutePath());
                 }
             }
-            """.trimIndent(), """
+            """, """
             import java.io.File;
             import java.io.IOException;
             import java.nio.file.Files;
@@ -89,13 +89,14 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     System.out.println(tempDir.getAbsolutePath());
                 }
             }
-        """.trimIndent()
+        """
         )
     )
 
     @Test
     fun `useFilesCreateTempDirectoryWithAsserts fully qualified`() = rewriteRun(
-        { spec -> spec.parser(JavaParser.fromJavaVersion().classpath("junit-jupiter").build()) }, java(
+        { spec -> spec.parser(JavaParser.fromJavaVersion().classpath("junit-jupiter")) },
+        java(
             """
             import java.io.File;
             import java.io.IOException;
@@ -110,7 +111,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     System.out.println(tempDir.getAbsolutePath());
                 }
             }
-            """.trimIndent(), """
+            """, """
             import java.io.File;
             import java.io.IOException;
             import java.nio.file.Files;
@@ -122,13 +123,14 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     System.out.println(tempDir.getAbsolutePath());
                 }
             }
-        """.trimIndent()
+            """
         )
     )
 
     @Test
     fun `useFilesCreateTempDirectoryWith junit4 Asserts`() = rewriteRun(
-        { spec -> spec.parser(JavaParser.fromJavaVersion().classpath("junit").build()) }, java(
+        { spec -> spec.parser(JavaParser.fromJavaVersion().classpath("junit")) },
+        java(
             """
             import java.io.File;
             import java.io.IOException;
@@ -143,7 +145,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     System.out.println(tempDir.getAbsolutePath());
                 }
             }
-            """.trimIndent(), """
+            """, """
             import java.io.File;
             import java.io.IOException;
             import java.nio.file.Files;
@@ -155,13 +157,14 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     System.out.println(tempDir.getAbsolutePath());
                 }
             }
-        """.trimIndent()
+        """
         )
     )
 
     @Test
     fun `useFilesCreateTempDirectoryWith junit4 asserts with messages`() = rewriteRun(
-        { spec -> spec.parser(JavaParser.fromJavaVersion().classpath("junit").build()) }, java(
+        { spec -> spec.parser(JavaParser.fromJavaVersion().classpath("junit")) },
+        java(
             """
             import java.io.File;
             import java.io.IOException;
@@ -176,7 +179,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     System.out.println(tempDir.getAbsolutePath());
                 }
             }
-            """.trimIndent(), """
+            """, """
             import java.io.File;
             import java.io.IOException;
             import java.nio.file.Files;
@@ -188,7 +191,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     System.out.println(tempDir.getAbsolutePath());
                 }
             }
-        """.trimIndent()
+        """
         )
     )
 
@@ -208,7 +211,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     tmpDir.mkdir();
                 }
             }
-            """.trimIndent(), """
+            """, """
             import java.io.File;
             import java.io.IOException;
             import java.nio.file.Files;
@@ -219,7 +222,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     File tmpDir = Files.createTempDirectory(testData.toPath(), "test" + "dir").toFile();
                 }
             }
-            """.trimIndent()
+            """
         )
     )
 
@@ -242,7 +245,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     System.out.println(tempDir.getAbsolutePath());
                 }
             }
-            """.trimIndent(), """
+            """, """
             import java.io.File;
             import java.io.IOException;
             import java.nio.file.Files;
@@ -255,7 +258,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     System.out.println(tempDir.getAbsolutePath());
                 }
             }
-            """.trimIndent()
+            """
         )
     )
 
@@ -268,8 +271,9 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
             public class C {
                 public static File FILE;
             }
-            """.trimIndent()
-        ), java(
+            """
+        ),
+        java(
             """
             package abc;
             import java.io.File;
@@ -283,7 +287,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     tempDir.mkdir();
                 }
             }
-            """.trimIndent(), """
+            """, """
             package abc;
             import java.io.File;
             import java.io.IOException;
@@ -295,7 +299,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     File tempDir = Files.createTempDirectory("abc" + "png").toFile();
                 }
             }
-            """.trimIndent()
+            """
         )
     )
 
@@ -313,7 +317,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     tempDirChild.mkdir();
                 }
             }
-            """.trimIndent()
+            """
         )
     )
 
@@ -330,7 +334,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     tempDirChild.mkdir();
                 }
             }
-            """.trimIndent()
+            """
         )
     )
 
@@ -357,7 +361,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                         }
                     }
                 }
-                """.trimIndent(), """
+                """, """
                 import java.io.File;
                 import java.io.IOException;
                 import java.nio.file.Files;
@@ -375,7 +379,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                         }
                     }
                 }
-                """.trimIndent()
+                """
             )
         )
 
@@ -397,7 +401,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     tmpDir.mkdir();
                 }
             }
-            """.trimIndent(), """
+            """, """
             import java.io.File;
             import java.io.IOException;
             import java.nio.file.Files;
@@ -408,7 +412,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     File tmpDir = Files.createTempDirectory(testData.toPath(), "test" + "dir").toFile();
                 }
             }
-            """.trimIndent()
+            """
         )
     )
 
@@ -429,7 +433,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     }
                 }
             }
-        """.trimIndent(), """
+        """, """
             import java.io.File;
             import java.io.IOException;
             import java.nio.file.Files;
@@ -440,7 +444,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     File tmpDir = Files.createTempDirectory(testData.toPath(), "test" + "dir").toFile();
                 }
             }
-            """.trimIndent()
+            """
         )
     )
 
@@ -465,7 +469,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     }
                 }
             }
-            """.trimIndent(), """
+            """, """
             import java.io.File;
             import java.io.IOException;
             import java.nio.file.Files;
@@ -481,7 +485,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     }
                 }
             }
-            """.trimIndent()
+            """
         )
     )
 
@@ -508,7 +512,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     }
                 }
             }
-            """.trimIndent(), """
+            """, """
             import java.io.File;
             import java.io.FileWriter;
             import java.io.IOException;
@@ -527,7 +531,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     }
                 }
             }
-            """.trimIndent()
+            """
         )
     )
 
@@ -547,7 +551,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     temp.mkdir();
                 }
             }
-            """.trimIndent()
+            """
         )
     )
 
@@ -570,7 +574,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     }
                 }
             }
-            """.trimIndent(), """
+            """, """
             import java.io.File;
             import java.io.IOException;
             import java.nio.file.Files;
@@ -584,7 +588,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     }
                 }
             }
-            """.trimIndent()
+            """
         )
     )
 
@@ -604,7 +608,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     return dir;
                 }
             }
-            """.trimIndent(), """
+            """, """
             import java.io.File;
             import java.io.IOException;
             import java.nio.file.Files;
@@ -615,7 +619,7 @@ class UseFilesCreateTempDirectoryTest : RewriteTest {
                     return dir;
                 }
             }
-            """.trimIndent()
+            """
         )
     )
 }
