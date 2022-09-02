@@ -43,7 +43,7 @@ public class ZipSlip extends Recipe {
     @Option(displayName = "Debug",
             description = "Debug and output intermediate results.",
             example = "true")
-    boolean debug;
+    Boolean debug;
 
     @Override
     public String getDisplayName() {

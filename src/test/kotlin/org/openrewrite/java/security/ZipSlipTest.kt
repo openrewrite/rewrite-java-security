@@ -1271,7 +1271,7 @@ class ZipSlipTest : RewriteTest {
             import java.util.Enumeration;
             import java.util.zip.ZipEntry;
             import java.util.zip.ZipFile;
-
+            
             class Test {
                 File dir;
                 private File getFilesToZip(File originalZipFile) throws IOException {
@@ -1281,19 +1281,17 @@ class ZipSlipTest : RewriteTest {
                         File outputFile;
                         byte[] buffer;
                         int readLen;
-
+                        
                         while (zipEntries.hasMoreElements()) {
                             zipEntry = zipEntries.nextElement();
                             if (zipEntry.isDirectory()) {
                                 continue;
                             }
-
                             outputFile = new File(dir, zipEntry.getName());
                             if (!outputFile.getParentFile().exists()) {
                                 outputFile.getParentFile().mkdirs();
                             }
                             outputFile = new File(dir, zipEntry.getName());
-
                             try (InputStream inputStream = zipFile.getInputStream(zipEntry);
                                  OutputStream outputStream = Files.newOutputStream(outputFile.toPath())) {
                                 buffer = new byte[(int) zipEntry.getSize()];
@@ -1307,12 +1305,13 @@ class ZipSlipTest : RewriteTest {
                 }
 
             }
-            """, """
+            """.trimIndent(), """
             import java.io.*;
             import java.nio.file.Files;
             import java.util.Enumeration;
             import java.util.zip.ZipEntry;
             import java.util.zip.ZipFile;
+            
             class Test {
                 File dir;
                 private File getFilesToZip(File originalZipFile) throws IOException {
@@ -1322,6 +1321,7 @@ class ZipSlipTest : RewriteTest {
                         File outputFile;
                         byte[] buffer;
                         int readLen;
+                        
                         while (zipEntries.hasMoreElements()) {
                             zipEntry = zipEntries.nextElement();
                             if (zipEntry.isDirectory()) {
@@ -1347,8 +1347,9 @@ class ZipSlipTest : RewriteTest {
                     }
                     return dir.listFiles()[0];
                 }
+            
             }
-            """
+            """.trimIndent()
         )
     )
 
@@ -1368,21 +1369,17 @@ class ZipSlipTest : RewriteTest {
             import java.util.zip.ZipEntry;
             import java.util.zip.ZipFile;
             import java.util.zip.ZipOutputStream;
-
-
+            
             public class CbzIo {
-
+                
                 public void read(File file, File workDir) throws IOException {
                     ZipEntry entry = null;
                     ZipFile zipFile = null;
-
                     try {
                         zipFile = new ZipFile(file);
                         Enumeration<? extends ZipEntry> en = zipFile.entries();
                         for (; en.hasMoreElements(); entry = en.nextElement()) {
-
                             File imageFile = new File(workDir, entry.getName());
-
                             // Standard un-zip...
                             OutputStream fos = new FileOutputStream(imageFile);
                         }
@@ -1406,7 +1403,9 @@ class ZipSlipTest : RewriteTest {
             import java.util.zip.ZipEntry;
             import java.util.zip.ZipFile;
             import java.util.zip.ZipOutputStream;
+            
             public class CbzIo {
+                
                 public void read(File file, File workDir) throws IOException {
                     ZipEntry entry = null;
                     ZipFile zipFile = null;
@@ -1454,28 +1453,22 @@ class ZipSlipTest : RewriteTest {
                     {
                         e.printStackTrace();
                     }
-
                     Enumeration<JarEntry> entries = jar.entries();
-
                     int total = 0;
                     while (entries.hasMoreElements())
                     {
                         final JarEntry entry = entries.nextElement();
-
                         if (!entry.isDirectory()
                                 && !entry.getName().equalsIgnoreCase("MANIFEST.MF"))
                         {
                             total += entry.getSize();
                         }
                     }
-
                     entries = jar.entries();
                     final int current = 0;
-
                     while (entries.hasMoreElements())
                     {
                         final JarEntry entry = entries.nextElement();
-
                         if (entry.isDirectory())
                         {
                             final File dir = new File(dest, entry.getName());
@@ -1506,6 +1499,7 @@ class ZipSlipTest : RewriteTest {
             import java.util.Enumeration;
             import java.util.jar.JarEntry;
             import java.util.jar.JarFile;
+            
             class Test {
                 public static void extractJAR(File file, File dest, int min, int max) throws Exception
                 {
@@ -1556,12 +1550,13 @@ class ZipSlipTest : RewriteTest {
                         }
                     }
                 }
+            
                 private static void copyStream(InputStream in, OutputStream out, int current, int total, int min, int max) throws Exception
                 {
                     // No-op
                 }
             }
-            """
+            """.trimIndent()
         )
     )
 }

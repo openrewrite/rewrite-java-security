@@ -100,7 +100,7 @@ class PreventClickjackingTest : RewriteTest, JavaRecipeTest {
 
         val results = recipe.run(cus).results
 
-        assertThat(results).isEqualTo(1)
+        assertThat(results.size).isEqualTo(1)
         assertThat(results[0].after!!.sourcePath).isEqualTo(Paths.get("src/main/java/org/openrewrite/SecurityConfig.java"))
 
         //language=java
