@@ -89,9 +89,9 @@ class ZipSlipTest : RewriteTest {
     fun `fixes Zip Slip using Path`() = rewriteRun(
         java(
             """
+            import java.io.FileWriter;
             import java.io.OutputStream;
             import java.io.RandomAccessFile;
-            import java.io.FileWriter;
             import java.nio.file.Files;
             import java.nio.file.Path;
             import java.util.zip.ZipEntry;
@@ -104,10 +104,10 @@ class ZipSlipTest : RewriteTest {
                 }
             }
             """.trimIndent(), """
-            import java.io.OutputStream;
-            import java.io.RandomAccessFile;
             import java.io.FileWriter;
             import java.io.IOException;
+            import java.io.OutputStream;
+            import java.io.RandomAccessFile;
             import java.nio.file.Files;
             import java.nio.file.Path;
             import java.util.zip.ZipEntry;
@@ -144,10 +144,10 @@ class ZipSlipTest : RewriteTest {
                 }
             }
             """.trimIndent(), """
+            import java.io.IOException;
             import java.io.OutputStream;
             import java.io.RandomAccessFile;
             import java.io.FileWriter;
-            import java.io.IOException;
             import java.nio.file.Files;
             import java.nio.file.Path;
             import java.util.zip.ZipEntry;
