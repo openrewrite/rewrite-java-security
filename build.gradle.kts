@@ -128,6 +128,12 @@ dependencies {
     testRuntimeOnly("com.fasterxml.jackson.core:jackson-databind:latest.release")
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
 tasks.withType(KotlinCompile::class.java).configureEach {
     kotlinOptions {
         jvmTarget = "1.8"
@@ -140,11 +146,10 @@ tasks.named<Test>("test") {
 }
 
 tasks.named<JavaCompile>("compileJava") {
-    sourceCompatibility = JavaVersion.VERSION_1_8.toString()
-    targetCompatibility = JavaVersion.VERSION_1_8.toString()
+    options.release.set(8)
+    sourceCompatibility = "1.8"
+    targetCompatibility = "1.8"
 
-    options.isFork = true
-    options.compilerArgs.addAll(listOf("--release", "8"))
     options.encoding = "UTF-8"
     options.compilerArgs.add("-parameters")
 }

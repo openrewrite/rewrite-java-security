@@ -28,13 +28,10 @@ import org.openrewrite.java.tree.JavaSourceFile;
 import org.openrewrite.java.tree.TypeUtils;
 
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Collections;
+import java.util.Set;
 
 public class SecureRandom extends Recipe {
-    private static final List<String> secureWords = Arrays.asList(
-            "password", "secret", "token", "cred", "hash"
-    );
 
     @Override
     public String getDisplayName() {
@@ -43,7 +40,13 @@ public class SecureRandom extends Recipe {
 
     @Override
     public String getDescription() {
-        return "Use cryptographically secure PRNGs in secure contexts.";
+        return "Use cryptographically secure Pseudo Random Number Generation in the \"main\" source set. " +
+                "Replaces instantiation of `java.util.Random` with `java.security.SecureRandom`.";
+    }
+
+    @Override
+    public Set<String> getTags() {
+        return Collections.singleton("RSPEC-2245");
     }
 
     @Override
@@ -69,9 +72,7 @@ public class SecureRandom extends Recipe {
             @Override
             public J.NewClass visitNewClass(J.NewClass newClass, ExecutionContext executionContext) {
                 J.NewClass n = super.visitNewClass(newClass, executionContext);
-                J.MethodDeclaration methodDecl = getCursor().firstEnclosing(J.MethodDeclaration.class);
-                if (TypeUtils.isOfClassType(newClass.getType(), "java.util.Random") &&
-                        methodDecl != null && secureWords.stream().anyMatch(word -> methodDecl.getSimpleName().toLowerCase().contains(word))) {
+                if (TypeUtils.isOfClassType(newClass.getType(), "java.util.Random")) {
                     maybeAddImport("java.security.SecureRandom");
                     return n.withTemplate(JavaTemplate.builder(this::getCursor, "new SecureRandom()")
                             .imports("java.security.SecureRandom")
