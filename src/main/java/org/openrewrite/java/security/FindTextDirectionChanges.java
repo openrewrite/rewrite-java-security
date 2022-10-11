@@ -106,11 +106,11 @@ public class FindTextDirectionChanges extends Recipe {
                 if (containsSneakyCodes(s.getWhitespace())) {
                     foundCodes = listSneakyCodes(s.getWhitespace());
                 }
-                if (containsSneakyCodes(s.getComments(), Comment::printComment)) {
+                if (containsSneakyCodes(s.getComments(), (Comment c) -> c.printComment(getCursor()))) {
                     if (foundCodes == null) {
                         foundCodes = new HashSet<>();
                     }
-                    foundCodes.addAll(listSneakyCodes(s.getComments(), Comment::printComment));
+                    foundCodes.addAll(listSneakyCodes(s.getComments(), (Comment c) -> c.printComment(getCursor())));
                 }
                 if (containsSneakyCodes(s.getComments(), Comment::getSuffix)) {
                     if (foundCodes == null) {
