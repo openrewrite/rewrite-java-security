@@ -1,14 +1,26 @@
 package org.openrewrite.java.security.secret;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Recipe;
 import org.openrewrite.SourceFile;
 import org.openrewrite.internal.ListUtils;
+import org.openrewrite.internal.lang.Nullable;
+import org.openrewrite.java.JavaIsoVisitor;
+import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.JavaType;
+import org.openrewrite.java.tree.Space;
+import org.openrewrite.java.tree.TextComment;
+import org.openrewrite.marker.SearchResult;
+import org.openrewrite.yaml.YamlIsoVisitor;
+import org.openrewrite.yaml.tree.Yaml;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+
+import static org.openrewrite.Tree.randomId;
 
 public class DetectSecrets extends Recipe {
 
@@ -19,23 +31,98 @@ public class DetectSecrets extends Recipe {
 
     @Override
     protected List<SourceFile> visit(List<SourceFile> before, ExecutionContext ctx) {
+        FindYamlSecretVisitor findYamlSecretVisitor = new FindYamlSecretVisitor();
+        FindJavaTextVisitor findJavaTextVisitor = new FindJavaTextVisitor();
         return ListUtils.map(before, sf -> {
-            for (SecretConfiguration secretConfiguration : secretConfigurations) {
-                sf = secretConfiguration.findSecrets(sf, ctx);
-            }
+            sf = (SourceFile) findJavaTextVisitor.visit(sf, ctx);
+            sf = (SourceFile) findYamlSecretVisitor.visit(sf, ctx);
             return sf;
         });
     }
 
     // WIP
-    final SecretConfiguration[] secretConfigurations = new SecretConfiguration[]{
+    @JsonIgnore
+    private final SecretConfiguration[] secretConfigurations = new SecretConfiguration[]{
             new ArtifactorySecretConfiguration(),
-            new AzureSecretConfiguration(),
             new AwsSecretConfiguration(),
-            new DiscordSecretConfiguration()
+            new AzureSecretConfiguration(),
+            new DiscordSecretConfiguration(),
+            new GithubSecretConfiguration(),
+            new NpmSecretConfiguration(),
+            new SlackSecretConfiguration()
     };
 
+    @Nullable
+    private String getSecret(@Nullable String key,@Nullable String value, ExecutionContext ctx){
+        for (SecretConfiguration secretConfiguration : secretConfigurations) {
+            String secretType = secretConfiguration.findSecret(key, value, ctx);
+            if (secretType != null) {
+                return secretType;
+            }
+        }
+        return null;
+    }
 
+
+    class FindYamlSecretVisitor extends YamlIsoVisitor<ExecutionContext> {
+        @Override
+        public Yaml.Sequence.Entry visitSequenceEntry(Yaml.Sequence.Entry entry, ExecutionContext executionContext) {
+            Yaml.Sequence.Entry ent = super.visitSequenceEntry(entry, executionContext);
+            if (ent.getBlock() instanceof Yaml.Scalar) {
+                Yaml.Scalar scalar = (Yaml.Scalar) ent.getBlock();
+                String secretType = getSecret(null, scalar.getValue(), executionContext);
+                if (secretType != null) {
+                    ent = SearchResult.found(ent, secretType);
+                }
+            }
+            return ent;
+        }
+
+        @Override
+        public Yaml.Mapping.Entry visitMappingEntry(Yaml.Mapping.Entry entry, ExecutionContext executionContext) {
+            Yaml.Mapping.Entry ent = super.visitMappingEntry(entry, executionContext);
+            if (ent.getKey() instanceof Yaml.Scalar && ent.getValue() instanceof Yaml.Scalar) {
+                Yaml.Scalar key = (Yaml.Scalar) ent.getKey();
+                Yaml.Scalar val = (Yaml.Scalar) ent.getValue();
+                String secretType = getSecret(key.getValue(), val.getValue(), executionContext);
+                if (secretType != null) {
+                    ent = SearchResult.found(ent, secretType);
+                }
+            }
+            return ent;
+        }
+    }
+
+    class FindJavaTextVisitor extends JavaIsoVisitor<ExecutionContext> {
+
+        @Override
+        public Space visitSpace(Space space, Space.Location loc, ExecutionContext ctx) {
+            return space.withComments(ListUtils.map(space.getComments(), comment -> {
+                if (comment instanceof TextComment) {
+                    String secretType = getSecret(null, ((TextComment) comment).getText(), ctx);
+                    if (secretType != null) {
+                        return comment.withMarkers(comment.getMarkers().
+                                computeByType(new SearchResult(randomId(), secretType), (s1, s2) -> s1 == null ? s2 : s1));
+                    }
+                }
+                return comment;
+            }));
+        }
+
+        @Override
+        public J.Literal visitLiteral(J.Literal literal, ExecutionContext ctx) {
+            if (literal.getType() == JavaType.Primitive.Null) {
+                return literal;
+            }
+            if (literal.getValue() != null) {
+                String secretType = getSecret(null, literal.getValue().toString(), ctx);
+                if (secretType != null) {
+                    return SearchResult.found(literal, secretType);
+                }
+            }
+            return literal;
+        }
+    }
     // A combination of org.openrewrite.java.search.FindSecrets
     // and https://github.com/Yelp/detect-secrets/tree/master/detect_secrets/plugins
     // some have been moved to SecretConfigurations

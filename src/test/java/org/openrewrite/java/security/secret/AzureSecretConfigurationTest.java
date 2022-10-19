@@ -1,15 +1,16 @@
 package org.openrewrite.java.security.secret;
 
 import org.junit.jupiter.api.Test;
+import org.openrewrite.test.RecipeSpec;
+import org.openrewrite.test.RewriteTest;
 
 import static org.openrewrite.yaml.Assertions.yaml;
 
-class AzureSecretConfigurationTest implements SecretConfigurationTest {
+class AzureSecretConfigurationTest implements RewriteTest {
     @Override
-    public SecretConfiguration secretConfiguration() {
-        return new AzureSecretConfiguration();
+    public void defaults(RecipeSpec spec) {
+        spec.recipe(new DetectSecrets());
     }
-
     @Test
     void findYamlSecret() {
         rewriteRun(

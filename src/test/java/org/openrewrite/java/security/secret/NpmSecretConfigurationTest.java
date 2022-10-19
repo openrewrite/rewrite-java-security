@@ -1,15 +1,16 @@
 package org.openrewrite.java.security.secret;
 
 import org.junit.jupiter.api.Test;
+import org.openrewrite.test.RecipeSpec;
+import org.openrewrite.test.RewriteTest;
 
 import static org.openrewrite.java.Assertions.java;
 
-public class NpmSecretConfigurationTest implements SecretConfigurationTest {
+public class NpmSecretConfigurationTest implements RewriteTest {
     @Override
-    public SecretConfiguration secretConfiguration() {
-        return new NpmSecretConfiguration();
+    public void defaults(RecipeSpec spec) {
+        spec.recipe(new DetectSecrets());
     }
-
     @Test
     void npmSecrets() {
         rewriteRun(

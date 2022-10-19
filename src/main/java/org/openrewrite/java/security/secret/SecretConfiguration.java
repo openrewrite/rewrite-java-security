@@ -1,15 +1,19 @@
 package org.openrewrite.java.security.secret;
 
 import org.openrewrite.ExecutionContext;
-import org.openrewrite.SourceFile;
+import org.openrewrite.internal.lang.Nullable;
 
 public interface SecretConfiguration {
     SecretFinder[] secretFinders();
 
-    default SourceFile findSecrets(SourceFile sourceFile, ExecutionContext ctx) {
+    @Nullable
+    default String findSecret(@Nullable String key, @Nullable String value, ExecutionContext ctx) {
         for (SecretFinder secretFinder : secretFinders()) {
-            sourceFile = secretFinder.findSecrets(sourceFile, ctx);
+            String secretName = secretFinder.findSecret(key, value, ctx);
+            if (secretName != null) {
+                return secretName;
+            }
         }
-        return sourceFile;
+        return null;
     }
 }
