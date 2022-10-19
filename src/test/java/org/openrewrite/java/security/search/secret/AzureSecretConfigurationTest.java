@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
-import java.util.Arrays;
 import java.util.List;
 
 import static org.openrewrite.yaml.Assertions.yaml;

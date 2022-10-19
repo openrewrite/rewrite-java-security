@@ -57,6 +57,7 @@ public class DetectSecrets extends Recipe {
             new AzureSecretConfiguration(),
             new DiscordSecretConfiguration(),
             new GithubSecretConfiguration(),
+            new JwtSecretConfiguration(),
             new NpmSecretConfiguration(),
             new SlackSecretConfiguration()
     };
