@@ -1,4 +1,4 @@
-package org.openrewrite.java.security.secret;
+package org.openrewrite.java.security.search.secret;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.openrewrite.ExecutionContext;

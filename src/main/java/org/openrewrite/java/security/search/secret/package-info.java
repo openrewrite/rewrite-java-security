@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 @NonNullApi
-package org.openrewrite.java.security.secret;
+package org.openrewrite.java.security.search.secret;
 
 import org.openrewrite.internal.lang.NonNullApi;

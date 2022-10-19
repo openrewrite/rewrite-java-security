@@ -1,4 +1,4 @@
-package org.openrewrite.java.security.secret;
+package org.openrewrite.java.security.search.secret;
 
 import org.openrewrite.HttpSenderExecutionContextView;
 import org.openrewrite.ipc.http.HttpSender;
