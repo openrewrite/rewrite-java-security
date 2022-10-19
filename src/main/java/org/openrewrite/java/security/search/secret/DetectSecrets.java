@@ -1,7 +1,10 @@
 package org.openrewrite.java.security.search.secret;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.EqualsAndHashCode;
+import lombok.Value;
 import org.openrewrite.ExecutionContext;
+import org.openrewrite.Option;
 import org.openrewrite.Recipe;
 import org.openrewrite.SourceFile;
 import org.openrewrite.internal.ListUtils;
@@ -22,7 +25,13 @@ import java.util.regex.Pattern;
 
 import static org.openrewrite.Tree.randomId;
 
+@EqualsAndHashCode(callSuper = true)
+@Value
 public class DetectSecrets extends Recipe {
+
+    @Option(displayName = "Secret Type",
+            example = "JWT Token", required = false)
+    List<String> secretTypeFilter;
 
     @Override
     public String getDisplayName() {
@@ -42,7 +51,7 @@ public class DetectSecrets extends Recipe {
 
     // WIP
     @JsonIgnore
-    private final SecretConfiguration[] secretConfigurations = new SecretConfiguration[]{
+    private static final SecretConfiguration[] secretConfigurations = new SecretConfiguration[]{
             new ArtifactorySecretConfiguration(),
             new AwsSecretConfiguration(),
             new AzureSecretConfiguration(),
@@ -55,7 +64,7 @@ public class DetectSecrets extends Recipe {
     @Nullable
     private String getSecret(@Nullable String key,@Nullable String value, ExecutionContext ctx){
         for (SecretConfiguration secretConfiguration : secretConfigurations) {
-            String secretType = secretConfiguration.findSecret(key, value, ctx);
+            String secretType = secretConfiguration.findSecret(key, value, ctx, secretTypeFilter);
             if (secretType != null) {
                 return secretType;
             }

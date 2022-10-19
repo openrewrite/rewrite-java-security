@@ -22,6 +22,10 @@ public class SecretFinder {
         this.secretTester = secretTester;
     }
 
+    public String getName() {
+        return name;
+    }
+
     @FunctionalInterface
     interface SecretTester {
         boolean isValid(@Nullable String key, @Nullable String value, ExecutionContext ctx);

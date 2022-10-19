@@ -4,12 +4,14 @@ import org.junit.jupiter.api.Test;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
+import java.util.List;
+
 import static org.openrewrite.java.Assertions.java;
 
 public class NpmSecretConfigurationTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new DetectSecrets());
+        spec.recipe(new DetectSecrets(List.of("NPM Token")));
     }
     @Test
     void npmSecrets() {

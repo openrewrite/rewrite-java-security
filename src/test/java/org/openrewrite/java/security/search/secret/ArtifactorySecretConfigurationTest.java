@@ -4,12 +4,15 @@ import org.junit.jupiter.api.Test;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static org.openrewrite.java.Assertions.java;
 
 public class ArtifactorySecretConfigurationTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new DetectSecrets());
+        spec.recipe(new DetectSecrets(List.of("Artifactory Password", "Artifactory API Token")));
     }
 
     @Test

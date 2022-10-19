@@ -4,13 +4,16 @@ import org.junit.jupiter.api.Test;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static org.openrewrite.java.Assertions.java;
 import static org.openrewrite.yaml.Assertions.yaml;
 
 public class AwsSecretConfigurationTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new DetectSecrets());
+        spec.recipe(new DetectSecrets(List.of("AWS Token", "AWS API Key")));
     }
 
     @Test
