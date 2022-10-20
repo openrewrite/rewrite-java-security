@@ -1,10 +1,10 @@
 package org.openrewrite.java.security.search.secret;
 
-class NpmSecretConfiguration implements SecretConfiguration {
+class NpmSecretMatcherGroup implements SecretMatcherGroup {
     @Override
-    public SecretFinder[] secretFinders() {
-        return new SecretFinder[]{
-                SecretFinder.builder("NPM Token")
+    public SecretMatcher[] secretMatchers() {
+        return new SecretMatcher[]{
+                SecretMatcher.builder("NPM Token")
                         .valuePattern("\\/\\/.+\\/:_authToken=\\s*((npm_.+)|([A-Fa-f0-9-]{36})).*")
                         .build()
         };

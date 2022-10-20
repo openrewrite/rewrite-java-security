@@ -8,10 +8,10 @@ import java.util.List;
 
 import static org.openrewrite.java.Assertions.java;
 
-public class GithubSecretConfigurationTest implements RewriteTest {
+public class GithubSecretMatcherGroupTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new DetectSecrets(List.of("GitHub Token")));
+        spec.recipe(new FindSecrets(List.of("GitHub Token")));
     }
 
     @Test

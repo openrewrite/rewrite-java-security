@@ -1,11 +1,11 @@
 package org.openrewrite.java.security.search.secret;
 
-class AzureSecretConfiguration implements SecretConfiguration {
+class AzureSecretMatcherGroup implements SecretMatcherGroup {
 
     @Override
-    public SecretFinder[] secretFinders() {
-        return new SecretFinder[]{
-                new SecretFinder.Builder("Azure Storage Account access key")
+    public SecretMatcher[] secretMatchers() {
+        return new SecretMatcher[]{
+                new SecretMatcher.Builder("Azure Storage Account access key")
                         .keyPattern("AccountKey")
                         .valuePattern("[a-zA-Z0-9+\\/=]{88}")
                         .build()

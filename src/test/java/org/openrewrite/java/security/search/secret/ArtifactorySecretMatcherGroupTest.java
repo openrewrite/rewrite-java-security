@@ -8,10 +8,10 @@ import java.util.List;
 
 import static org.openrewrite.java.Assertions.java;
 
-public class ArtifactorySecretConfigurationTest implements RewriteTest {
+public class ArtifactorySecretMatcherGroupTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new DetectSecrets(List.of("Artifactory Password", "Artifactory API Token")));
+        spec.recipe(new FindSecrets(List.of("Artifactory Password", "Artifactory API Token")));
     }
 
     @Test

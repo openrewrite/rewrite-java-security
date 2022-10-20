@@ -8,10 +8,10 @@ import java.util.List;
 
 import static org.openrewrite.java.Assertions.java;
 
-public class NpmSecretConfigurationTest implements RewriteTest {
+public class NpmSecretMatcherGroupTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new DetectSecrets(List.of("NPM Token")));
+        spec.recipe(new FindSecrets(List.of("NPM Token")));
     }
     @Test
     void npmSecrets() {

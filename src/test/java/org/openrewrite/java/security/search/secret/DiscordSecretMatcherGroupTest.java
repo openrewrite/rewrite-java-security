@@ -8,10 +8,10 @@ import java.util.List;
 
 import static org.openrewrite.java.Assertions.java;
 
-public class DiscordSecretConfigurationTest implements RewriteTest {
+public class DiscordSecretMatcherGroupTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new DetectSecrets(List.of("Discord Bot Token")));
+        spec.recipe(new FindSecrets(List.of("Discord Bot Token")));
     }
 
     @Test

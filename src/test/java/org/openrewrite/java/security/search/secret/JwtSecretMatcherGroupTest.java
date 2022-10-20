@@ -8,10 +8,10 @@ import java.util.List;
 
 import static org.openrewrite.yaml.Assertions.yaml;
 
-class JwtSecretConfigurationTest implements RewriteTest {
+class JwtSecretMatcherGroupTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new DetectSecrets(List.of("JSON Web Token")));
+        spec.recipe(new FindSecrets(List.of("JSON Web Token")));
     }
 
     @Test

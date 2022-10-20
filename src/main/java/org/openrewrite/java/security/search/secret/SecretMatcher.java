@@ -7,19 +7,19 @@ import org.openrewrite.internal.lang.Nullable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class SecretFinder {
+public class SecretMatcher {
     private final String name;
     @Nullable
     private final Pattern keyPattern;
     @Nullable
     private final Pattern valuePattern;
-    private final SecretTester secretTester;
+    private final SecretValidator secretValidator;
 
-    private SecretFinder(String name, @Nullable Pattern keyPattern, @Nullable Pattern valuePattern, SecretTester secretTester) {
+    private SecretMatcher(String name, @Nullable Pattern keyPattern, @Nullable Pattern valuePattern, SecretValidator secretValidator) {
         this.name = name;
         this.keyPattern = keyPattern;
         this.valuePattern = valuePattern;
-        this.secretTester = secretTester;
+        this.secretValidator = secretValidator;
     }
 
     public String getName() {
@@ -27,12 +27,12 @@ public class SecretFinder {
     }
 
     @FunctionalInterface
-    interface SecretTester {
+    interface SecretValidator {
         boolean isValid(@Nullable String key, @Nullable String value, ExecutionContext ctx);
     }
     
     @Nullable
-    public String findSecret(@Nullable String key, @Nullable String value, ExecutionContext ctx) {
+    public String matches(@Nullable String key, @Nullable String value, ExecutionContext ctx) {
         String foundKey = null;
         String foundValue = null;
         if (keyPattern != null && !StringUtils.isNullOrEmpty(key)) {
@@ -48,12 +48,12 @@ public class SecretFinder {
             }
         }
         if (keyPattern != null && valuePattern != null) {
-            if (foundKey != null && foundValue != null && secretTester.isValid(foundKey, foundValue, ctx)) {
+            if (foundKey != null && foundValue != null && secretValidator.isValid(foundKey, foundValue, ctx)) {
                 return name;
             }
-        } else if (keyPattern != null && foundKey != null && secretTester.isValid(foundKey, null, ctx)) {
+        } else if (keyPattern != null && foundKey != null && secretValidator.isValid(foundKey, null, ctx)) {
             return name;
-        } else if (valuePattern != null && foundValue != null && secretTester.isValid(null, foundValue, ctx)) {
+        } else if (valuePattern != null && foundValue != null && secretValidator.isValid(null, foundValue, ctx)) {
             return name;
         }
         return null;
@@ -67,14 +67,14 @@ public class SecretFinder {
         private final String name;
         private Pattern keyPattern = null;
         private Pattern valuePattern = null;
-        private SecretTester secretTester = (key, value, ctx) -> true;
+        private SecretValidator secretValidator = (key, value, ctx) -> true;
 
         Builder(String name) {
             this.name = name;
         }
 
-        SecretFinder build() {
-            return new SecretFinder(name, keyPattern, valuePattern, secretTester);
+        SecretMatcher build() {
+            return new SecretMatcher(name, keyPattern, valuePattern, secretValidator);
         }
 
         Builder keyPattern(String keyPattern) {
@@ -91,8 +91,8 @@ public class SecretFinder {
             return this;
         }
 
-        Builder valueVerifier(SecretTester secretTester) {
-            this.secretTester = secretTester;
+        Builder valueVerifier(SecretValidator secretValidator) {
+            this.secretValidator = secretValidator;
             return this;
         }
     }

@@ -9,10 +9,10 @@ import java.util.List;
 import static org.openrewrite.java.Assertions.java;
 import static org.openrewrite.yaml.Assertions.yaml;
 
-public class AwsSecretConfigurationTest implements RewriteTest {
+public class AwsSecretMatcherGroupTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new DetectSecrets(List.of("AWS Token", "AWS API Key")));
+        spec.recipe(new FindSecrets(List.of("AWS Token", "AWS API Key")));
     }
 
     @Test

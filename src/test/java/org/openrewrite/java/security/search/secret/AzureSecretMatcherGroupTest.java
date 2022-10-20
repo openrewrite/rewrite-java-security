@@ -8,10 +8,10 @@ import java.util.List;
 
 import static org.openrewrite.yaml.Assertions.yaml;
 
-class AzureSecretConfigurationTest implements RewriteTest {
+class AzureSecretMatcherGroupTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new DetectSecrets(List.of("Azure Storage Account access key")));
+        spec.recipe(new FindSecrets(List.of("Azure Storage Account access key")));
     }
     @Test
     void findYamlSecret() {

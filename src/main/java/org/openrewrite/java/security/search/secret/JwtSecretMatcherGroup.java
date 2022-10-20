@@ -8,12 +8,12 @@ import com.nimbusds.jwt.JWTParser;
  * Uses <a href="https://github.com/felx/nimbus-jose-jwt">...</a> JWTParser for validating potential JWT Tokens
  * Less restrictive than <a href="https://github.com/Yelp/detect-secrets/blob/master/detect_secrets/plugins/jwt.py">...</a>
  */
-public class JwtSecretConfiguration implements SecretConfiguration {
+public class JwtSecretMatcherGroup implements SecretMatcherGroup {
 
     @Override
-    public SecretFinder[] secretFinders() {
-        return new SecretFinder[]{
-                SecretFinder.builder("JSON Web Token")
+    public SecretMatcher[] secretMatchers() {
+        return new SecretMatcher[]{
+                SecretMatcher.builder("JSON Web Token")
                         .valuePattern("eyJ[A-Za-z0-9-_=]+\\.[A-Za-z0-9-_=]+\\.?[A-Za-z0-9-_.+/=]*?")
                         .valueVerifier((k, v, ctx) -> {
                             if (v != null) {

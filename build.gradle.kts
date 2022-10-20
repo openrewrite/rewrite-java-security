@@ -99,7 +99,7 @@ dependencies {
     implementation("org.openrewrite:rewrite-yaml:${rewriteVersion}")
     implementation("org.openrewrite:rewrite-xml:${rewriteVersion}")
     runtimeOnly("org.openrewrite:rewrite-java-11:${rewriteVersion}")
-    implementation("com.nimbusds:nimbus-jose-jwt:latest.release")
+    implementation("com.nimbusds:nimbus-jose-jwt:9.+")
 
 
     runtimeOnly("org.springframework:spring-context:latest.release")

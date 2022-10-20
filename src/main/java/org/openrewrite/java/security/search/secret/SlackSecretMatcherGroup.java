@@ -3,17 +3,17 @@ package org.openrewrite.java.security.search.secret;
 import org.openrewrite.HttpSenderExecutionContextView;
 import org.openrewrite.ipc.http.HttpSender;
 
-public class SlackSecretConfiguration implements SecretConfiguration {
+public class SlackSecretMatcherGroup implements SecretMatcherGroup {
     @Override
-    public SecretFinder[] secretFinders() {
-        return new SecretFinder[]{
-                SecretFinder.builder("Slack Token")
+    public SecretMatcher[] secretMatchers() {
+        return new SecretMatcher[]{
+                SecretMatcher.builder("Slack Token")
                         .valuePattern("(xox[pboa]-[0-9]{12}-[0-9]{12}-[0-9]{12}-[a-z0-9]{32})")
                         .build(),
-                SecretFinder.builder("Slack Token")
+                SecretMatcher.builder("Slack Token")
                         .valuePattern("xox(?:a|b|p|o|s|r)-(?:\\d+-)+[a-z0-9]+")
                         .build(),
-                SecretFinder.builder("Slack WebHook")
+                SecretMatcher.builder("Slack WebHook")
                         .valuePattern("https://hooks\\.slack\\.com/services/T[a-zA-Z0-9_]{8}/B[a-zA-Z0-9_]{8}/[a-zA-Z0-9_]{24}")
                         .valueVerifier((k, v, ctx) -> {
                             // https://github.com/Yelp/detect-secrets/blob/001e16323a2f0162336345f4ceb6d72c204980b5/detect_secrets/plugins/slack.py#L29-L51

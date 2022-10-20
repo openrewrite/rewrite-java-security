@@ -1,13 +1,13 @@
 package org.openrewrite.java.security.search.secret;
 
-class ArtifactorySecretConfiguration implements SecretConfiguration {
+class ArtifactorySecretMatcherGroup implements SecretMatcherGroup {
     @Override
-    public SecretFinder[] secretFinders() {
-        return new SecretFinder[]{
-                SecretFinder.builder("Artifactory API Token")
+    public SecretMatcher[] secretMatchers() {
+        return new SecretMatcher[]{
+                SecretMatcher.builder("Artifactory API Token")
                         .valuePattern("(?:\\s|=|:|\"|^)AKC[a-zA-Z0-9]{10,}(?:\\s|\"|$)")
                         .build(),
-                SecretFinder.builder("Artifactory Password")
+                SecretMatcher.builder("Artifactory Password")
                         .valuePattern("(?:\\s|=|:|\"|^)AP[\\dABCDEF][a-zA-Z0-9]{8,}(?:\\s|\"|$)")
                         .build()
         };

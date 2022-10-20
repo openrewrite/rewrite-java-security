@@ -27,7 +27,7 @@ import static org.openrewrite.Tree.randomId;
 
 @EqualsAndHashCode(callSuper = true)
 @Value
-public class DetectSecrets extends Recipe {
+public class FindSecrets extends Recipe {
 
     @Option(displayName = "Secret Type",
             example = "JWT Token", required = false)
@@ -51,23 +51,27 @@ public class DetectSecrets extends Recipe {
 
     // WIP
     @JsonIgnore
-    private static final SecretConfiguration[] secretConfigurations = new SecretConfiguration[]{
-            new ArtifactorySecretConfiguration(),
-            new AwsSecretConfiguration(),
-            new AzureSecretConfiguration(),
-            new DiscordSecretConfiguration(),
-            new GithubSecretConfiguration(),
-            new JwtSecretConfiguration(),
-            new NpmSecretConfiguration(),
-            new SlackSecretConfiguration()
+    private static final SecretMatcherGroup[] SECRET_MATCHER_GROUPS = new SecretMatcherGroup[]{
+            new ArtifactorySecretMatcherGroup(),
+            new AwsSecretMatcherGroup(),
+            new AzureSecretMatcherGroup(),
+            new DiscordSecretMatcherGroup(),
+            new GithubSecretMatcherGroup(),
+            new JwtSecretMatcherGroup(),
+            new NpmSecretMatcherGroup(),
+            new SlackSecretMatcherGroup()
     };
 
     @Nullable
     private String getSecret(@Nullable String key,@Nullable String value, ExecutionContext ctx){
-        for (SecretConfiguration secretConfiguration : secretConfigurations) {
-            String secretType = secretConfiguration.findSecret(key, value, ctx, secretTypeFilter);
-            if (secretType != null) {
-                return secretType;
+        for (SecretMatcherGroup secretMatcherGroup : SECRET_MATCHER_GROUPS) {
+            for (SecretMatcher secretMatcher : secretMatcherGroup.secretMatchers()) {
+                if (secretTypeFilter == null || secretTypeFilter.contains(secretMatcher.getName())) {
+                    String secretName = secretMatcher.matches(key, value, ctx);
+                    if (secretName != null) {
+                        return secretName;
+                    }
+                }
             }
         }
         return null;
