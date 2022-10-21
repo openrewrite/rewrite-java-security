@@ -51,27 +51,22 @@ public class FindSecrets extends Recipe {
 
     // WIP
     @JsonIgnore
-    private static final SecretMatcherGroup[] SECRET_MATCHER_GROUPS = new SecretMatcherGroup[]{
-            new ArtifactorySecretMatcherGroup(),
-            new AwsSecretMatcherGroup(),
-            new AzureSecretMatcherGroup(),
-            new DiscordSecretMatcherGroup(),
-            new GithubSecretMatcherGroup(),
-            new JwtSecretMatcherGroup(),
-            new NpmSecretMatcherGroup(),
-            new SlackSecretMatcherGroup()
+    private static final SecretPredicateGroup[] SECRET_MATCHER_GROUPS = new SecretPredicateGroup[]{
+            new ArtifactorySecretPredicateGroup(),
+            new AwsSecretPredicateGroup(),
+            new AzureSecretPredicateGroup(),
+            new DiscordSecretPredicateGroup(),
+            new GithubSecretPredicateGroup(),
+            new JwtSecretPredicateGroup(),
+            new NpmSecretPredicateGroup(),
+            new SlackSecretPredicateGroup()
     };
 
     @Nullable
     private String findSecret(@Nullable String key, @Nullable String value, ExecutionContext ctx){
-        for (SecretMatcherGroup secretMatcherGroup : SECRET_MATCHER_GROUPS) {
-            for (SecretMatcher secretMatcher : secretMatcherGroup.secretMatchers()) {
-                if (secretTypeFilter == null || secretTypeFilter.contains(secretMatcher.getSecretName())) {
-                    String secretName = secretMatcher.matches(key, value, ctx);
-                    if (secretName != null) {
-                        return secretName;
-                    }
-                }
+        for (SecretPredicateGroup secretPredicateGroup : SECRET_MATCHER_GROUPS) {
+            if (secretPredicateGroup.secretPredicate().isSecret(key, value, ctx))  {
+                return secretPredicateGroup.getName();
             }
         }
         return null;

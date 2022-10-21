@@ -8,7 +8,7 @@ import java.util.List;
 
 import static org.openrewrite.java.Assertions.java;
 
-public class NpmSecretMatcherGroupTest implements RewriteTest {
+public class NpmSecretPredicateGroupTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new FindSecrets(List.of("NPM Token")));

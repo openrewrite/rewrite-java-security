@@ -9,7 +9,7 @@ import java.util.List;
 import static org.openrewrite.java.Assertions.java;
 import static org.openrewrite.yaml.Assertions.yaml;
 
-public class AwsSecretMatcherGroupTest implements RewriteTest {
+public class AwsSecretPredicateGroupTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new FindSecrets(List.of("AWS Token", "AWS API Key")));
@@ -27,14 +27,14 @@ public class AwsSecretMatcherGroupTest implements RewriteTest {
                     evn3:
                       aws_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKE
                     """,
-                        """
-                        env1:
-                          ~~(AWS Token)~~>aws_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-                        env2:
-                          aws_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEYa
-                        evn3:
-                          aws_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKE
-                        """),
+                    """
+                    env1:
+                      ~~(AWS Access Key)~~>aws_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+                    env2:
+                      aws_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEYa
+                    evn3:
+                      aws_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKE
+                    """),
                 //language=java
                 java("""
                             class T {
@@ -46,14 +46,14 @@ public class AwsSecretMatcherGroupTest implements RewriteTest {
                             }
                         """,
                         """
-                                class T {
-                                    String[] awsSecrets = {
-                                        /*~~(AWS API Key)~~>*/"AKIAZZZZZZZZZZZZZZZZ",
-                                        "akiazzzzzzzzzzzzzzzz",
-                                        "AKIAZZZ",
-                                    };
-                                }
-                            """)
+                            class T {
+                                String[] awsSecrets = {
+                                    /*~~(AWS Access Key)~~>*/"AKIAZZZZZZZZZZZZZZZZ",
+                                    "akiazzzzzzzzzzzzzzzz",
+                                    "AKIAZZZ",
+                                };
+                            }
+                        """)
         );
     }
 

@@ -8,7 +8,7 @@ import java.util.List;
 
 import static org.openrewrite.yaml.Assertions.yaml;
 
-public class SlackSecretMatcherGroupTest implements RewriteTest {
+public class SlackSecretPredicateGroupTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new FindSecrets(List.of("Slack WebHook", "Slack Token")));

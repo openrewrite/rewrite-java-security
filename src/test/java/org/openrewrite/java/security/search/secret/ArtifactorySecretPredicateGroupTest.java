@@ -8,7 +8,7 @@ import java.util.List;
 
 import static org.openrewrite.java.Assertions.java;
 
-public class ArtifactorySecretMatcherGroupTest implements RewriteTest {
+public class ArtifactorySecretPredicateGroupTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new FindSecrets(List.of("Artifactory Password", "Artifactory API Token")));
@@ -51,25 +51,25 @@ public class ArtifactorySecretMatcherGroupTest implements RewriteTest {
         """
                     class Test {
                         String[] artifactoryStrings = {
-                            /*~~(Artifactory Password)~~>*/"AP6xxxxxxxxxx",
-                            /*~~(Artifactory Password)~~>*/"AP2xxxxxxxxxx",
-                            /*~~(Artifactory Password)~~>*/"AP3xxxxxxxxxx",
-                            /*~~(Artifactory Password)~~>*/"AP5xxxxxxxxxx",
-                            /*~~(Artifactory Password)~~>*/"APAxxxxxxxxxx",
-                            /*~~(Artifactory Password)~~>*/"APBxxxxxxxxxx",
-                            /*~~(Artifactory API Token)~~>*/"AKCxxxxxxxxxx",
-                            /*~~(Artifactory Password)~~>*/" AP6xxxxxxxxxx",
-                            /*~~(Artifactory API Token)~~>*/" AKCxxxxxxxxxx",
-                            /*~~(Artifactory Password)~~>*/"=AP6xxxxxxxxxx",
-                            /*~~(Artifactory API Token)~~>*/"=AKCxxxxxxxxxx",
-                            /*~~(Artifactory Password)~~>*/"\\"AP6xxxxxxxxxx\\"",
-                            /*~~(Artifactory API Token)~~>*/"\\"AKCxxxxxxxxxx\\"",
-                            /*~~(Artifactory Password)~~>*/"artif-key:AP6xxxxxxxxxx",
-                            /*~~(Artifactory API Token)~~>*/"artif-key:AKCxxxxxxxxxx",
-                            /*~~(Artifactory API Token)~~>*/"X-JFrog-Art-Api: AKCxxxxxxxxxx",
-                            /*~~(Artifactory Password)~~>*/"X-JFrog-Art-Api: AP6xxxxxxxxxx",
-                            /*~~(Artifactory API Token)~~>*/"artifactoryx:_password=AKCxxxxxxxxxx",
-                            /*~~(Artifactory Password)~~>*/"artifactoryx:_password=AP6xxxxxxxxxx",
+                            /*~~(Artifactory)~~>*/"AP6xxxxxxxxxx",
+                            /*~~(Artifactory)~~>*/"AP2xxxxxxxxxx",
+                            /*~~(Artifactory)~~>*/"AP3xxxxxxxxxx",
+                            /*~~(Artifactory)~~>*/"AP5xxxxxxxxxx",
+                            /*~~(Artifactory)~~>*/"APAxxxxxxxxxx",
+                            /*~~(Artifactory)~~>*/"APBxxxxxxxxxx",
+                            /*~~(Artifactory)~~>*/"AKCxxxxxxxxxx",
+                            /*~~(Artifactory)~~>*/" AP6xxxxxxxxxx",
+                            /*~~(Artifactory)~~>*/" AKCxxxxxxxxxx",
+                            /*~~(Artifactory)~~>*/"=AP6xxxxxxxxxx",
+                            /*~~(Artifactory)~~>*/"=AKCxxxxxxxxxx",
+                            /*~~(Artifactory)~~>*/"\\"AP6xxxxxxxxxx\\"",
+                            /*~~(Artifactory)~~>*/"\\"AKCxxxxxxxxxx\\"",
+                            /*~~(Artifactory)~~>*/"artif-key:AP6xxxxxxxxxx",
+                            /*~~(Artifactory)~~>*/"artif-key:AKCxxxxxxxxxx",
+                            /*~~(Artifactory)~~>*/"X-JFrog-Art-Api: AKCxxxxxxxxxx",
+                            /*~~(Artifactory)~~>*/"X-JFrog-Art-Api: AP6xxxxxxxxxx",
+                            /*~~(Artifactory)~~>*/"artifactoryx:_password=AKCxxxxxxxxxx",
+                            /*~~(Artifactory)~~>*/"artifactoryx:_password=AP6xxxxxxxxxx",
                             "testAKCwithinsomeirrelevantstring",
                             "testAP6withinsomeirrelevantstring",
                             "X-JFrog-Art-Api: $API_KEY",

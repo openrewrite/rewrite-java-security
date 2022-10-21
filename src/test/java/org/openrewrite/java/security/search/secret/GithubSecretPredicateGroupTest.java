@@ -8,7 +8,7 @@ import java.util.List;
 
 import static org.openrewrite.java.Assertions.java;
 
-public class GithubSecretMatcherGroupTest implements RewriteTest {
+public class GithubSecretPredicateGroupTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new FindSecrets(List.of("GitHub Token")));
@@ -29,7 +29,7 @@ public class GithubSecretMatcherGroupTest implements RewriteTest {
         """
                     class Test {
                         void githubTest() {
-                            String secret = /*~~(GitHub Token)~~>*/"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";
+                            String secret = /*~~(GitHub)~~>*/"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";
                             String notSecret = "foo_wWPw5k4aXcaT4fNP0UcnZwJUVFk6LO0pINUx";
                         }
                     }
