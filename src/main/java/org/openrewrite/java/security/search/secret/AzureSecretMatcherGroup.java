@@ -6,8 +6,8 @@ class AzureSecretMatcherGroup implements SecretMatcherGroup {
     public SecretMatcher[] secretMatchers() {
         return new SecretMatcher[]{
                 new SecretMatcher.Builder("Azure Storage Account access key")
-                        .keyPattern("AccountKey")
-                        .valuePattern("[a-zA-Z0-9+\\/=]{88}")
+                        .keyRegex("AccountKey")
+                        .valueRegex("[a-zA-Z0-9+\\/=]{88}")
                         .build()
         };
     }

@@ -63,10 +63,10 @@ public class FindSecrets extends Recipe {
     };
 
     @Nullable
-    private String getSecret(@Nullable String key,@Nullable String value, ExecutionContext ctx){
+    private String findSecret(@Nullable String key, @Nullable String value, ExecutionContext ctx){
         for (SecretMatcherGroup secretMatcherGroup : SECRET_MATCHER_GROUPS) {
             for (SecretMatcher secretMatcher : secretMatcherGroup.secretMatchers()) {
-                if (secretTypeFilter == null || secretTypeFilter.contains(secretMatcher.getName())) {
+                if (secretTypeFilter == null || secretTypeFilter.contains(secretMatcher.getSecretName())) {
                     String secretName = secretMatcher.matches(key, value, ctx);
                     if (secretName != null) {
                         return secretName;
@@ -84,7 +84,7 @@ public class FindSecrets extends Recipe {
             Yaml.Sequence.Entry ent = super.visitSequenceEntry(entry, executionContext);
             if (ent.getBlock() instanceof Yaml.Scalar) {
                 Yaml.Scalar scalar = (Yaml.Scalar) ent.getBlock();
-                String secretType = getSecret(null, scalar.getValue(), executionContext);
+                String secretType = findSecret(null, scalar.getValue(), executionContext);
                 if (secretType != null) {
                     ent = SearchResult.found(ent, secretType);
                 }
@@ -98,7 +98,7 @@ public class FindSecrets extends Recipe {
             if (ent.getKey() instanceof Yaml.Scalar && ent.getValue() instanceof Yaml.Scalar) {
                 Yaml.Scalar key = (Yaml.Scalar) ent.getKey();
                 Yaml.Scalar val = (Yaml.Scalar) ent.getValue();
-                String secretType = getSecret(key.getValue(), val.getValue(), executionContext);
+                String secretType = findSecret(key.getValue(), val.getValue(), executionContext);
                 if (secretType != null) {
                     ent = SearchResult.found(ent, secretType);
                 }
@@ -113,7 +113,7 @@ public class FindSecrets extends Recipe {
         public Space visitSpace(Space space, Space.Location loc, ExecutionContext ctx) {
             return space.withComments(ListUtils.map(space.getComments(), comment -> {
                 if (comment instanceof TextComment) {
-                    String secretType = getSecret(null, ((TextComment) comment).getText(), ctx);
+                    String secretType = findSecret(null, ((TextComment) comment).getText(), ctx);
                     if (secretType != null) {
                         return comment.withMarkers(comment.getMarkers().
                                 computeByType(new SearchResult(randomId(), secretType), (s1, s2) -> s1 == null ? s2 : s1));
@@ -129,7 +129,7 @@ public class FindSecrets extends Recipe {
                 return literal;
             }
             if (literal.getValue() != null) {
-                String secretType = getSecret(null, literal.getValue().toString(), ctx);
+                String secretType = findSecret(null, literal.getValue().toString(), ctx);
                 if (secretType != null) {
                     return SearchResult.found(literal, secretType);
                 }

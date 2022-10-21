@@ -14,8 +14,8 @@ public class JwtSecretMatcherGroup implements SecretMatcherGroup {
     public SecretMatcher[] secretMatchers() {
         return new SecretMatcher[]{
                 SecretMatcher.builder("JSON Web Token")
-                        .valuePattern("eyJ[A-Za-z0-9-_=]+\\.[A-Za-z0-9-_=]+\\.?[A-Za-z0-9-_.+/=]*?")
-                        .valueVerifier((k, v, ctx) -> {
+                        .valueRegex("eyJ[A-Za-z0-9-_=]+\\.[A-Za-z0-9-_=]+\\.?[A-Za-z0-9-_.+/=]*?")
+                        .secretValidator((k, v, ctx) -> {
                             if (v != null) {
                                 try {
                                     JWTParser.parse(v);

@@ -8,27 +8,27 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class SecretMatcher {
-    private final String name;
+    private final String secretName;
     @Nullable
     private final Pattern keyPattern;
     @Nullable
     private final Pattern valuePattern;
     private final SecretValidator secretValidator;
 
-    private SecretMatcher(String name, @Nullable Pattern keyPattern, @Nullable Pattern valuePattern, SecretValidator secretValidator) {
-        this.name = name;
+    private SecretMatcher(String secretName, @Nullable Pattern keyPattern, @Nullable Pattern valuePattern, SecretValidator secretValidator) {
+        this.secretName = secretName;
         this.keyPattern = keyPattern;
         this.valuePattern = valuePattern;
         this.secretValidator = secretValidator;
     }
 
-    public String getName() {
-        return name;
+    public String getSecretName() {
+        return secretName;
     }
 
     @FunctionalInterface
     interface SecretValidator {
-        boolean isValid(@Nullable String key, @Nullable String value, ExecutionContext ctx);
+        boolean isSecret(@Nullable String key, @Nullable String value, ExecutionContext ctx);
     }
     
     @Nullable
@@ -48,50 +48,50 @@ public class SecretMatcher {
             }
         }
         if (keyPattern != null && valuePattern != null) {
-            if (foundKey != null && foundValue != null && secretValidator.isValid(foundKey, foundValue, ctx)) {
-                return name;
+            if (foundKey != null && foundValue != null && secretValidator.isSecret(foundKey, foundValue, ctx)) {
+                return secretName;
             }
-        } else if (keyPattern != null && foundKey != null && secretValidator.isValid(foundKey, null, ctx)) {
-            return name;
-        } else if (valuePattern != null && foundValue != null && secretValidator.isValid(null, foundValue, ctx)) {
-            return name;
+        } else if (keyPattern != null && foundKey != null && secretValidator.isSecret(foundKey, null, ctx)) {
+            return secretName;
+        } else if (valuePattern != null && foundValue != null && secretValidator.isSecret(null, foundValue, ctx)) {
+            return secretName;
         }
         return null;
     }
 
-    public static Builder builder(String name) {
-        return new Builder(name);
+    public static Builder builder(String secretName) {
+        return new Builder(secretName);
     }
 
     public static class Builder {
-        private final String name;
+        private final String secretName;
         private Pattern keyPattern = null;
         private Pattern valuePattern = null;
         private SecretValidator secretValidator = (key, value, ctx) -> true;
 
-        Builder(String name) {
-            this.name = name;
+        Builder(String secretName) {
+            this.secretName = secretName;
         }
 
         SecretMatcher build() {
-            return new SecretMatcher(name, keyPattern, valuePattern, secretValidator);
+            return new SecretMatcher(secretName, keyPattern, valuePattern, secretValidator);
         }
 
-        Builder keyPattern(String keyPattern) {
-            if (!StringUtils.isNullOrEmpty(keyPattern)) {
-                this.keyPattern = Pattern.compile(keyPattern);
+        Builder keyRegex(String keyRegex) {
+            if (!StringUtils.isNullOrEmpty(keyRegex)) {
+                this.keyPattern = Pattern.compile(keyRegex);
             }
             return this;
         }
 
-        Builder valuePattern(String valuePattern) {
-            if (!StringUtils.isNullOrEmpty(valuePattern)) {
-                this.valuePattern = Pattern.compile(valuePattern);
+        Builder valueRegex(String valueRegex) {
+            if (!StringUtils.isNullOrEmpty(valueRegex)) {
+                this.valuePattern = Pattern.compile(valueRegex);
             }
             return this;
         }
 
-        Builder valueVerifier(SecretValidator secretValidator) {
+        Builder secretValidator(SecretValidator secretValidator) {
             this.secretValidator = secretValidator;
             return this;
         }
