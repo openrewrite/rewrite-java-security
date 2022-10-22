@@ -96,7 +96,7 @@ dependencies {
 
     implementation("org.openrewrite:rewrite-java:${rewriteVersion}")
     implementation("org.openrewrite:rewrite-maven:${rewriteVersion}")
-    runtimeOnly("org.openrewrite:rewrite-java-11:${rewriteVersion}")
+    runtimeOnly("org.openrewrite:rewrite-java-17:${rewriteVersion}")
 
     runtimeOnly("org.springframework:spring-context:latest.release")
     runtimeOnly("org.springframework.security:spring-security-config:latest.release")
