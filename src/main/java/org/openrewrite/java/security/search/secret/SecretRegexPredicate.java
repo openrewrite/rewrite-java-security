@@ -12,7 +12,6 @@ public class SecretRegexPredicate implements SecretPredicate<String, String, Exe
     public SecretRegexPredicate(@Nullable String keyRegex,@Nullable String valueRegex) {
         this.keyPattern = keyRegex != null ? Pattern.compile(keyRegex) : null;
         this.valuePattern = valueRegex != null ? Pattern.compile(valueRegex) : null;
-
     }
 
     @Override

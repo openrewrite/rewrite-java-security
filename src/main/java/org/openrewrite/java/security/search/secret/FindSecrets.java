@@ -45,6 +45,9 @@ public class FindSecrets extends Recipe {
         return ListUtils.map(before, sf -> {
             sf = (SourceFile) findJavaTextVisitor.visit(sf, ctx);
             sf = (SourceFile) findYamlSecretVisitor.visit(sf, ctx);
+            // TODO: Add PropertiesVisitor
+            // TODO: Add XmlParser
+            // TODO: Add PlainTextParser
             return sf;
         });
     }
