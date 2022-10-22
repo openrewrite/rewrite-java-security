@@ -26,32 +26,13 @@ public class JwtSecretPredicateGroup implements SecretPredicateGroup {
             @Override
             public boolean isSecret(@Nullable String key, @Nullable String value, ExecutionContext ctx) {
                 if (value != null && valuePattern.matcher(value).find()) {
-                    String[] parts = value.split("\\.");
-
-                    for (int i = 0; i < parts.length; i++) {
-                        String part = new String(parts[i].getBytes(), StandardCharsets.US_ASCII);
-                        int m = part.length() % 4;
-                        if (m == 1) {
-                            return false;
-                        } else if (m == 2) {
-                            part += "==";
-                        } else if (m == 3) {
-                            part += "===";
-                        }
-                        byte[] b64Encoded = Base64.getUrlDecoder().decode(part);
-                        if (i < 2) {
-
-                        }
-                    }
-
-
                     try {
                         JWTParser.parse(value);
                     } catch (ParseException e) {
                         return false;
                     }
+                    return true;
                 }
-
                 return false;
             }
         };
