@@ -1,8 +1,9 @@
 import com.github.jk1.license.LicenseReportExtension
 import nebula.plugin.contacts.Contact
 import nebula.plugin.contacts.ContactsExtension
-//import nl.javadude.gradle.plugins.license.LicenseExtension
+import nl.javadude.gradle.plugins.license.LicenseExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.util.*
 
 plugins {
     `java-library`
@@ -14,7 +15,7 @@ plugins {
     id("nebula.release") version "15.3.1"
     id("io.github.gradle-nexus.publish-plugin") version "1.0.0"
 
-//    id("com.github.hierynomus.license") version "0.16.1"
+    id("com.github.hierynomus.license") version "0.16.1"
     id("com.github.jk1.dependency-license-report") version "1.16"
     id("org.owasp.dependencycheck") version "latest.release"
 
@@ -33,6 +34,12 @@ apply(plugin = "nebula.publish-verification")
 
 rewrite {
     activeRecipe("org.openrewrite.java.format.AutoFormat", "org.openrewrite.java.cleanup.Cleanup")
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
 }
 
 configure<nebula.plugin.release.git.base.ReleasePluginExtension> {
@@ -96,8 +103,11 @@ dependencies {
 
     implementation("org.openrewrite:rewrite-java:${rewriteVersion}")
     implementation("org.openrewrite:rewrite-maven:${rewriteVersion}")
-    runtimeOnly("org.openrewrite:rewrite-java-17:${rewriteVersion}")
+    implementation("org.openrewrite:rewrite-yaml:${rewriteVersion}")
+    implementation("org.openrewrite:rewrite-xml:${rewriteVersion}")
+    implementation("com.nimbusds:nimbus-jose-jwt:9.+")
 
+    runtimeOnly("org.openrewrite:rewrite-java-17:${rewriteVersion}")
     runtimeOnly("org.springframework:spring-context:latest.release")
     runtimeOnly("org.springframework.security:spring-security-config:latest.release")
     runtimeOnly("org.springframework.security:spring-security-web:latest.release")
@@ -154,7 +164,6 @@ tasks.named<JavaCompile>("compileJava") {
     options.compilerArgs.add("-parameters")
 }
 
-
 configure<ContactsExtension> {
     val j = Contact("team@moderne.io")
     j.moniker("Team Moderne")
@@ -162,14 +171,14 @@ configure<ContactsExtension> {
     people["team@moderne.io"] = j
 }
 
-//configure<LicenseExtension> {
-//    ext.set("year", Calendar.getInstance().get(Calendar.YEAR))
-//    skipExistingHeaders = true
-//    header = project.rootProject.file("gradle/licenseHeader.txt")
-//    mapping(mapOf("kt" to "SLASHSTAR_STYLE", "java" to "SLASHSTAR_STYLE"))
-//    exclude("src/main/resources/*.java")
-//    strictCheck = true
-//}
+configure<LicenseExtension> {
+    ext.set("year", Calendar.getInstance().get(Calendar.YEAR))
+    skipExistingHeaders = true
+    header = project.rootProject.file("gradle/licenseHeader.txt")
+    mapping(mapOf("kt" to "SLASHSTAR_STYLE", "java" to "SLASHSTAR_STYLE"))
+    exclude("src/main/resources/*.java")
+    strictCheck = true
+}
 
 configure<LicenseReportExtension> {
     renderers = arrayOf(com.github.jk1.license.render.CsvReportRenderer())
