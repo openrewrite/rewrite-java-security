@@ -2,7 +2,6 @@ import com.github.jk1.license.LicenseReportExtension
 import nebula.plugin.contacts.Contact
 import nebula.plugin.contacts.ContactsExtension
 import nl.javadude.gradle.plugins.license.LicenseExtension
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.*
 
 plugins {
@@ -10,7 +9,6 @@ plugins {
     `maven-publish`
     signing
 
-    id("org.jetbrains.kotlin.jvm") version "1.6.21"
     id("nebula.maven-resolved-dependencies") version "17.3.2"
     id("nebula.release") version "15.3.1"
     id("io.github.gradle-nexus.publish-plugin") version "1.0.0"
@@ -114,13 +112,6 @@ dependencies {
     runtimeOnly("org.springframework.security:spring-security-web:latest.release")
     runtimeOnly("jakarta.servlet:jakarta.servlet-api:4.+")
 
-    // eliminates "unknown enum constant DeprecationLevel.WARNING" warnings from the build log
-    // see https://github.com/gradle/kotlin-dsl-samples/issues/1301 for why (okhttp is leaking parts of kotlin stdlib)
-    compileOnly(kotlin("stdlib"))
-
-    testImplementation(kotlin("reflect"))
-    testImplementation(kotlin("stdlib"))
-
     testImplementation("org.junit.jupiter:junit-jupiter-api:latest.release")
     testImplementation("org.junit.jupiter:junit-jupiter-params:latest.release")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:latest.release")
@@ -132,8 +123,7 @@ dependencies {
 
     testImplementation("org.assertj:assertj-core:latest.release")
 
-    testRuntimeOnly("org.openrewrite:rewrite-java-11:${rewriteVersion}")
-    testRuntimeOnly("org.openrewrite:rewrite-java-8:${rewriteVersion}")
+    testRuntimeOnly("org.openrewrite:rewrite-java-17:${rewriteVersion}")
     testRuntimeOnly("junit:junit:latest.release")
 
     testRuntimeOnly("com.fasterxml.jackson.core:jackson-databind:2.13.4")
@@ -145,12 +135,6 @@ java {
     }
 }
 
-tasks.withType(KotlinCompile::class.java).configureEach {
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
-}
-
 tasks.named<Test>("test") {
     useJUnitPlatform()
     jvmArgs = listOf("-XX:+UnlockDiagnosticVMOptions", "-XX:+ShowHiddenFrames")
@@ -158,9 +142,6 @@ tasks.named<Test>("test") {
 
 tasks.named<JavaCompile>("compileJava") {
     options.release.set(8)
-    sourceCompatibility = "1.8"
-    targetCompatibility = "1.8"
-
     options.encoding = "UTF-8"
     options.compilerArgs.add("-parameters")
 }

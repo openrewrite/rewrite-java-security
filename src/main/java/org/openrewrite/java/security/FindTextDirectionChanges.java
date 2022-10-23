@@ -24,12 +24,11 @@ import org.openrewrite.java.tree.Comment;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.java.tree.Space;
+import org.openrewrite.marker.SearchResult;
 
 import java.time.Duration;
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class FindTextDirectionChanges extends Recipe {
 
@@ -42,13 +41,13 @@ public class FindTextDirectionChanges extends Recipe {
     public Duration getEstimatedEffortPerOccurrence() {
         return Duration.ofMinutes(5);
     }
+
     public static final char LRI = '\u2066';
     public static final char RLI = '\u2067';
     public static final char FSI = '\u2068';
     public static final char PDF = '\u202C';
     public static final char PDI = '\u2069';
-    public static final Set<Character> sneakyCodes = Stream.of(LRE, RLE, LRO, RLO, LRI, RLI, FSI, PDF, PDI)
-            .collect(Collectors.toSet());
+    public static final Collection<Character> sneakyCodes = Arrays.asList(LRE, RLE, LRO, RLO, LRI, RLI, FSI, PDF, PDI);
     public static final Map<Character, String> charToText = new HashMap<>();
 
     static {
@@ -71,11 +70,11 @@ public class FindTextDirectionChanges extends Recipe {
     @Override
     public String getDescription() {
         return "Finds unicode control characters which can change the direction text is displayed in. " +
-                "These control characters can alter how source code is presented to a human reader without affecting its interpretation by tools like compilers. " +
-                "So a malicious patch could pass code review while introducing vulnerabilities. " +
-                "Note that text direction-changing unicode control characters aren't inherently malicious. " +
-                "These characters can appear for legitimate reasons in code written in or dealing with right-to-left languages. " +
-                "See: https://trojansource.codes/";
+               "These control characters can alter how source code is presented to a human reader without affecting its interpretation by tools like compilers. " +
+               "So a malicious patch could pass code review while introducing vulnerabilities. " +
+               "Note that text direction-changing unicode control characters aren't inherently malicious. " +
+               "These characters can appear for legitimate reasons in code written in or dealing with right-to-left languages. " +
+               "See: https://trojansource.codes/";
     }
 
     @Override
@@ -90,11 +89,11 @@ public class FindTextDirectionChanges extends Recipe {
             @Override
             public @Nullable J visit(@Nullable Tree tree, ExecutionContext context) {
                 J j = super.visit(tree, context);
-                Object foundCodes = getCursor().pollMessage("FOUND_SNEAKY_CODES");
+                Object foundCodes = getCursor().pollMessage("foundSneakyCodes");
                 if (j != null && foundCodes != null) {
                     //noinspection unchecked
-                    j = j.withMarkers(j.getMarkers().searchResult("Found text-direction altering unicode control characters: " +
-                            String.join(",", (Set<String>) foundCodes)));
+                    j = SearchResult.found(j, "Found text-direction altering unicode control characters: " +
+                                              String.join(",", (Set<String>) foundCodes));
                 }
 
                 return j;
@@ -119,7 +118,7 @@ public class FindTextDirectionChanges extends Recipe {
                     foundCodes.addAll(listSneakyCodes(s.getComments(), Comment::getSuffix));
                 }
                 if (foundCodes != null) {
-                    getCursor().putMessage("FOUND_SNEAKY_CODES", foundCodes);
+                    getCursor().putMessage("foundSneakyCodes", foundCodes);
                 }
                 return s;
             }
@@ -128,8 +127,8 @@ public class FindTextDirectionChanges extends Recipe {
             public J.Literal visitLiteral(J.Literal literal, ExecutionContext context) {
                 J.Literal l = super.visitLiteral(literal, context);
                 if (l.getType() == JavaType.Primitive.String && l.getValueSource() != null && containsSneakyCodes(l.getValueSource())) {
-                    l = l.withMarkers(l.getMarkers().searchResult("Found text-direction altering unicode control characters: " +
-                            String.join(",", listSneakyCodes(l.getValueSource()))));
+                    l = SearchResult.found(l, "Found text-direction altering unicode control characters: " +
+                                              String.join(",", listSneakyCodes(l.getValueSource())));
                 }
                 return l;
             }
@@ -146,9 +145,13 @@ public class FindTextDirectionChanges extends Recipe {
     }
 
     private static <T> boolean containsSneakyCodes(Collection<T> collection, Function<T, String> conversion) {
-        return collection.stream()
-                .map(conversion)
-                .anyMatch(FindTextDirectionChanges::containsSneakyCodes);
+        for (T t : collection) {
+            String s = conversion.apply(t);
+            if (containsSneakyCodes(s)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static Set<String> listSneakyCodes(String s) {
@@ -162,9 +165,11 @@ public class FindTextDirectionChanges extends Recipe {
     }
 
     private static <T> Set<String> listSneakyCodes(Collection<T> collection, Function<T, String> conversion) {
-        return collection.stream()
-                .map(conversion)
-                .flatMap(suffix -> listSneakyCodes(suffix).stream())
-                .collect(Collectors.toSet());
+        Set<String> set = new HashSet<>();
+        for (T t : collection) {
+            String suffix = conversion.apply(t);
+            set.addAll(listSneakyCodes(suffix));
+        }
+        return set;
     }
 }
