@@ -4,9 +4,9 @@ import com.nimbusds.jwt.JWTParser;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.internal.lang.Nullable;
 
-import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
-import java.util.Base64;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -20,9 +20,10 @@ public class JwtSecretPredicateGroup implements SecretPredicateGroup {
     }
 
     @Override
-    public SecretPredicate<String, String, ExecutionContext> secretPredicate() {
-        return new SecretPredicate<String, String, ExecutionContext>() {
+    public List<SecretPredicate<String, String, ExecutionContext>> secretPredicates() {
+        return Collections.singletonList(new SecretPredicate<String, String, ExecutionContext>() {
             private final Pattern valuePattern = Pattern.compile("eyJ[A-Za-z0-9-_=]+\\.[A-Za-z0-9-_=]+\\.?[A-Za-z0-9-_.+/=]*?");
+
             @Override
             public boolean isSecret(@Nullable String key, @Nullable String value, ExecutionContext ctx) {
                 if (value != null && valuePattern.matcher(value).find()) {
@@ -35,6 +36,6 @@ public class JwtSecretPredicateGroup implements SecretPredicateGroup {
                 }
                 return false;
             }
-        };
+        });
     }
 }

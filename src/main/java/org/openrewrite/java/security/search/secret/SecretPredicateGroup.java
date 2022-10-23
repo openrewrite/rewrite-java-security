@@ -2,10 +2,12 @@ package org.openrewrite.java.security.search.secret;
 
 import org.openrewrite.ExecutionContext;
 
+import java.util.List;
+
 public interface SecretPredicateGroup {
     default String getName(){
         return "IDK";
     }
 
-    SecretPredicate<String, String, ExecutionContext> secretPredicate();
+    List<SecretPredicate<String, String, ExecutionContext>> secretPredicates();
 }

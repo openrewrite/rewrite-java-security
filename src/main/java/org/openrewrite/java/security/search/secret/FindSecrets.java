@@ -68,8 +68,10 @@ public class FindSecrets extends Recipe {
     @Nullable
     private String findSecret(@Nullable String key, @Nullable String value, ExecutionContext ctx){
         for (SecretPredicateGroup secretPredicateGroup : SECRET_MATCHER_GROUPS) {
-            if (secretPredicateGroup.secretPredicate().isSecret(key, value, ctx))  {
-                return secretPredicateGroup.getName();
+            for (SecretPredicate<String, String, ExecutionContext> secretPredicate : secretPredicateGroup.secretPredicates()) {
+                if (secretPredicate.isSecret(key, value, ctx))  {
+                    return secretPredicateGroup.getName();
+                }
             }
         }
         return null;

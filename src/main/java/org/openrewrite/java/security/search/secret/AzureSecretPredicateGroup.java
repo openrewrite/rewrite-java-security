@@ -2,6 +2,9 @@ package org.openrewrite.java.security.search.secret;
 
 import org.openrewrite.ExecutionContext;
 
+import java.util.Collections;
+import java.util.List;
+
 class AzureSecretPredicateGroup implements SecretPredicateGroup {
 
     @Override
@@ -10,7 +13,7 @@ class AzureSecretPredicateGroup implements SecretPredicateGroup {
     }
 
     @Override
-    public SecretPredicate<String, String, ExecutionContext> secretPredicate() {
-        return new SecretRegexPredicate("AccountKey", "[a-zA-Z0-9+\\/=]{88}");
+    public List<SecretPredicate<String, String, ExecutionContext>> secretPredicates() {
+        return Collections.singletonList(new SecretRegexPredicate("AccountKey", "[a-zA-Z0-9+\\/=]{88}"));
     }
 }
