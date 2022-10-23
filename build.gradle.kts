@@ -98,10 +98,9 @@ dependencies {
     implementation("org.openrewrite:rewrite-maven:${rewriteVersion}")
     implementation("org.openrewrite:rewrite-yaml:${rewriteVersion}")
     implementation("org.openrewrite:rewrite-xml:${rewriteVersion}")
-    runtimeOnly("org.openrewrite:rewrite-java-11:${rewriteVersion}")
     implementation("com.nimbusds:nimbus-jose-jwt:9.+")
 
-
+    runtimeOnly("org.openrewrite:rewrite-java-17:${rewriteVersion}")
     runtimeOnly("org.springframework:spring-context:latest.release")
     runtimeOnly("org.springframework.security:spring-security-config:latest.release")
     runtimeOnly("org.springframework.security:spring-security-web:latest.release")
@@ -157,7 +156,6 @@ tasks.named<JavaCompile>("compileJava") {
     options.encoding = "UTF-8"
     options.compilerArgs.add("-parameters")
 }
-
 
 configure<ContactsExtension> {
     val j = Contact("team@moderne.io")
