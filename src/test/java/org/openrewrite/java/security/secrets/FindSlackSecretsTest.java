@@ -29,17 +29,17 @@ public class FindSlackSecretsTest implements RewriteTest {
     }
 
     @Test
-    void slackWebHook() {
+    void slackWebhook() {
         rewriteRun(
           //language=yaml
           yaml(
             """
               slack:
-                webHook: "https://hooks.slack.com/services/Txxxxxxxx/Bxxxxxxxx/xxxxxxxxxxxxxxxxxxxxxxxx"
+                webhook: "https://hooks.slack.com/services/Txxxxxxxx/Bxxxxxxxx/xxxxxxxxxxxxxxxxxxxxxxxx"
               """,
             """
               slack:
-                ~~(Slack WebHook)~~>webHook: "https://hooks.slack.com/services/Txxxxxxxx/Bxxxxxxxx/xxxxxxxxxxxxxxxxxxxxxxxx"
+                ~~(Slack)~~>webhook: "https://hooks.slack.com/services/Txxxxxxxx/Bxxxxxxxx/xxxxxxxxxxxxxxxxxxxxxxxx"
               """
           )
         );

@@ -49,10 +49,12 @@ public class FindSlackSecrets extends Recipe {
             @Override
             protected boolean isSecret(@Nullable String key, @Nullable String value, ExecutionContext ctx) {
                 if (value != null && valuePattern.matcher(value).find()) {
-                    HttpSender httpSender = HttpSenderExecutionContextView.view(ctx).getHttpSender();
-                    try(HttpSender.Response response = httpSender.send(httpSender.post(value).build())) {
-                        return response.getCode() != 404;
-                    }
+//                    HttpSender httpSender = HttpSenderExecutionContextView.view(ctx).getHttpSender();
+//                    try(HttpSender.Response response = httpSender.send(httpSender.post(value).build())) {
+//                        return response.getCode() != 404;
+//                    }
+                    // TODO make an HTTP request to check
+                    return true;
                 }
                 return false;
             }

@@ -27,6 +27,7 @@ import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.format.AutoFormatVisitor;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
+import org.openrewrite.java.tree.Space;
 import org.openrewrite.java.tree.TypeUtils;
 
 import java.nio.file.Paths;
@@ -88,7 +89,9 @@ public class GenerateWebSecurityConfigurerAdapter {
 
                 J.Package pkg = springBootApp.getPackageDeclaration();
                 if (pkg != null) {
-                    generated = generated.withPackageDeclaration(pkg.withId(randomId()));
+                    generated = generated
+                            .withPackageDeclaration(pkg.withId(randomId()))
+                            .withPrefix(Space.EMPTY);
                 }
 
                 generated = generated.withMarkers(springBootApp.getMarkers());
