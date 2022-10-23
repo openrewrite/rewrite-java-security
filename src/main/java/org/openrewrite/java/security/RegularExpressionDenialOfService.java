@@ -20,16 +20,31 @@ import org.openrewrite.ExecutionContext;
 import org.openrewrite.Incubating;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
+import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
 
+import java.time.Duration;
+
 @Incubating(since = "1.15.0")
-public class RegularExpressionDenialOfService extends Recipe  {
+public class RegularExpressionDenialOfService extends Recipe {
 
     @Override
     public String getDisplayName() {
         return "Regular Expression Denial of Service (ReDOS)";
+    }
+
+    @Override
+    public String getDescription() {
+        return "ReDoS is a Denial of Service attack that exploits the fact that most Regular Expression implementations may reach extreme situations that cause them to " +
+               "work very slowly (exponentially related to input size). " +
+               "See the OWASP description of this attack [here](https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS) for more details.";
+    }
+
+    @Override
+    public Duration getEstimatedEffortPerOccurrence() {
+        return Duration.ofMinutes(15);
     }
 
     @Override
@@ -100,9 +115,12 @@ public class RegularExpressionDenialOfService extends Recipe  {
         public J.Literal visitLiteral(J.Literal literal, P p) {
             if (literal.getType() == JavaType.Primitive.String) {
                 for (KnownVulnerableRegex regex : KnownVulnerableRegex.values()) {
-                    if (literal.getValue().toString().contains(regex.bad)) {
+                    if (literal.getValue() != null &&
+                        literal.getValue().toString().contains(regex.bad)) {
+
                         String valueBad = literal.getValue().toString();
-                        String replacement = valueBad.replace(regex.bad, regex.good);
+                        String replacement = valueBad.replace(regex.bad, regex.good
+                                .replace("\\", "\\\\"));
                         return literal.withValue(replacement).withValueSource("\"" + replacement + "\"");
                     }
                 }

@@ -21,12 +21,13 @@ import org.openrewrite.test.RecipeSpec
 import org.openrewrite.test.RewriteTest
 
 class RegularExpressionDenialOfServiceTest: RewriteTest {
+
     override fun defaults(spec: RecipeSpec) {
         spec.recipe(RegularExpressionDenialOfService())
     }
 
     @Test
-    fun `fix ReDOS for simple string`() = rewriteRun(
+    fun simpleString() = rewriteRun(
         java(
             """
             import java.util.regex.Pattern;
