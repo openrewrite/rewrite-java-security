@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 the original author or authors.
+ * Copyright 2022 the original author or authors.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,34 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.openrewrite.java.security.search.secret;
+package org.openrewrite.java.security.secrets;
 
 import org.junit.jupiter.api.Test;
+import org.openrewrite.config.Environment;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
-import java.util.List;
-
 import static org.openrewrite.yaml.Assertions.yaml;
 
-class AzureSecretPredicateGroupTest implements RewriteTest {
+class FindAzureSecretsTest implements RewriteTest {
+
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new FindSecrets(List.of("Azure Storage Account access key")));
+        spec.recipe(Environment.builder()
+          .scanRuntimeClasspath("org.openrewrite.java.security.secrets")
+          .build()
+          .activateRecipes("org.openrewrite.java.security.secrets.FindAzureSecrets"));
     }
+
     @Test
     void findYamlSecret() {
         rewriteRun(
-            //language=yaml
-            yaml(
+          //language=yaml
+          yaml(
             """
-               root:
-                 AccountKey: lJzRc1YdHaAA2KCNJJ1tkYwF/+mKK6Ygw0NGe170Xu592euJv2wYUtBlV8z+qnlcNQSnIYVTkLWntUO1F8j8rQ==
-               """,
-               """
-               root:
-                 ~~(Azure Storage Account access key)~~>AccountKey: lJzRc1YdHaAA2KCNJJ1tkYwF/+mKK6Ygw0NGe170Xu592euJv2wYUtBlV8z+qnlcNQSnIYVTkLWntUO1F8j8rQ==
-               """)
+              root:
+                AccountKey: lJzRc1YdHaAA2KCNJJ1tkYwF/+mKK6Ygw0NGe170Xu592euJv2wYUtBlV8z+qnlcNQSnIYVTkLWntUO1F8j8rQ==
+              """,
+            """
+              root:
+                ~~(Azure access key)~~>AccountKey: lJzRc1YdHaAA2KCNJJ1tkYwF/+mKK6Ygw0NGe170Xu592euJv2wYUtBlV8z+qnlcNQSnIYVTkLWntUO1F8j8rQ==
+              """)
         );
     }
 }
