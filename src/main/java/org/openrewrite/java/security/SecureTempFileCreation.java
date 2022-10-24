@@ -26,6 +26,8 @@ import org.openrewrite.java.tree.JavaType;
 
 import java.time.Duration;
 
+import static java.util.Objects.requireNonNull;
+
 public class SecureTempFileCreation extends Recipe {
     private static final MethodMatcher matcher = new MethodMatcher("java.io.File createTempFile(..)");
 
@@ -64,7 +66,7 @@ public class SecureTempFileCreation extends Recipe {
             public J.Block visitBlock(J.Block block, ExecutionContext executionContext) {
                 J.Block createTempDirectoryFix = (J.Block) new UseFilesCreateTempDirectory()
                         .getVisitor()
-                        .visitNonNull(block, executionContext, getCursor());
+                        .visitNonNull(block, executionContext, requireNonNull(getCursor().getParent()));
                 if (createTempDirectoryFix != block) {
                     // If the issue could be fixed by the UseFilesCreateTempDirectory's visitor
                     // then this visitor should not be applied.
