@@ -17,18 +17,19 @@ package org.openrewrite.java.security
 
 import org.junit.jupiter.api.Test
 import org.openrewrite.Issue
-import org.openrewrite.Recipe
-import org.openrewrite.java.JavaRecipeTest
+import org.openrewrite.java.Assertions.java
+import org.openrewrite.test.RecipeSpec
+import org.openrewrite.test.RewriteTest
 
-class SecureTempFileCreationTest : JavaRecipeTest {
+class SecureTempFileCreationTest : RewriteTest {
 
-
-    override val recipe: Recipe
-        get() = SecureTempFileCreation()
+    override fun defaults(spec: RecipeSpec) {
+        spec.recipe(SecureTempFileCreation())
+    }
 
     @Test
-    fun twoArgCreateTempFile() = assertChanged(
-        before = """
+    fun twoArgCreateTempFile() = rewriteRun(
+        java("""
             import java.io.File;
             import java.io.IOException;
 
@@ -38,7 +39,7 @@ class SecureTempFileCreationTest : JavaRecipeTest {
                 }
             }
         """,
-        after = """
+            """
             import java.io.File;
             import java.io.IOException;
             import java.nio.file.Files;
@@ -48,12 +49,12 @@ class SecureTempFileCreationTest : JavaRecipeTest {
                     File tempDir = Files.createTempFile("hello", "world").toFile();
                 }
             }
-        """
+        """)
     )
 
     @Test
-    fun threeArgCreateTempFile() = assertChanged(
-        before = """
+    fun threeArgCreateTempFile() = rewriteRun(
+        java("""
             import java.io.File;
             import java.io.IOException;
 
@@ -63,7 +64,7 @@ class SecureTempFileCreationTest : JavaRecipeTest {
                 }
             }
         """,
-        after = """
+            """
             import java.io.File;
             import java.io.IOException;
             import java.nio.file.Files;
@@ -73,26 +74,38 @@ class SecureTempFileCreationTest : JavaRecipeTest {
                     File tempDir = Files.createTempFile(new File(".").toPath(), "hello", "world").toFile();
                 }
             }
-        """
+        """)
     )
 
     @Test
-    fun threeArgWithNullPath() =  assertChanged(
-        before = """
+    fun insideTryCatch() =  rewriteRun(
+        java("""
             import java.io.File;
-
+            
             class T {
-                File temp = File.createTempFile("random", "file", null);
+                private static void foo(File location) {
+                    try {
+                        File temp = File.createTempFile("random", "file", location);
+                    } catch (Exception e) {
+                        File temp = File.createTempFile("random", "file", null);
+                    }
+                }
             }
         """,
-        after = """
+            """
             import java.io.File;
             import java.nio.file.Files;
-
+            
             class T {
-                File temp = Files.createTempFile("random", "file").toFile();
+                private static void foo(File location) {
+                    try {
+                        File temp = Files.createTempFile(location.toPath(), "random", "file").toFile();
+                    } catch (Exception e) {
+                        File temp = Files.createTempFile("random", "file").toFile();
+                    }
+                }
             }
-        """
+        """)
     )
 
     /**
@@ -100,8 +113,8 @@ class SecureTempFileCreationTest : JavaRecipeTest {
      */
     @Test
     @Issue("https://github.com/openrewrite/rewrite-java-security/issues/9")
-    fun `do not fix temporary directory hijacking`() = assertUnchanged(
-        before = """
+    fun `do not fix temporary directory hijacking`() = rewriteRun(
+        java("""
             class A {
                 void b() {
                     File tempDir = File.createTempFile("abc", "def");
@@ -110,6 +123,6 @@ class SecureTempFileCreationTest : JavaRecipeTest {
                     System.out.println(tempDir.getAbsolutePath());
                 }
             }
-        """
+        """)
     )
 }
