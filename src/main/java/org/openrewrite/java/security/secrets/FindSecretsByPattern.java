@@ -30,7 +30,7 @@ public class FindSecretsByPattern extends Recipe {
             description = "The type of secret that this recipe is looking for.",
             example = "AWS Access Key"
     )
-    String name;
+    String secretName;
 
     @Option(displayName = "Key pattern",
             description = "A regular expression to match a 'key' against. For example, a key ",
@@ -46,8 +46,8 @@ public class FindSecretsByPattern extends Recipe {
     )
     String valuePattern;
 
-    public FindSecretsByPattern(String name, @Nullable String keyPattern, String valuePattern) {
-        this.name = name;
+    public FindSecretsByPattern(String secretName, @Nullable String keyPattern, String valuePattern) {
+        this.secretName = secretName;
         this.keyPattern = keyPattern;
         this.valuePattern = valuePattern;
     }
@@ -91,7 +91,7 @@ public class FindSecretsByPattern extends Recipe {
         Pattern keyPatternCompiled = keyPattern == null ? null : Pattern.compile(keyPattern);
         Pattern valuePatternCompiled = Pattern.compile(valuePattern);
 
-        return new FindSecretsVisitor(name) {
+        return new FindSecretsVisitor(secretName) {
             @Override
             protected boolean isSecret(@Nullable String key, @Nullable String value, ExecutionContext ctx) {
                 return (keyPatternCompiled == null || (key != null && keyPatternCompiled.matcher(key).find())) &&
