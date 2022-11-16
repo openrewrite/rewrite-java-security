@@ -107,16 +107,16 @@ dependencies {
     implementation("com.nimbusds:nimbus-jose-jwt:9.+")
 
     runtimeOnly("org.openrewrite:rewrite-java-17")
-    runtimeOnly("org.springframework:spring-context:latest.release")
-    runtimeOnly("org.springframework.security:spring-security-config:latest.release")
-    runtimeOnly("org.springframework.security:spring-security-web:latest.release")
+    runtimeOnly("org.springframework:spring-context:5.+")
+    runtimeOnly("org.springframework.security:spring-security-config:5.+")
+    runtimeOnly("org.springframework.security:spring-security-web:5.+")
     runtimeOnly("jakarta.servlet:jakarta.servlet-api:4.+")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:latest.release")
     testImplementation("org.junit.jupiter:junit-jupiter-params:latest.release")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:latest.release")
 
-    testRuntimeOnly("org.springframework.boot:spring-boot-starter:latest.release")
+    testRuntimeOnly("org.springframework.boot:spring-boot-starter:2.+")
 
     testImplementation("org.openrewrite:rewrite-test:${rewriteVersion}")
     testImplementation("org.openrewrite:rewrite-java-tck:${rewriteVersion}")
