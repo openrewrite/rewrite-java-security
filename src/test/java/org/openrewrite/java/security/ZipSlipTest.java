@@ -76,6 +76,7 @@ class ZipSlipTest implements RewriteTest {
 
     @Test
     void fixesZipSlipFileWhenRuntimeExceptionIsRequired() {
+        //language=java
         rewriteRun(
           java(
             """
@@ -329,6 +330,7 @@ class ZipSlipTest implements RewriteTest {
 
     @Test
     void safeZipSlipPathAbsoluteNormalizeStartsWith() {
+        //language=java
         rewriteRun(
           java(
             """
