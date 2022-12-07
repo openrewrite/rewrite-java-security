@@ -15,21 +15,56 @@
  */
 package org.openrewrite.java.security;
 
+import lombok.AllArgsConstructor;
 import org.openrewrite.ExecutionContext;
+import org.openrewrite.Option;
 import org.openrewrite.Recipe;
 import org.openrewrite.java.JavaIsoVisitor;
-import org.openrewrite.java.JavaTemplate;
-import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.search.UsesMethod;
 import org.openrewrite.java.tree.J;
-import org.openrewrite.java.tree.JavaType;
 
+import java.nio.file.PathMatcher;
 import java.time.Duration;
 
-import static java.util.Objects.requireNonNull;
-
+@AllArgsConstructor
 public class SecureTempFileCreation extends Recipe {
-    private static final MethodMatcher matcher = new MethodMatcher("java.io.File createTempFile(..)");
+
+    @AllArgsConstructor
+    enum Target {
+        AllSource(Target.ALL_SOURCE),
+        AllSourceWhenNonTestDetected(Target.ALL_SOURCE_IF_DETECTED),
+        NonTestSource(Target.NON_TEST_SOURCE);
+
+        static final String ALL_SOURCE = "All Source";
+        static final String ALL_SOURCE_IF_DETECTED = "All Source if detected in Non Test Source";
+        static final String NON_TEST_SOURCE = "Non-Test Source";
+
+        private static Target fromString(String target) {
+            switch (target) {
+                case ALL_SOURCE:
+                    return AllSource;
+                case ALL_SOURCE_IF_DETECTED:
+                    return AllSourceWhenNonTestDetected;
+                case NON_TEST_SOURCE:
+                    return NonTestSource;
+                default:
+                    throw new IllegalArgumentException("Unknown target: " + target);
+            }
+        }
+
+        private final String description;
+    }
+
+    @Option(
+            displayName = "Target",
+            valid = {
+                    Target.ALL_SOURCE,
+                    Target.ALL_SOURCE_IF_DETECTED,
+                    Target.NON_TEST_SOURCE
+            },
+            example = Target.ALL_SOURCE
+    )
+    private final String target;
 
     @Override
     public String getDisplayName() {
@@ -48,57 +83,28 @@ public class SecureTempFileCreation extends Recipe {
 
     @Override
     protected JavaIsoVisitor<ExecutionContext> getSingleSourceApplicableTest() {
-        return new UsesMethod<>(matcher);
+        return new UsesMethod<>(SecureTempFileCreationVisitor.MATCHER);
     }
 
     @Override
     protected JavaIsoVisitor<ExecutionContext> getVisitor() {
+        Target target = Target.fromString(this.target);
         return new JavaIsoVisitor<ExecutionContext>() {
-            private final JavaTemplate twoArg = JavaTemplate.builder(this::getCursor, "Files.createTempFile(#{any(String)}, #{any(String)}).toFile()")
-                    .imports("java.nio.file.Files")
-                    .build();
-
-            private final JavaTemplate threeArg = JavaTemplate.builder(this::getCursor, "Files.createTempFile(#{any(java.io.File)}.toPath(), #{any(String)}, #{any(String)}).toFile()")
-                    .imports("java.nio.file.Files")
-                    .build();
-
             @Override
-            public J.Block visitBlock(J.Block block, ExecutionContext executionContext) {
-                J.Block createTempDirectoryFix = (J.Block) new UseFilesCreateTempDirectory()
-                        .getVisitor()
-                        .visitNonNull(block, executionContext, requireNonNull(getCursor().getParent()));
-                if (createTempDirectoryFix != block) {
-                    // If the issue could be fixed by the UseFilesCreateTempDirectory's visitor
-                    // then this visitor should not be applied.
-                    return block;
-                } else {
-                    return super.visitBlock(block, executionContext);
+            public J.CompilationUnit visitCompilationUnit(J.CompilationUnit cu, ExecutionContext executionContext) {
+                PathMatcher testMatcher = cu.getSourcePath().getFileSystem().getPathMatcher("glob:**/test/**");
+                // If the target is Non Test Source, and this is a test source file, skip it.
+                if ((target == Target.NonTestSource || target == Target.AllSourceWhenNonTestDetected) && testMatcher.matches(cu.getSourcePath())) {
+                    return cu;
                 }
-            }
-
-            @Override
-            public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, ExecutionContext executionContext) {
-                J.MethodInvocation m = method;
-                if (matcher.matches(m)) {
-                    maybeAddImport("java.nio.file.Files");
-                    if (m.getArguments().size() == 2 || (m.getArguments().size() == 3 && m.getArguments().get(2).getType() == JavaType.Primitive.Null)) {
-                        // File.createTempFile(String prefix, String suffix)
-                        m = m.withTemplate(twoArg,
-                                m.getCoordinates().replace(),
-                                m.getArguments().get(0),
-                                m.getArguments().get(1)
-                        );
-                    } else if (m.getArguments().size() == 3) {
-                        // File.createTempFile(String prefix, String suffix, File dir)
-                        m = m.withTemplate(threeArg,
-                                m.getCoordinates().replace(),
-                                m.getArguments().get(2),
-                                m.getArguments().get(0),
-                                m.getArguments().get(1)
-                        );
+                J.CompilationUnit compilationUnit = (J.CompilationUnit) new SecureTempFileCreationVisitor().visitNonNull(cu, executionContext, getCursor().getParentOrThrow());
+                if (target == Target.AllSourceWhenNonTestDetected && compilationUnit != cu) {
+                    // A non-test source file was changed, so we should change all source files.
+                    if (getRecipeList().stream().noneMatch(SecureTempFileCreation.class::isInstance)) {
+                        getRecipeList().add(new SecureTempFileCreation(Target.ALL_SOURCE));
                     }
                 }
-                return m;
+                return compilationUnit;
             }
         };
     }

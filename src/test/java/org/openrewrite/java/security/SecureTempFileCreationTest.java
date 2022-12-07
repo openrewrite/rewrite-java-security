@@ -26,7 +26,7 @@ class SecureTempFileCreationTest implements RewriteTest {
 
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new SecureTempFileCreation());
+        spec.recipe(new SecureTempFileCreation(SecureTempFileCreation.Target.ALL_SOURCE));
     }
 
     @Test
@@ -123,6 +123,8 @@ class SecureTempFileCreationTest implements RewriteTest {
         rewriteRun(
           java(
             """
+                  import java.io.File;
+                  
                   class A {
                       void b() {
                           File tempDir = File.createTempFile("abc", "def");
