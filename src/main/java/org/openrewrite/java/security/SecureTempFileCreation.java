@@ -48,7 +48,9 @@ public class SecureTempFileCreation extends Recipe {
                 case NON_TEST_SOURCE:
                     return NonTestSource;
                 default:
-                    throw new IllegalArgumentException("Unknown target: " + target);
+                    @SuppressWarnings("ConstantConditions")
+                    String targetDescription = target == null ? "`null`" : target.isEmpty() ? "`empty`" : target;
+                    throw new IllegalArgumentException("Unknown target: " + targetDescription);
             }
         }
 
