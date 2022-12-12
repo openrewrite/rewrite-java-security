@@ -16,8 +16,8 @@
 package org.openrewrite.java.security;
 
 import lombok.AllArgsConstructor;
-import lombok.Value;
 import lombok.EqualsAndHashCode;
+import lombok.Value;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Option;
 import org.openrewrite.Recipe;
@@ -25,7 +25,7 @@ import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.search.UsesMethod;
 import org.openrewrite.java.tree.J;
 
-import java.nio.file.PathMatcher;
+import java.nio.file.Path;
 import java.time.Duration;
 
 @Value
@@ -69,7 +69,7 @@ public class SecureTempFileCreation extends Recipe {
             },
             example = Target.ALL_SOURCE
     )
-    private final String target;
+    String target;
 
     @Override
     public String getDisplayName() {
@@ -93,17 +93,16 @@ public class SecureTempFileCreation extends Recipe {
 
     @Override
     protected JavaIsoVisitor<ExecutionContext> getVisitor() {
-        Target target = Target.fromString(this.target);
+        Target target = Target.fromString(getTarget());
         return new JavaIsoVisitor<ExecutionContext>() {
             @Override
             public J.CompilationUnit visitCompilationUnit(J.CompilationUnit cu, ExecutionContext executionContext) {
-                PathMatcher testMatcher = cu.getSourcePath().getFileSystem().getPathMatcher("glob:**/test/**");
                 // If the target is Non Test Source, and this is a test source file, skip it.
-                if ((target == Target.NonTestSource || target == Target.AllSourceWhenNonTestDetected) && testMatcher.matches(cu.getSourcePath())) {
+                if ((Target.NonTestSource.equals(target) || Target.AllSourceWhenNonTestDetected.equals(target)) && isTestSource(cu.getSourcePath())) {
                     return cu;
                 }
                 J.CompilationUnit compilationUnit = (J.CompilationUnit) new SecureTempFileCreationVisitor().visitNonNull(cu, executionContext, getCursor().getParentOrThrow());
-                if (target == Target.AllSourceWhenNonTestDetected && compilationUnit != cu) {
+                if (Target.AllSourceWhenNonTestDetected.equals(target) && compilationUnit != cu) {
                     // A non-test source file was changed, so we should change all source files.
                     if (getRecipeList().stream().noneMatch(SecureTempFileCreation.class::isInstance)) {
                         getRecipeList().add(new SecureTempFileCreation(Target.ALL_SOURCE));
@@ -112,5 +111,9 @@ public class SecureTempFileCreation extends Recipe {
                 return compilationUnit;
             }
         };
+    }
+
+    static boolean isTestSource(Path path) {
+        return path.getFileSystem().getPathMatcher("glob:**/test/**").matches(path);
     }
 }
