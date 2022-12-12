@@ -16,6 +16,8 @@
 package org.openrewrite.java.security;
 
 import lombok.AllArgsConstructor;
+import lombok.Value;
+import lombok.EqualsAndHashCode;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Option;
 import org.openrewrite.Recipe;
@@ -26,7 +28,8 @@ import org.openrewrite.java.tree.J;
 import java.nio.file.PathMatcher;
 import java.time.Duration;
 
-@AllArgsConstructor
+@Value
+@EqualsAndHashCode(callSuper = true)
 public class SecureTempFileCreation extends Recipe {
 
     @AllArgsConstructor
