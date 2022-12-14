@@ -24,6 +24,7 @@ import org.openrewrite.Recipe;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.search.UsesMethod;
 import org.openrewrite.java.tree.J;
+import org.openrewrite.marker.SearchResult;
 
 import java.nio.file.Path;
 import java.time.Duration;
@@ -102,12 +103,17 @@ public class SecureTempFileCreation extends Recipe {
                     return cu;
                 }
                 J.CompilationUnit compilationUnit = (J.CompilationUnit) new SecureTempFileCreationVisitor().visitNonNull(cu, executionContext, getCursor().getParentOrThrow());
+                String reasonForChangeMessageTag = "REASON_FOR_CHANGE";
                 if (Target.AllSourceWhenNonTestDetected.equals(target) && compilationUnit != cu) {
                     // A non-test source file was changed, so we should change all source files.
                     if (getRecipeList().stream().noneMatch(SecureTempFileCreation.class::isInstance)) {
-                        SecureTempFileCreation secureTempFileCreation = new SecureTempFileCreation(Target.ALL_SOURCE);
-                        getRecipeList().add(secureTempFileCreation);
+                        executionContext.putMessage(reasonForChangeMessageTag, cu.getSourcePath().toString());
+                        getRecipeList().add(new SecureTempFileCreation(Target.ALL_SOURCE));
                     }
+                }
+                if (executionContext.getMessage(reasonForChangeMessageTag) != null) {
+                    String reasonForChange = String.format("This file was changed because a change was detected in a non-test source file: %s", (String) executionContext.getMessage(reasonForChangeMessageTag));
+                    return SearchResult.found(compilationUnit, reasonForChange);
                 }
                 return compilationUnit;
             }
