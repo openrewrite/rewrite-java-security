@@ -144,6 +144,7 @@ class SecureTempFileCreationTest implements RewriteTest {
         );
     }
 
+
     @Nested
     class TestSourceMatcherTest {
 
@@ -154,7 +155,8 @@ class SecureTempFileCreationTest implements RewriteTest {
           "commons-vfs2/src/test/java/org/apache/commons/vfs2/provider/sftp/AbstractSftpProviderTestCase.java",
           "commons-vfs2/src/test/java/org/apache/commons/vfs2/provider/zip/ZipFileObjectTest.java",
           "commons-vfs2/src/test/java/org/apache/commons/vfs2/provider/local/TempFileTests.java",
-          "commons-vfs2/src/test/java/org/apache/commons/vfs2/provider/DefaultFileContentTest.java"
+          "commons-vfs2/src/test/java/org/apache/commons/vfs2/provider/DefaultFileContentTest.java",
+          "src/test/java/org/apache/commons/codec/digest/DigestUtilsTest.java"
         })
         void ensureIsTestSource(String path) {
             assertTrue(SecureTempFileCreation.isTestSource(Path.of(path)));

@@ -35,18 +35,18 @@ public class SecureTempFileCreation extends Recipe {
     @AllArgsConstructor
     enum Target {
         AllSource(Target.ALL_SOURCE),
-        AllSourceWhenNonTestDetected(Target.ALL_SOURCE_IF_DETECTED),
+        AllSourceWhenNonTestDetected(Target.ALL_SOURCE_IF_DETECTED_IN_NON_TEST),
         NonTestSource(Target.NON_TEST_SOURCE);
 
         static final String ALL_SOURCE = "All Source";
-        static final String ALL_SOURCE_IF_DETECTED = "All Source if detected in Non Test Source";
+        static final String ALL_SOURCE_IF_DETECTED_IN_NON_TEST = "All Source if detected in Non Test Source";
         static final String NON_TEST_SOURCE = "Non-Test Source";
 
         private static Target fromString(String target) {
             switch (target) {
                 case ALL_SOURCE:
                     return AllSource;
-                case ALL_SOURCE_IF_DETECTED:
+                case ALL_SOURCE_IF_DETECTED_IN_NON_TEST:
                     return AllSourceWhenNonTestDetected;
                 case NON_TEST_SOURCE:
                     return NonTestSource;
@@ -64,7 +64,7 @@ public class SecureTempFileCreation extends Recipe {
             displayName = "Target",
             valid = {
                     Target.ALL_SOURCE,
-                    Target.ALL_SOURCE_IF_DETECTED,
+                    Target.ALL_SOURCE_IF_DETECTED_IN_NON_TEST,
                     Target.NON_TEST_SOURCE
             },
             example = Target.ALL_SOURCE
@@ -105,7 +105,8 @@ public class SecureTempFileCreation extends Recipe {
                 if (Target.AllSourceWhenNonTestDetected.equals(target) && compilationUnit != cu) {
                     // A non-test source file was changed, so we should change all source files.
                     if (getRecipeList().stream().noneMatch(SecureTempFileCreation.class::isInstance)) {
-                        getRecipeList().add(new SecureTempFileCreation(Target.ALL_SOURCE));
+                        SecureTempFileCreation secureTempFileCreation = new SecureTempFileCreation(Target.ALL_SOURCE);
+                        getRecipeList().add(secureTempFileCreation);
                     }
                 }
                 return compilationUnit;
