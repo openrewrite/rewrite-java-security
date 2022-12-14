@@ -51,7 +51,7 @@ class SecureTempFileCreationTest implements RewriteTest {
                   }
               """,
             """
-                  import java.io.File;
+                  /*~~(This file was changed because the target was set to: `All Source` Had a path of: `Test.java`)~~>*/import java.io.File;
                   import java.io.IOException;
                   import java.nio.file.Files;
 
@@ -81,7 +81,7 @@ class SecureTempFileCreationTest implements RewriteTest {
                   }
               """,
             """
-                  import java.io.File;
+                  /*~~(This file was changed because the target was set to: `All Source` Had a path of: `Test.java`)~~>*/import java.io.File;
                   import java.io.IOException;
                   import java.nio.file.Files;
 
@@ -108,7 +108,7 @@ class SecureTempFileCreationTest implements RewriteTest {
               }
               """,
             """
-              import java.io.File;
+              /*~~(This file was changed because the target was set to: `All Source` Had a path of: `T.java`)~~>*/import java.io.File;
               import java.nio.file.Files;
 
               class T {
