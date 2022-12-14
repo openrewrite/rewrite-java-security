@@ -112,10 +112,18 @@ public class SecureTempFileCreation extends Recipe {
                     }
                 }
                 if (executionContext.getMessage(reasonForChangeMessageTag) != null && compilationUnit != cu) {
-                    String reasonForChange = String.format("This file was changed because a change was detected in a non-test source file: %s", (String) executionContext.getMessage(reasonForChangeMessageTag));
+                    String reasonForChange = String.format("This file was changed because a change was detected in a non-test source file: `%s`. Target is `%s`",
+                            executionContext.getMessage(reasonForChangeMessageTag),
+                            target.description
+                    );
                     return SearchResult.found(compilationUnit, reasonForChange);
                 } else if (compilationUnit != cu) {
-                    String reasonForChange = String.format("This file was changed because the target was set to: `%s` Had a path of: `%s`", target.description, compilationUnit.getSourcePath());
+                    String reasonForChange = String.format(
+                            "This file was changed because the target was set to: `%s`. Had a path of: `%s`. Is test source: %s",
+                            target.description,
+                            compilationUnit.getSourcePath(),
+                            isTestSource(compilationUnit.getSourcePath())
+                    );
                     return SearchResult.found(compilationUnit, reasonForChange);
                 }
                 return compilationUnit;

@@ -51,7 +51,7 @@ class SecureTempFileCreationTest implements RewriteTest {
                   }
               """,
             """
-                  /*~~(This file was changed because the target was set to: `All Source` Had a path of: `Test.java`)~~>*/import java.io.File;
+                  /*~~(This file was changed because the target was set to: `All Source`. Had a path of: `Test.java`. Is test source: false)~~>*/import java.io.File;
                   import java.io.IOException;
                   import java.nio.file.Files;
 
@@ -81,7 +81,7 @@ class SecureTempFileCreationTest implements RewriteTest {
                   }
               """,
             """
-                  /*~~(This file was changed because the target was set to: `All Source` Had a path of: `Test.java`)~~>*/import java.io.File;
+                  /*~~(This file was changed because the target was set to: `All Source`. Had a path of: `Test.java`. Is test source: false)~~>*/import java.io.File;
                   import java.io.IOException;
                   import java.nio.file.Files;
 
@@ -108,7 +108,7 @@ class SecureTempFileCreationTest implements RewriteTest {
               }
               """,
             """
-              /*~~(This file was changed because the target was set to: `All Source` Had a path of: `T.java`)~~>*/import java.io.File;
+              /*~~(This file was changed because the target was set to: `All Source`. Had a path of: `T.java`. Is test source: false)~~>*/import java.io.File;
               import java.nio.file.Files;
 
               class T {
@@ -156,7 +156,8 @@ class SecureTempFileCreationTest implements RewriteTest {
           "commons-vfs2/src/test/java/org/apache/commons/vfs2/provider/zip/ZipFileObjectTest.java",
           "commons-vfs2/src/test/java/org/apache/commons/vfs2/provider/local/TempFileTests.java",
           "commons-vfs2/src/test/java/org/apache/commons/vfs2/provider/DefaultFileContentTest.java",
-          "src/test/java/org/apache/commons/codec/digest/DigestUtilsTest.java"
+          "src/test/java/org/apache/commons/codec/digest/DigestUtilsTest.java",
+          "juneau-utest/src/test/java/org/apache/juneau/http/BasicHttpResource_Test.java"
         })
         void ensureIsTestSource(String path) {
             assertTrue(SecureTempFileCreation.isTestSource(Path.of(path)));

@@ -53,7 +53,7 @@ public class SecureTempFileCreationFilteringTest implements RewriteTest {
 
     @Language("java")
     private static final String PRODUCTION_SAFE = """
-      /*~~(This file was changed because a change was detected in a non-test source file: src/main/java/org/openrewrite/java/security/Production.java)~~>*/import java.io.File;
+      /*~~(This file was changed because a change was detected in a non-test source file: `src/main/java/org/openrewrite/java/security/Production.java`. Target is `All Source if detected in Non Test Source`)~~>*/import java.io.File;
       import java.io.IOException;
       import java.nio.file.Files;
         
@@ -78,7 +78,7 @@ public class SecureTempFileCreationFilteringTest implements RewriteTest {
 
     @Language("java")
     private static final String TEST_SAFE = """
-      /*~~(This file was changed because a change was detected in a non-test source file: src/main/java/org/openrewrite/java/security/Production.java)~~>*/import java.io.File;
+      /*~~(This file was changed because a change was detected in a non-test source file: `src/main/java/org/openrewrite/java/security/Production.java`. Target is `All Source`)~~>*/import java.io.File;
       import java.io.IOException;
       import java.nio.file.Files;
         
