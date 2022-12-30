@@ -72,24 +72,24 @@ class SecureRandomUseDefaultSeedTest implements RewriteTest {
         rewriteRun(
           java(
             """
-                  import java.security.SecureRandom;
-                  
-                  public class A {
-                      void test(byte[] bytes) {
-                          SecureRandom r = new SecureRandom();
-                          r.setSeed(System.currentTimeMillis());
-                          r.setSeed(System.nanoTime());
-                      }
+              import java.security.SecureRandom;
+              
+              public class A {
+                  void test(byte[] bytes) {
+                      SecureRandom r = new SecureRandom();
+                      r.setSeed(System.currentTimeMillis());
+                      r.setSeed(System.nanoTime());
                   }
+              }
               """,
             """
-                  import java.security.SecureRandom;
-                  
-                  public class A {
-                      void test(byte[] bytes) {
-                          SecureRandom r = new SecureRandom();
-                      }
+              import java.security.SecureRandom;
+              
+              public class A {
+                  void test(byte[] bytes) {
+                      SecureRandom r = new SecureRandom();
                   }
+              }
               """
           )
         );
@@ -101,24 +101,24 @@ class SecureRandomUseDefaultSeedTest implements RewriteTest {
         rewriteRun(
           java(
             """
-                  import java.security.SecureRandom;
-                  import java.util.Date;
-                  
-                  public class A {
-                      void test(byte[] bytes) {
-                          SecureRandom r = new SecureRandom();
-                          r.setSeed(new Date().getTime());
-                      }
+              import java.security.SecureRandom;
+              import java.util.Date;
+              
+              public class A {
+                  void test(byte[] bytes) {
+                      SecureRandom r = new SecureRandom();
+                      r.setSeed(new Date().getTime());
                   }
+              }
               """,
             """
-                  import java.security.SecureRandom;
-                  
-                  public class A {
-                      void test(byte[] bytes) {
-                          SecureRandom r = new SecureRandom();
-                      }
+              import java.security.SecureRandom;
+              
+              public class A {
+                  void test(byte[] bytes) {
+                      SecureRandom r = new SecureRandom();
                   }
+              }
               """
           )
         );
@@ -130,24 +130,24 @@ class SecureRandomUseDefaultSeedTest implements RewriteTest {
         rewriteRun(
           java(
             """
-                  import java.security.SecureRandom;
-                  
-                  public class A {
-                      void test() {
-                          SecureRandom r = new SecureRandom();
-                          r.setSeed("abcdef".getBytes());
-                          r.setSeed(1234L);
-                      }
+              import java.security.SecureRandom;
+              
+              public class A {
+                  void test() {
+                      SecureRandom r = new SecureRandom();
+                      r.setSeed("abcdef".getBytes());
+                      r.setSeed(1234L);
                   }
+              }
               """,
             """
-                  import java.security.SecureRandom;
-                  
-                  public class A {
-                      void test() {
-                          SecureRandom r = new SecureRandom();
-                      }
+              import java.security.SecureRandom;
+              
+              public class A {
+                  void test() {
+                      SecureRandom r = new SecureRandom();
                   }
+              }
               """
           )
         );

@@ -41,25 +41,25 @@ class SecureTempFileCreationTest implements RewriteTest {
         rewriteRun(
           java(
             """
-                  import java.io.File;
-                  import java.io.IOException;
+              import java.io.File;
+              import java.io.IOException;
 
-                  class Test {
-                      static void method() throws IOException {
-                          File tempDir = File.createTempFile("hello", "world");
-                      }
+              class Test {
+                  static void method() throws IOException {
+                      File tempDir = File.createTempFile("hello", "world");
                   }
+              }
               """,
             """
-                  /*~~(This file was changed because the target was set to: `All Source`. Had a path of: `Test.java`. Is test source: false)~~>*/import java.io.File;
-                  import java.io.IOException;
-                  import java.nio.file.Files;
+              /*~~(This file was changed because the target was set to: `All Source`. Had a path of: `Test.java`. Is test source: false)~~>*/import java.io.File;
+              import java.io.IOException;
+              import java.nio.file.Files;
 
-                  class Test {
-                      static void method() throws IOException {
-                          File tempDir = Files.createTempFile("hello", "world").toFile();
-                      }
+              class Test {
+                  static void method() throws IOException {
+                      File tempDir = Files.createTempFile("hello", "world").toFile();
                   }
+              }
               """
           )
         );
@@ -71,25 +71,25 @@ class SecureTempFileCreationTest implements RewriteTest {
         rewriteRun(
           java(
             """
-                  import java.io.File;
-                  import java.io.IOException;
+              import java.io.File;
+              import java.io.IOException;
 
-                  class Test {
-                      static void method() throws IOException {
-                          File tempDir = File.createTempFile("hello", "world", new File("."));
-                      }
+              class Test {
+                  static void method() throws IOException {
+                      File tempDir = File.createTempFile("hello", "world", new File("."));
                   }
+              }
               """,
             """
-                  /*~~(This file was changed because the target was set to: `All Source`. Had a path of: `Test.java`. Is test source: false)~~>*/import java.io.File;
-                  import java.io.IOException;
-                  import java.nio.file.Files;
+              /*~~(This file was changed because the target was set to: `All Source`. Had a path of: `Test.java`. Is test source: false)~~>*/import java.io.File;
+              import java.io.IOException;
+              import java.nio.file.Files;
 
-                  class Test {
-                      static void method() throws IOException {
-                          File tempDir = Files.createTempFile(new File(".").toPath(), "hello", "world").toFile();
-                      }
+              class Test {
+                  static void method() throws IOException {
+                      File tempDir = Files.createTempFile(new File(".").toPath(), "hello", "world").toFile();
                   }
+              }
               """
           )
         );
@@ -129,16 +129,16 @@ class SecureTempFileCreationTest implements RewriteTest {
         rewriteRun(
           java(
             """
-                  import java.io.File;
-                  
-                  class A {
-                      void b() {
-                          File tempDir = File.createTempFile("abc", "def");
-                          tempDir.delete();
-                          tempDir.mkdir();
-                          System.out.println(tempDir.getAbsolutePath());
-                      }
+              import java.io.File;
+              
+              class A {
+                  void b() {
+                      File tempDir = File.createTempFile("abc", "def");
+                      tempDir.delete();
+                      tempDir.mkdir();
+                      System.out.println(tempDir.getAbsolutePath());
                   }
+              }
               """
           )
         );

@@ -36,19 +36,19 @@ class SecureSnakeYamlConstructorTest implements RewriteTest {
           //language=java
           java(
             """
-                  import org.yaml.snakeyaml.Yaml;
-                  
-                  class Test {
-                      Object o = new Yaml();
-                  }
+              import org.yaml.snakeyaml.Yaml;
+              
+              class Test {
+                  Object o = new Yaml();
+              }
               """,
             """
-                  import org.yaml.snakeyaml.Yaml;
-                  import org.yaml.snakeyaml.constructor.SafeConstructor;
-                  
-                  class Test {
-                      Object o = new Yaml(new SafeConstructor());
-                  }
+              import org.yaml.snakeyaml.Yaml;
+              import org.yaml.snakeyaml.constructor.SafeConstructor;
+              
+              class Test {
+                  Object o = new Yaml(new SafeConstructor());
+              }
               """
           )
         );
