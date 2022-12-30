@@ -391,7 +391,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
                             return binaryArg.getLeft();
                         } else if (rightArg instanceof J.Literal) {
                             J.Literal literalRight = (J.Literal)rightArg;
-                            if (literalRight.getValueSource() != null && ((J.Literal) rightArg).getValueSource().equals("\"\"")) {
+                            if (literalRight.getValueSource() != null && "\"\"".equals(((J.Literal) rightArg).getValueSource())) {
                                 return binaryArg.getLeft();
                             }
                         }

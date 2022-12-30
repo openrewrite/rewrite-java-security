@@ -65,7 +65,7 @@ public final class FileSeparatorUtil {
                 // CASE:
                 // - "/"
                 // - "\\"
-                return value.equals("/") || value.equals("\\");
+                return "/".equals(value) || "\\".equals(value);
             } else if (literal.getValue() instanceof Character) {
                 Character value = (Character) literal.getValue();
                 // CASE:

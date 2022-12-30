@@ -81,7 +81,8 @@ public class FileConstructorFixVisitor<P> extends JavaIsoVisitor<P> {
     @Value
     @With
     static class NewArguments {
-        Expression first, second;
+        Expression first;
+        Expression second;
     }
 
     private Optional<NewArguments> computeNewArguments(J.Binary binary) {
