@@ -15,6 +15,7 @@
  */
 package org.openrewrite.java.security.marshalling;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
@@ -48,6 +49,316 @@ class SecureSnakeYamlConstructorTest implements RewriteTest {
               
               class Test {
                   Object o = new Yaml(new SafeConstructor());
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void snakeYamlWithDumperArgument() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+                  import org.yaml.snakeyaml.Yaml;
+                  import org.yaml.snakeyaml.DumperOptions;
+                  
+                  class Test {
+                      Object o = new Yaml(new DumperOptions());
+                  }
+              """,
+            """
+                  import org.yaml.snakeyaml.Yaml;
+                  import org.yaml.snakeyaml.constructor.SafeConstructor;
+                  import org.yaml.snakeyaml.representer.Representer;
+                  import org.yaml.snakeyaml.DumperOptions;
+                  
+                  class Test {
+                      Object o = new Yaml(new SafeConstructor(), new Representer(), new DumperOptions());
+                  }
+              """
+          )
+        );
+    }
+
+    @Test
+    void snakeYamlWithRepresenterArgument() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+                  import org.yaml.snakeyaml.Yaml;
+                  import org.yaml.snakeyaml.representer.Representer;
+                  
+                  class Test {
+                      Object o = new Yaml(new Representer());
+                  }
+              """,
+            """
+                  import org.yaml.snakeyaml.DumperOptions;
+                  import org.yaml.snakeyaml.Yaml;
+                  import org.yaml.snakeyaml.constructor.SafeConstructor;
+                  import org.yaml.snakeyaml.representer.Representer;
+                  
+                  class Test {
+                      Object o = new Yaml(new SafeConstructor(), new Representer(), new DumperOptions());
+                  }
+              """
+          )
+        );
+    }
+
+    @Test
+    void doNotFixYamlIfDumpIsOnlyMethodCalled() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+                  import org.yaml.snakeyaml.Yaml;
+                  
+                  class Test {
+                      String test(Object o) {
+                         Yaml y = new Yaml();
+                         return y.dump(o);
+                      }
+                  }
+              """
+          )
+        );
+    }
+
+    @Test
+    void doFixYamlIfLoadIsOnlyMethodCalled() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import org.yaml.snakeyaml.Yaml;
+                            
+              class Test {
+                  Object test(String o) {
+                      Yaml y = new Yaml();
+                      return y.load(o);
+                  }
+              }
+              """,
+            """
+              import org.yaml.snakeyaml.Yaml;
+              import org.yaml.snakeyaml.constructor.SafeConstructor;
+                            
+              class Test {
+                  Object test(String o) {
+                      Yaml y = new Yaml(new SafeConstructor());
+                      return y.load(o);
+                  }
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void doFixYamlIfYamlPassedAsArgument() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import org.yaml.snakeyaml.Yaml;
+                            
+              class Test {
+                  void test(String o) {
+                      Yaml y = new Yaml();
+                      doSomething(y);
+                  }
+                  
+                  void doSomething(Yaml y) {
+                      // no-op
+                  }
+              }
+              """,
+            """
+              import org.yaml.snakeyaml.Yaml;
+              import org.yaml.snakeyaml.constructor.SafeConstructor;
+                            
+              class Test {
+                  void test(String o) {
+                      Yaml y = new Yaml(new SafeConstructor());
+                      doSomething(y);
+                  }
+                  
+                  void doSomething(Yaml y) {
+                      // no-op
+                  }
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void doFixYamlIfYamlAssignedToClassVariable() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import org.yaml.snakeyaml.Yaml;
+                            
+              class Test {
+                  final Yaml y;
+                  Test(Object o) {
+                      y = new Yaml();
+                  }
+              }
+              """,
+            """
+              import org.yaml.snakeyaml.Yaml;
+              import org.yaml.snakeyaml.constructor.SafeConstructor;
+                            
+              class Test {
+                  final Yaml y;
+                  Test(Object o) {
+                      y = new Yaml(new SafeConstructor());
+                  }
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    @SuppressWarnings({"UnusedAssignment", "ParameterCanBeLocal"})
+    void doNotFixYamlIfYamlAssignedToConstructorVariable() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import org.yaml.snakeyaml.Yaml;
+                            
+              class Test {
+                  final Object y;
+                  Test(Object y) {
+                      y = new Yaml();
+                  }
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    @SuppressWarnings({"UnusedAssignment"})
+    void doNotFixYamlIfYamlAssignedToMethodScopeVariable() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import org.yaml.snakeyaml.Yaml;
+                            
+              class Test {
+                  final Object y;
+                  Test() {
+                      Object y;
+                      {
+                        y = new Yaml();
+                      }
+                  }
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void doFixYamlIfYamlAssignedToClassVariableViaThis() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import org.yaml.snakeyaml.Yaml;
+                            
+              class Test {
+                  final Yaml y;
+                  Test(Object o) {
+                      this.y = new Yaml();
+                  }
+              }
+              """,
+            """
+              import org.yaml.snakeyaml.Yaml;
+              import org.yaml.snakeyaml.constructor.SafeConstructor;
+                            
+              class Test {
+                  final Yaml y;
+                  Test(Object o) {
+                      this.y = new Yaml(new SafeConstructor());
+                  }
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void doFixYamlIfSnakeYamlIsReturned() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import org.yaml.snakeyaml.Yaml;
+                            
+              class Test {
+                  Yaml test() {
+                      return new Yaml();
+                  }
+              }
+              """,
+            """
+              import org.yaml.snakeyaml.Yaml;
+              import org.yaml.snakeyaml.constructor.SafeConstructor;
+                            
+              class Test {
+                  Yaml test() {
+                      return new Yaml(new SafeConstructor());
+                  }
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    @Disabled("See: https://github.com/openrewrite/rewrite/issues/2540")
+    void doFixYamlIfPassedInLambda() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import org.yaml.snakeyaml.Yaml;
+              import java.util.function.Supplier;
+                            
+              class Test {
+                  void test() {
+                      supply(Yaml::new);
+                  }
+                  
+                  void supply(Supplier<Yaml> supplier) {
+                      // no-op
+                  }
+              }
+              """,
+            """
+              import org.yaml.snakeyaml.Yaml;
+              import org.yaml.snakeyaml.constructor.SafeConstructor;
+                            
+              class Test {
+                  void test() {
+                      supply(() -> new Yaml(new SafeConstructor()));
+                  }
+                  
+                  void supply(Supplier<Yaml> supplier) {
+                      // no-op
+                  }
               }
               """
           )
