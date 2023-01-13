@@ -21,11 +21,11 @@ import org.openrewrite.test.RewriteTest;
 
 import static org.openrewrite.java.Assertions.java;
 
-class FileConstructorVisitorFixTest implements RewriteTest {
+class FileConstructorFixVisitorTest implements RewriteTest {
 
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(RewriteTest.toRecipe(FileConstructorFixVisitor::new));
+        spec.recipe(RewriteTest.toRecipe(() -> new FileConstructorFixVisitor<>()));
     }
 
     @SuppressWarnings("UnnecessaryLocalVariable")
