@@ -465,6 +465,41 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
     }
 
     @Test
+    void deleteWrappedInAnIfNoBlock() {
+        //language=java
+        rewriteRun(
+          java(
+            """
+              import java.io.File;
+              import java.io.IOException;
+              import java.nio.file.Files;
+
+              class A {
+                  File testData = Files.createTempDirectory("").toFile();
+                  void b() throws IOException {
+                      File tmpDir = File.createTempFile("test", "dir", testData);
+                      if (!tmpDir.delete()) System.out.println("Failed to delete directory!");
+                      tmpDir.mkdir();
+                  }
+              }
+              """,
+            """
+              import java.io.File;
+              import java.io.IOException;
+              import java.nio.file.Files;
+
+              class A {
+                  File testData = Files.createTempDirectory("").toFile();
+                  void b() throws IOException {
+                      File tmpDir = Files.createTempDirectory(testData.toPath(), "test" + "dir").toFile();
+                  }
+              }
+              """
+          )
+        );
+    }
+
+    @Test
     void deleteAndMkdirsWrappedInAnIfBlock() {
         //language=java
         rewriteRun(
