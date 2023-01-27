@@ -21,14 +21,15 @@ import lombok.Value;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Option;
 import org.openrewrite.Recipe;
+import org.openrewrite.TreeVisitor;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.search.UsesMethod;
 import org.openrewrite.java.tree.J;
-import org.openrewrite.marker.SearchResult;
 
 import java.nio.file.Path;
 import java.time.Duration;
+
 
 @Value
 @EqualsAndHashCode(callSuper = true)
@@ -45,7 +46,7 @@ public class SecureTempFileCreation extends Recipe {
         static final String NON_TEST_SOURCE = "Non-Test Source";
 
         private static Target fromString(@Nullable String target) {
-            if(target == null) {
+            if (target == null) {
                 return NonTestSource;
             }
             switch (target) {
@@ -90,12 +91,7 @@ public class SecureTempFileCreation extends Recipe {
     }
 
     @Override
-    protected JavaIsoVisitor<ExecutionContext> getSingleSourceApplicableTest() {
-        return new UsesMethod<>(SecureTempFileCreationVisitor.MATCHER);
-    }
-
-    @Override
-    protected JavaIsoVisitor<ExecutionContext> getVisitor() {
+    protected TreeVisitor<?, ExecutionContext> getApplicableTest() {
         Target target = Target.fromString(getTarget());
         return new JavaIsoVisitor<ExecutionContext>() {
             @Override
@@ -104,33 +100,22 @@ public class SecureTempFileCreation extends Recipe {
                 if ((Target.NonTestSource.equals(target) || Target.AllSourceWhenNonTestDetected.equals(target)) && isTestSource(cu.getSourcePath())) {
                     return cu;
                 }
-                J.CompilationUnit compilationUnit = (J.CompilationUnit) new SecureTempFileCreationVisitor().visitNonNull(cu, executionContext, getCursor().getParentOrThrow());
-                String reasonForChangeMessageTag = "REASON_FOR_CHANGE";
-                if (Target.AllSourceWhenNonTestDetected.equals(target) && compilationUnit != cu) {
-                    // A non-test source file was changed, so we should change all source files.
-                    if (getRecipeList().stream().noneMatch(SecureTempFileCreation.class::isInstance)) {
-                        executionContext.putMessage(reasonForChangeMessageTag, cu.getSourcePath().toString());
-                        getRecipeList().add(new SecureTempFileCreation(Target.ALL_SOURCE));
-                    }
+                if (getSingleSourceApplicableTest().visitNonNull(cu, executionContext) != cu) {
+                    return (J.CompilationUnit) getVisitor().visitNonNull(cu, executionContext, getCursor().getParentOrThrow());
                 }
-                if (executionContext.getMessage(reasonForChangeMessageTag) != null && compilationUnit != cu) {
-                    String reasonForChange = String.format("This file was changed because a change was detected in a non-test source file: `%s`. Target is `%s`",
-                            executionContext.getMessage(reasonForChangeMessageTag),
-                            target.description
-                    );
-                    return SearchResult.found(compilationUnit, reasonForChange);
-                } else if (compilationUnit != cu) {
-                    String reasonForChange = String.format(
-                            "This file was changed because the target was set to: `%s`. Had a path of: `%s`. Is test source: %s",
-                            target.description,
-                            compilationUnit.getSourcePath(),
-                            isTestSource(compilationUnit.getSourcePath())
-                    );
-                    return SearchResult.found(compilationUnit, reasonForChange);
-                }
-                return compilationUnit;
+                return cu;
             }
         };
+    }
+
+    @Override
+    protected JavaIsoVisitor<ExecutionContext> getSingleSourceApplicableTest() {
+        return new UsesMethod<>(SecureTempFileCreationVisitor.MATCHER);
+    }
+
+    @Override
+    protected JavaIsoVisitor<ExecutionContext> getVisitor() {
+        return new SecureTempFileCreationVisitor();
     }
 
     static boolean isTestSource(Path path) {
