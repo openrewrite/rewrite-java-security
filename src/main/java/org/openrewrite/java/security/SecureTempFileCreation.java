@@ -100,7 +100,7 @@ public class SecureTempFileCreation extends Recipe {
                 if ((Target.NonTestSource.equals(target) || Target.AllSourceWhenNonTestDetected.equals(target)) && isTestSource(cu.getSourcePath())) {
                     return cu;
                 }
-                if (getSingleSourceApplicableTest().visitNonNull(cu, executionContext) != cu) {
+                if (getSingleSourceApplicableTest().visitNonNull(cu, executionContext, getCursor().getParentOrThrow()) != cu) {
                     return (J.CompilationUnit) getVisitor().visitNonNull(cu, executionContext, getCursor().getParentOrThrow());
                 }
                 return cu;
