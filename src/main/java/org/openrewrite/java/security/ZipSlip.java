@@ -50,7 +50,7 @@ public class ZipSlip extends Recipe {
     private static final MethodMatcher ZIP_ARCHIVE_ENTRY_GET_NAME_METHOD_MATCHER =
             new MethodMatcher("org.apache.commons.compress.archivers.zip.ZipArchiveEntry getName()", true);
 
-    private static final InvocationMatcher ZIP_ENTRY_GET_NAME = InvocationMatcher.fromInvocationMatchers(
+    private static final InvocationMatcher ZIP_ENTRY_GET_NAME = InvocationMatcher.fromMethodMatchers(
             ZIP_ENTRY_GET_NAME_METHOD_MATCHER,
             ZIP_ARCHIVE_ENTRY_GET_NAME_METHOD_MATCHER
     );

@@ -53,7 +53,7 @@ public class SecureSnakeYamlConstructor extends Recipe {
 
     @Override
     protected JavaVisitor<ExecutionContext> getVisitor() {
-        InvocationMatcher yamlConstructor = InvocationMatcher.fromInvocationMatchers(
+        InvocationMatcher yamlConstructor = InvocationMatcher.fromMethodMatchers(
                 snakeYamlZeroArgumentConstructor,
                 snakeYamlRepresenterArgumentConstructor,
                 snakeYamlDumperArgumentConstructor
