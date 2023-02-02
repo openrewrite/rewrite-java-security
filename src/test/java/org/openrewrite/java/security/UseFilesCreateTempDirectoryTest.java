@@ -729,4 +729,78 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
           )
         );
     }
+
+    @Test
+    void useFilesCreateTempDirectoryWithApacheForceDelete() {
+        //language=java
+        rewriteRun(
+          spec -> spec.parser(JavaParser.fromJavaVersion().classpath("commons-io")),
+          java(
+            """
+              import java.io.File;
+              import java.io.IOException;
+
+              class A {
+                  void b() throws IOException {
+                      File tempDir;
+                      tempDir = File.createTempFile("OverridesTest", "dir");
+                      org.apache.commons.io.FileUtils.forceDelete(tempDir);
+                      tempDir.mkdir();
+                      System.out.println(tempDir.getAbsolutePath());
+                  }
+              }
+              """,
+            """
+              import java.io.File;
+              import java.io.IOException;
+              import java.nio.file.Files;
+
+              class A {
+                  void b() throws IOException {
+                      File tempDir;
+                      tempDir = Files.createTempDirectory("OverridesTest" + "dir").toFile();
+                      System.out.println(tempDir.getAbsolutePath());
+                  }
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void useFilesCreateTempDirectoryWithApacheCommons() {
+        //language=java
+        rewriteRun(
+          spec -> spec.parser(JavaParser.fromJavaVersion().classpath("commons-io")),
+          java(
+            """
+              import java.io.File;
+              import java.io.IOException;
+
+              class A {
+                  void b() throws IOException {
+                      File tempDir;
+                      tempDir = File.createTempFile("OverridesTest", "dir");
+                      org.apache.commons.io.FileUtils.forceDelete(tempDir);
+                      org.apache.commons.io.FileUtils.forceMkdir(tempDir);
+                      System.out.println(tempDir.getAbsolutePath());
+                  }
+              }
+              """,
+            """
+              import java.io.File;
+              import java.io.IOException;
+              import java.nio.file.Files;
+
+              class A {
+                  void b() throws IOException {
+                      File tempDir;
+                      tempDir = Files.createTempDirectory("OverridesTest" + "dir").toFile();
+                      System.out.println(tempDir.getAbsolutePath());
+                  }
+              }
+              """
+          )
+        );
+    }
 }
