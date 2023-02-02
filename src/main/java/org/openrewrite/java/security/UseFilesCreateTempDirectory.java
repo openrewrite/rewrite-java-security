@@ -26,12 +26,14 @@ import org.openrewrite.java.*;
 import org.openrewrite.java.cleanup.RemoveUnneededAssertion;
 import org.openrewrite.java.cleanup.SimplifyCompoundVisitor;
 import org.openrewrite.java.cleanup.SimplifyConstantIfBranchExecution;
+import org.openrewrite.java.dataflow.internal.InvocationMatcher;
 import org.openrewrite.java.marker.JavaVersion;
 import org.openrewrite.java.search.UsesMethod;
 import org.openrewrite.java.tree.*;
 import org.openrewrite.marker.Markers;
 
 import java.io.File;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 
@@ -78,10 +80,6 @@ public class UseFilesCreateTempDirectory extends Recipe {
     }
 
     private static class UsesFilesCreateTempDirVisitor extends JavaIsoVisitor<ExecutionContext> {
-        private static final MethodMatcher DELETE_MATCHER = new MethodMatcher("java.io.File delete()");
-        private static final MethodMatcher MKDIR_MATCHER = new MethodMatcher("java.io.File mkdir()");
-        private static final MethodMatcher MKDIRS_MATCHER = new MethodMatcher("java.io.File mkdirs()");
-
         @Override
         public JavaSourceFile visitJavaSourceFile(JavaSourceFile cu, ExecutionContext executionContext) {
             Optional<JavaVersion> javaVersion = cu.getMarkers().findFirst(JavaVersion.class);
@@ -195,6 +193,20 @@ public class UseFilesCreateTempDirectory extends Recipe {
 
         @AllArgsConstructor
         private static class TempDirHijackingChainFinderVisitor extends JavaIsoVisitor<TempDirHijackingChainStateMachine> {
+            private final InvocationMatcher DELETE_MATCHER = InvocationMatcher.fromInvocationMatchers(
+                    new MethodMatcher("java.io.File delete()"),
+                    new MethodMatcher("org.apache.commons.io.FileUtils delete(..)"),
+                    new MethodMatcher("org.apache.commons.io.FileUtils forceDelete(..)"),
+                    new MethodMatcher("org.apache.commons.io.FileUtils deleteQuietly(..)")
+            );
+
+            private final InvocationMatcher MKDIR_OR_MKDIRS_MATCHER = InvocationMatcher.fromInvocationMatchers(
+                    new MethodMatcher("java.io.File mkdir()"),
+                    new MethodMatcher("java.io.File mkdirs()"),
+                    new MethodMatcher("org.apache.commons.io.FileUtils mkdirs(..)"),
+                    new MethodMatcher("org.apache.commons.io.FileUtils forceMkdir(..)")
+            );
+
             private final J createFileStatement;
 
             @Override
@@ -210,8 +222,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
                         );
                     } else if (isMethodForIdent(createFileIdentifier, DELETE_MATCHER, stmt)) {
                         stateMachine.stateDeleteStatement(stmt);
-                    } else if (isMethodForIdent(createFileIdentifier, MKDIR_MATCHER, stmt)
-                            || isMethodForIdent(createFileIdentifier, MKDIRS_MATCHER, stmt)) {
+                    } else if (isMethodForIdent(createFileIdentifier, MKDIR_OR_MKDIRS_MATCHER, stmt)) {
                         stateMachine.stateMkdirStatement(stmt);
                     } else if (isAssignmentForIdent(createFileIdentifier, stmt)) {
                         stateMachine.stateVariableReassigned();
@@ -324,14 +335,24 @@ public class UseFilesCreateTempDirectory extends Recipe {
             return false;
         }
 
-        private static boolean isMethodForIdent(J.Identifier ident, MethodMatcher methodMatcher, Statement statement) {
+        private static boolean isMethodForIdent(J.Identifier ident, InvocationMatcher invocationMatcher, Statement statement) {
+            if (!TypeUtils.isOfClassType(ident.getType(), "java.io.File")) {
+                return false;
+            }
             if (statement instanceof J.MethodInvocation) {
                 J.MethodInvocation mi = (J.MethodInvocation) statement;
-                if (mi.getSelect() instanceof J.Identifier && methodMatcher.matches(mi)) {
-                    J.Identifier sel = (J.Identifier) mi.getSelect();
-                    return ident.getSimpleName().equals(sel.getSimpleName())
-                            && TypeUtils.isOfClassType(ident.getType(), "java.io.File");
+                if (!invocationMatcher.matches(mi)) {
+                    return false;
                 }
+                final J.Identifier sel;
+                if (mi.getSelect() != null && mi.getSelect().unwrap() instanceof J.Identifier) {
+                    sel = (J.Identifier) mi.getSelect().unwrap();
+                } else if (!mi.getArguments().isEmpty() && mi.getArguments().get(0).unwrap() instanceof J.Identifier) {
+                    sel = (J.Identifier) mi.getArguments().get(0).unwrap();
+                } else {
+                    return false;
+                }
+                return ident.getSimpleName().equals(sel.getSimpleName());
             }
             return false;
         }

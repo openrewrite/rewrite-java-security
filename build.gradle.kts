@@ -41,6 +41,6 @@ dependencies {
 
     testRuntimeOnly("org.openrewrite:rewrite-java-17:${rewriteVersion}")
     testRuntimeOnly("junit:junit:latest.release")
-
     testRuntimeOnly("com.fasterxml.jackson.core:jackson-databind:2.13.4")
+    testRuntimeOnly("commons-io:commons-io:2.11.0")
 }
