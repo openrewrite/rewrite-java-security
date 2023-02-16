@@ -54,13 +54,8 @@ public class CsrfProtection extends Recipe {
     }
 
     @Override
-    protected TreeVisitor<?, ExecutionContext> getApplicableTest() {
-        return new HasTypeOnClasspathSourceSet<>("org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter");
-    }
-
-    @Override
     protected TreeVisitor<?, ExecutionContext> getSingleSourceApplicableTest() {
-        return new UsesType<>("org.springframework.security.web.csrf.CookieCsrfTokenRepository");
+        return new UsesType<>("org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter");
     }
 
     private static final MethodMatcher CSRF = new MethodMatcher("org.springframework.security.config.annotation.web.builders.HttpSecurity csrf()");
