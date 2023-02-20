@@ -61,22 +61,22 @@ class SecureSnakeYamlConstructorTest implements RewriteTest {
           //language=java
           java(
             """
-                  import org.yaml.snakeyaml.Yaml;
-                  import org.yaml.snakeyaml.DumperOptions;
-                  
-                  class Test {
-                      Object o = new Yaml(new DumperOptions());
-                  }
+              import org.yaml.snakeyaml.Yaml;
+              import org.yaml.snakeyaml.DumperOptions;
+              
+              class Test {
+                  Object o = new Yaml(new DumperOptions());
+              }
               """,
             """
-                  import org.yaml.snakeyaml.Yaml;
-                  import org.yaml.snakeyaml.constructor.SafeConstructor;
-                  import org.yaml.snakeyaml.representer.Representer;
-                  import org.yaml.snakeyaml.DumperOptions;
-                  
-                  class Test {
-                      Object o = new Yaml(new SafeConstructor(), new Representer(), new DumperOptions());
-                  }
+              import org.yaml.snakeyaml.Yaml;
+              import org.yaml.snakeyaml.constructor.SafeConstructor;
+              import org.yaml.snakeyaml.representer.Representer;
+              import org.yaml.snakeyaml.DumperOptions;
+              
+              class Test {
+                  Object o = new Yaml(new SafeConstructor(), new Representer(), new DumperOptions());
+              }
               """
           )
         );
@@ -88,22 +88,22 @@ class SecureSnakeYamlConstructorTest implements RewriteTest {
           //language=java
           java(
             """
-                  import org.yaml.snakeyaml.Yaml;
-                  import org.yaml.snakeyaml.representer.Representer;
-                  
-                  class Test {
-                      Object o = new Yaml(new Representer());
-                  }
+              import org.yaml.snakeyaml.Yaml;
+              import org.yaml.snakeyaml.representer.Representer;
+              
+              class Test {
+                  Object o = new Yaml(new Representer());
+              }
               """,
             """
-                  import org.yaml.snakeyaml.DumperOptions;
-                  import org.yaml.snakeyaml.Yaml;
-                  import org.yaml.snakeyaml.constructor.SafeConstructor;
-                  import org.yaml.snakeyaml.representer.Representer;
-                  
-                  class Test {
-                      Object o = new Yaml(new SafeConstructor(), new Representer(), new DumperOptions());
-                  }
+              import org.yaml.snakeyaml.DumperOptions;
+              import org.yaml.snakeyaml.Yaml;
+              import org.yaml.snakeyaml.constructor.SafeConstructor;
+              import org.yaml.snakeyaml.representer.Representer;
+              
+              class Test {
+                  Object o = new Yaml(new SafeConstructor(), new Representer(), new DumperOptions());
+              }
               """
           )
         );
@@ -115,14 +115,14 @@ class SecureSnakeYamlConstructorTest implements RewriteTest {
           //language=java
           java(
             """
-                  import org.yaml.snakeyaml.Yaml;
-                  
-                  class Test {
-                      String test(Object o) {
-                         Yaml y = new Yaml();
-                         return y.dump(o);
-                      }
+              import org.yaml.snakeyaml.Yaml;
+              
+              class Test {
+                  String test(Object o) {
+                     Yaml y = new Yaml();
+                     return y.dump(o);
                   }
+              }
               """
           )
         );
