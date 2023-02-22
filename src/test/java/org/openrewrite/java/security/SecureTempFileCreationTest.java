@@ -15,24 +15,18 @@
  */
 package org.openrewrite.java.security;
 
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.openrewrite.Issue;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
-import java.nio.file.Path;
-
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.openrewrite.java.Assertions.java;
 
 class SecureTempFileCreationTest implements RewriteTest {
 
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new SecureTempFileCreation(SecureTempFileCreation.Target.ALL_SOURCE));
+        spec.recipe(new SecureTempFileCreation());
     }
 
     @Test
@@ -142,25 +136,5 @@ class SecureTempFileCreationTest implements RewriteTest {
               """
           )
         );
-    }
-
-
-    @Nested
-    class TestSourceMatcherTest {
-
-        @ParameterizedTest
-        @ValueSource(strings = {
-          "commons-vfs2/src/test/java/org/apache/commons/vfs2/provider/zip/ParseXmlInZipTest.java",
-          "commons-vfs2/src/test/java/org/apache/commons/vfs2/provider/zip/FileLockTest.java",
-          "commons-vfs2/src/test/java/org/apache/commons/vfs2/provider/sftp/AbstractSftpProviderTestCase.java",
-          "commons-vfs2/src/test/java/org/apache/commons/vfs2/provider/zip/ZipFileObjectTest.java",
-          "commons-vfs2/src/test/java/org/apache/commons/vfs2/provider/local/TempFileTests.java",
-          "commons-vfs2/src/test/java/org/apache/commons/vfs2/provider/DefaultFileContentTest.java",
-          "src/test/java/org/apache/commons/codec/digest/DigestUtilsTest.java",
-          "juneau-utest/src/test/java/org/apache/juneau/http/BasicHttpResource_Test.java"
-        })
-        void ensureIsTestSource(String path) {
-            assertTrue(SecureTempFileCreation.isTestSource(Path.of(path)));
-        }
     }
 }

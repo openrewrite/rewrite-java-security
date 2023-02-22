@@ -15,65 +15,25 @@
  */
 package org.openrewrite.java.security;
 
-import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.ExecutionContext;
-import org.openrewrite.Option;
 import org.openrewrite.Recipe;
-import org.openrewrite.TreeVisitor;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.JavaIsoVisitor;
+import org.openrewrite.java.JavaTemplate;
+import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.search.UsesMethod;
 import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.JavaType;
 
-import java.nio.file.Path;
 import java.time.Duration;
+import java.util.List;
 
 
 @Value
 @EqualsAndHashCode(callSuper = true)
 public class SecureTempFileCreation extends Recipe {
-
-    @AllArgsConstructor
-    enum Target {
-        AllSource(Target.ALL_SOURCE),
-        AllSourceWhenNonTestDetected(Target.ALL_SOURCE_IF_DETECTED_IN_NON_TEST),
-        NonTestSource(Target.NON_TEST_SOURCE);
-
-        static final String ALL_SOURCE = "All Source";
-        static final String ALL_SOURCE_IF_DETECTED_IN_NON_TEST = "All Source if detected in Non Test Source";
-        static final String NON_TEST_SOURCE = "Non-Test Source";
-
-        private static Target fromString(@Nullable String target) {
-            if (target == null) {
-                return NonTestSource;
-            }
-            switch (target) {
-                case ALL_SOURCE:
-                    return AllSource;
-                case ALL_SOURCE_IF_DETECTED_IN_NON_TEST:
-                    return AllSourceWhenNonTestDetected;
-                default:
-                    return NonTestSource;
-            }
-        }
-
-        private final String description;
-    }
-
-    @Option(
-            displayName = "Target",
-            description = "Specify whether this recipe should apply to all sources or only non-test sources. Defaults to non-test sources.",
-            required = false,
-            valid = {
-                    Target.ALL_SOURCE,
-                    Target.ALL_SOURCE_IF_DETECTED_IN_NON_TEST,
-                    Target.NON_TEST_SOURCE
-            },
-            example = Target.ALL_SOURCE
-    )
-    String target;
 
     @Override
     public String getDisplayName() {
@@ -91,24 +51,6 @@ public class SecureTempFileCreation extends Recipe {
     }
 
     @Override
-    protected TreeVisitor<?, ExecutionContext> getApplicableTest() {
-        Target target = Target.fromString(getTarget());
-        return new JavaIsoVisitor<ExecutionContext>() {
-            @Override
-            public J.CompilationUnit visitCompilationUnit(J.CompilationUnit cu, ExecutionContext executionContext) {
-                // If the target is Non Test Source, and this is a test source file, skip it.
-                if ((Target.NonTestSource.equals(target) || Target.AllSourceWhenNonTestDetected.equals(target)) && isTestSource(cu.getSourcePath())) {
-                    return cu;
-                }
-                if (getSingleSourceApplicableTest().visitNonNull(cu, executionContext, getCursor().getParentOrThrow()) != cu) {
-                    return (J.CompilationUnit) getVisitor().visitNonNull(cu, executionContext, getCursor().getParentOrThrow());
-                }
-                return cu;
-            }
-        };
-    }
-
-    @Override
     protected JavaIsoVisitor<ExecutionContext> getSingleSourceApplicableTest() {
         return new UsesMethod<>(SecureTempFileCreationVisitor.MATCHER);
     }
@@ -118,7 +60,59 @@ public class SecureTempFileCreation extends Recipe {
         return new SecureTempFileCreationVisitor();
     }
 
-    static boolean isTestSource(Path path) {
-        return path.getFileSystem().getPathMatcher("glob:**/test/**").matches(path);
+    static class SecureTempFileCreationVisitor extends JavaIsoVisitor<ExecutionContext> {
+
+        static final MethodMatcher MATCHER = new MethodMatcher("java.io.File createTempFile(..)");
+        private final JavaTemplate twoArg = JavaTemplate.builder(this::getCursor, "Files.createTempFile(#{any(String)}, #{any(String)}).toFile()")
+                .imports("java.nio.file.Files")
+                .build();
+
+        private final JavaTemplate threeArg = JavaTemplate.builder(this::getCursor, "Files.createTempFile(#{any(java.io.File)}.toPath(), #{any(String)}, #{any(String)}).toFile()")
+                .imports("java.nio.file.Files")
+                .build();
+
+        @Override
+        public void visit(@Nullable List<? extends J> nodes, ExecutionContext executionContext) {
+            super.visit(nodes, executionContext);
+        }
+
+        @Override
+        public J.Block visitBlock(J.Block block, ExecutionContext executionContext) {
+            J.Block createTempDirectoryFix = (J.Block) new UseFilesCreateTempDirectory()
+                    .getVisitor()
+                    .visitNonNull(block, executionContext, getCursor().getParentOrThrow());
+            if (createTempDirectoryFix != block) {
+                // If the issue could be fixed by the UseFilesCreateTempDirectory's visitor
+                // then this visitor should not be applied.
+                return block;
+            } else {
+                return super.visitBlock(block, executionContext);
+            }
+        }
+
+        @Override
+        public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, ExecutionContext executionContext) {
+            J.MethodInvocation m = method;
+            if (MATCHER.matches(m)) {
+                maybeAddImport("java.nio.file.Files");
+                if (m.getArguments().size() == 2 || (m.getArguments().size() == 3 && m.getArguments().get(2).getType() == JavaType.Primitive.Null)) {
+                    // File.createTempFile(String prefix, String suffix)
+                    m = m.withTemplate(twoArg,
+                            m.getCoordinates().replace(),
+                            m.getArguments().get(0),
+                            m.getArguments().get(1)
+                    );
+                } else if (m.getArguments().size() == 3) {
+                    // File.createTempFile(String prefix, String suffix, File dir)
+                    m = m.withTemplate(threeArg,
+                            m.getCoordinates().replace(),
+                            m.getArguments().get(2),
+                            m.getArguments().get(0),
+                            m.getArguments().get(1)
+                    );
+                }
+            }
+            return m;
+        }
     }
 }

@@ -17,11 +17,12 @@ package org.openrewrite.java.security;
 
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
+import org.openrewrite.java.search.IsLikelyNotTest;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
-import static org.openrewrite.java.Assertions.java;
-import static org.openrewrite.test.SourceSpecs.dir;
+import static org.openrewrite.java.Assertions.*;
+import static org.openrewrite.test.RewriteTest.toRecipe;
 
 public class SecureTempFileCreationFilteringTest implements RewriteTest {
 
@@ -91,14 +92,16 @@ public class SecureTempFileCreationFilteringTest implements RewriteTest {
 
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new SecureTempFileCreation(SecureTempFileCreation.Target.ALL_SOURCE_IF_DETECTED_IN_NON_TEST));
+        spec.recipe(toRecipe()
+          .addApplicableTest(new IsLikelyNotTest())
+          .addApplicableTest(new SecureTempFileCreation())
+          .doNext(new SecureTempFileCreation()));
     }
 
     @Test
     void vulnerableTestFile() {
         rewriteRun(
-          dir(
-            "src/test/java/org/openrewrite/java/security/",
+          srcTestJava(
             java(TEST_VULNERABLE)
           )
         );
@@ -107,8 +110,7 @@ public class SecureTempFileCreationFilteringTest implements RewriteTest {
     @Test
     void vulnerableProductionFile() {
         rewriteRun(
-          dir(
-            "src/main/java/org/openrewrite/java/security/",
+          srcMainJava(
             java(PRODUCTION_VULNERABLE, PRODUCTION_SAFE)
           )
         );
@@ -117,12 +119,10 @@ public class SecureTempFileCreationFilteringTest implements RewriteTest {
     @Test
     void vulnerableTestAndProductionFile() {
         rewriteRun(
-          dir(
-            "src/main/java/org/openrewrite/java/security/",
+          srcMainJava(
             java(PRODUCTION_VULNERABLE, PRODUCTION_SAFE)
           ),
-          dir(
-            "src/test/java/org/openrewrite/java/security/",
+          srcTestJava(
             java(TEST_VULNERABLE, TEST_SAFE)
           )
         );
@@ -131,12 +131,10 @@ public class SecureTempFileCreationFilteringTest implements RewriteTest {
     @Test
     void vulnerableTempDirHijackingDoesNotTriggerChangesToTests() {
         rewriteRun(
-          dir(
-            "src/main/java/org/openrewrite/java/security/",
+          srcMainJava(
             java(PRODUCTION_TEMP_DIR_HIJACKING_VULNERABLE)
           ),
-          dir(
-            "src/test/java/org/openrewrite/java/security/",
+          srcTestJava(
             java(TEST_VULNERABLE)
           )
         );
