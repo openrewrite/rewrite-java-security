@@ -52,7 +52,7 @@ public final class FileSeparatorUtil {
                 nameIdentifier = (J.Identifier) expression;
                 type = ((J.Identifier) expression).getFieldType().getOwner();
             }
-            final String name = nameIdentifier.getSimpleName();
+            String name = nameIdentifier.getSimpleName();
             return ("separator".equals(name) || "separatorChar".equals(name)) &&
                     TypeUtils.isOfClassType(type, "java.io.File");
         } else if (expression instanceof J.Literal) {

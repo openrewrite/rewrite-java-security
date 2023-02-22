@@ -391,7 +391,7 @@ public class ZipSlip extends Recipe {
                             enclosingVariableIdentifier = enclosingVariable.getName();
                         }
 
-                        final ZipSlipSimpleInjectGuardInfo zipSlipSimpleInjectGuardInfo =
+                        ZipSlipSimpleInjectGuardInfo zipSlipSimpleInjectGuardInfo =
                                 new ZipSlipSimpleInjectGuardInfo(
                                         enclosingStatement,
                                         parentDirExtractor.apply(methodCall),
@@ -417,7 +417,7 @@ public class ZipSlip extends Recipe {
                                 getCursor(),
                                 VariableNameUtils.GenerationStrategy.INCREMENT_NUMBER
                         );
-                        final ZipSlipCreateNewVariableInfo zipSlipCreateNewVariableInfo =
+                        ZipSlipCreateNewVariableInfo zipSlipCreateNewVariableInfo =
                                 new ZipSlipCreateNewVariableInfo(
                                         newVariableName,
                                         enclosingStatement,

@@ -269,7 +269,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
             List<J> createFileStatements = getCursor().pollMessage("CREATE_FILE_STATEMENT");
             if (createFileStatements != null) {
                 for (J createFileStatement : createFileStatements) {
-                    final TempDirHijackingChainStateMachine stateMachine =
+                    TempDirHijackingChainStateMachine stateMachine =
                             new TempDirHijackingChainStateMachine();
 
                     new TempDirHijackingChainFinderVisitor(createFileStatement)
@@ -344,7 +344,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
                 if (!invocationMatcher.matches(mi)) {
                     return false;
                 }
-                final J.Identifier sel;
+                J.Identifier sel;
                 if (mi.getSelect() != null && mi.getSelect().unwrap() instanceof J.Identifier) {
                     sel = (J.Identifier) mi.getSelect().unwrap();
                 } else if (!mi.getArguments().isEmpty() && mi.getArguments().get(0).unwrap() instanceof J.Identifier) {
