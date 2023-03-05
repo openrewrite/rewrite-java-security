@@ -25,7 +25,7 @@ class FileConstructorFixVisitorTest implements RewriteTest {
 
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(RewriteTest.toRecipe(() -> new FileConstructorFixVisitor<>()));
+        spec.recipe(RewriteTest.toRecipe(FileConstructorFixVisitor::new));
     }
 
     @SuppressWarnings("UnnecessaryLocalVariable")
