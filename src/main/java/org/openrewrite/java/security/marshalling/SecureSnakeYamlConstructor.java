@@ -15,18 +15,18 @@
  */
 package org.openrewrite.java.security.marshalling;
 
-import org.openrewrite.Cursor;
-import org.openrewrite.ExecutionContext;
-import org.openrewrite.Recipe;
+import org.openrewrite.*;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.*;
 import org.openrewrite.java.dataflow.internal.InvocationMatcher;
+import org.openrewrite.java.search.UsesMethod;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.java.tree.TypeUtils;
 
 import java.time.Duration;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -43,7 +43,8 @@ public class SecureSnakeYamlConstructor extends Recipe {
 
     @Override
     public String getDescription() {
-        return "See the [paper](https://github.com/mbechler/marshalsec) on this subject.";
+        return "See the [paper](https://github.com/mbechler/marshalsec) on this subject.\n" +
+                "NOTE: This vulnerability is fixed in SnakeYAML 2.0, and this recipe is no longer needed for that version.";
     }
 
     @Override
@@ -60,7 +61,7 @@ public class SecureSnakeYamlConstructor extends Recipe {
         );
         return new JavaVisitor<ExecutionContext>() {
             @Override
-            public J visitMemberReference(J.MemberReference memberRef, ExecutionContext executionContext) {
+            public J visitMemberReference(J.MemberReference memberRef, ExecutionContext ctx) {
                 if (snakeYamlZeroArgumentConstructor.matches(memberRef.getMethodType())) {
                     maybeAddImport("org.yaml.snakeyaml.constructor.SafeConstructor");
                     return memberRef.withTemplate(
@@ -68,14 +69,12 @@ public class SecureSnakeYamlConstructor extends Recipe {
                                     .builder(this::getCursor, "() -> new Yaml(new SafeConstructor())")
                                     .imports("org.yaml.snakeyaml.Yaml")
                                     .imports("org.yaml.snakeyaml.constructor.SafeConstructor")
-                                    .javaParser(() -> JavaParser.fromJavaVersion()
-                                            .classpath("snakeyaml")
-                                            .build())
+                                    .javaParser(() -> snakeYaml1_3JavaParser(ctx))
                                     .build(),
                             memberRef.getCoordinates().replace()
                     );
                 }
-                return super.visitMemberReference(memberRef, executionContext);
+                return super.visitMemberReference(memberRef, ctx);
             }
 
             @Override
@@ -94,9 +93,7 @@ public class SecureSnakeYamlConstructor extends Recipe {
                                     .builder(this::getCursor, "new Yaml(new SafeConstructor())")
                                     .imports("org.yaml.snakeyaml.Yaml")
                                     .imports("org.yaml.snakeyaml.constructor.SafeConstructor")
-                                    .javaParser(() -> JavaParser.fromJavaVersion()
-                                            .classpath("snakeyaml")
-                                            .build())
+                                    .javaParser(() -> snakeYaml1_3JavaParser(ctx))
                                     .build(),
                             newClass.getCoordinates().replace()
                     );
@@ -115,9 +112,7 @@ public class SecureSnakeYamlConstructor extends Recipe {
                                             "org.yaml.snakeyaml.constructor.SafeConstructor",
                                             "org.yaml.snakeyaml.representer.Representer"
                                     )
-                                    .javaParser(() -> JavaParser.fromJavaVersion()
-                                            .classpath("snakeyaml")
-                                            .build())
+                                    .javaParser(() -> snakeYaml1_3JavaParser(ctx))
                                     .build(),
                             newClass.getCoordinates().replace(),
                             newClass.getArguments().get(0)
@@ -137,9 +132,7 @@ public class SecureSnakeYamlConstructor extends Recipe {
                                             "org.yaml.snakeyaml.constructor.SafeConstructor",
                                             "org.yaml.snakeyaml.representer.Representer"
                                     )
-                                    .javaParser(() -> JavaParser.fromJavaVersion()
-                                            .classpath("snakeyaml")
-                                            .build())
+                                    .javaParser(() -> snakeYaml1_3JavaParser(ctx))
                                     .build(),
                             newClass.getCoordinates().replace(),
                             newClass.getArguments().get(0)
@@ -274,5 +267,13 @@ public class SecureSnakeYamlConstructor extends Recipe {
             }
         }
         return null;
+    }
+
+    static JavaParser snakeYaml1_3JavaParser(ExecutionContext ctx) {
+        return snakeYaml1_3JavaParserBuilder(ctx).build();
+    }
+
+    static JavaParser.Builder<? extends JavaParser, ?> snakeYaml1_3JavaParserBuilder(ExecutionContext ctx) {
+        return JavaParser.fromJavaVersion().classpathFromResources(ctx, "snakeyaml-1.33");
     }
 }
