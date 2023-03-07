@@ -17,6 +17,7 @@ package org.openrewrite.java.security.marshalling;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
@@ -28,7 +29,8 @@ class SecureSnakeYamlConstructorTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new SecureSnakeYamlConstructor())
-          .parser(JavaParser.fromJavaVersion().classpath("snakeyaml"));
+          .parser(JavaParser.fromJavaVersion()
+            .classpathFromResources(new InMemoryExecutionContext(), "snakeyaml-1.33"));
     }
 
     @Test

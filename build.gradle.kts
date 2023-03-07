@@ -11,6 +11,10 @@ val rewriteVersion = if (project.hasProperty("releasing")) {
     "latest.integration"
 }
 
+recipeDependencies {
+    parserClasspath("org.yaml:snakeyaml:1.33")
+}
+
 dependencies {
     compileOnly("org.projectlombok:lombok:latest.release")
     annotationProcessor("org.projectlombok:lombok:latest.release")

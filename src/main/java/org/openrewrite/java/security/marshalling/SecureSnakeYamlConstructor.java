@@ -17,6 +17,7 @@ package org.openrewrite.java.security.marshalling;
 
 import org.openrewrite.Cursor;
 import org.openrewrite.ExecutionContext;
+import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.Recipe;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.*;
@@ -69,7 +70,7 @@ public class SecureSnakeYamlConstructor extends Recipe {
                                     .imports("org.yaml.snakeyaml.Yaml")
                                     .imports("org.yaml.snakeyaml.constructor.SafeConstructor")
                                     .javaParser(() -> JavaParser.fromJavaVersion()
-                                            .classpath("snakeyaml")
+                                            .classpathFromResources(executionContext, "snakeyaml-1.33")
                                             .build())
                                     .build(),
                             memberRef.getCoordinates().replace()
@@ -95,7 +96,7 @@ public class SecureSnakeYamlConstructor extends Recipe {
                                     .imports("org.yaml.snakeyaml.Yaml")
                                     .imports("org.yaml.snakeyaml.constructor.SafeConstructor")
                                     .javaParser(() -> JavaParser.fromJavaVersion()
-                                            .classpath("snakeyaml")
+                                            .classpathFromResources(ctx, "snakeyaml-1.33")
                                             .build())
                                     .build(),
                             newClass.getCoordinates().replace()
@@ -116,7 +117,7 @@ public class SecureSnakeYamlConstructor extends Recipe {
                                             "org.yaml.snakeyaml.representer.Representer"
                                     )
                                     .javaParser(() -> JavaParser.fromJavaVersion()
-                                            .classpath("snakeyaml")
+                                            .classpathFromResources(ctx, "snakeyaml-1.33")
                                             .build())
                                     .build(),
                             newClass.getCoordinates().replace(),
@@ -138,7 +139,7 @@ public class SecureSnakeYamlConstructor extends Recipe {
                                             "org.yaml.snakeyaml.representer.Representer"
                                     )
                                     .javaParser(() -> JavaParser.fromJavaVersion()
-                                            .classpath("snakeyaml")
+                                            .classpathFromResources(ctx, "snakeyaml-1.33")
                                             .build())
                                     .build(),
                             newClass.getCoordinates().replace(),
