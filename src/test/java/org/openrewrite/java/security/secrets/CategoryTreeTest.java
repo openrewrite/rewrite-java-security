@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.openrewrite.config.CategoryTree;
 import org.openrewrite.config.Environment;
 
-public class CategoryTreeTest {
+class CategoryTreeTest {
 
     @Test
     void categoryTree() {
