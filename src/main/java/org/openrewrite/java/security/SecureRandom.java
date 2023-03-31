@@ -59,7 +59,7 @@ public class SecureRandom extends Recipe {
         return new JavaVisitor<ExecutionContext>() {
             @Override
             public J visitJavaSourceFile(JavaSourceFile cu, ExecutionContext context) {
-                doAfterVisit(new UsesType<>("java.util.Random"));
+                doAfterVisit(new UsesType<>("java.util.Random", false));
                 doAfterVisit(new InJavaSourceSet<>("main"));
                 return cu;
             }

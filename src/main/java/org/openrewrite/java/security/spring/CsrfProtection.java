@@ -20,7 +20,6 @@ import lombok.Value;
 import org.openrewrite.*;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.*;
-import org.openrewrite.java.search.HasTypeOnClasspathSourceSet;
 import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaSourceFile;
@@ -55,7 +54,7 @@ public class CsrfProtection extends Recipe {
 
     @Override
     protected TreeVisitor<?, ExecutionContext> getSingleSourceApplicableTest() {
-        return new UsesType<>("org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter");
+        return new UsesType<>("org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter", false);
     }
 
     private static final MethodMatcher CSRF = new MethodMatcher("org.springframework.security.config.annotation.web.builders.HttpSecurity csrf()");
