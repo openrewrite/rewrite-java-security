@@ -63,7 +63,7 @@ public class CsrfProtection extends Recipe {
     protected List<SourceFile> visit(List<SourceFile> before, ExecutionContext ctx) {
         return super.visit(new GenerateWebSecurityConfigurerAdapter(Boolean.TRUE.equals(onlyIfSecurityConfig), new JavaVisitor<ExecutionContext>() {
             @Override
-            public J visitBlock(J.Block block, ExecutionContext executionContext) {
+            public J visitBlock(J.Block block, ExecutionContext ctx) {
                 for (JavaType.Method method : getCursor().firstEnclosingOrThrow(JavaSourceFile.class).getTypesInUse().getUsedMethods()) {
                     if (CSRF.matches(method)) {
                         return block;

@@ -58,7 +58,7 @@ public class SecureRandom extends Recipe {
     protected TreeVisitor<?, ExecutionContext> getSingleSourceApplicableTest() {
         return new JavaVisitor<ExecutionContext>() {
             @Override
-            public J visitJavaSourceFile(JavaSourceFile cu, ExecutionContext context) {
+            public J visitJavaSourceFile(JavaSourceFile cu, ExecutionContext ctx) {
                 doAfterVisit(new UsesType<>("java.util.Random", false));
                 doAfterVisit(new InJavaSourceSet<>("main"));
                 return cu;
@@ -70,8 +70,8 @@ public class SecureRandom extends Recipe {
     protected TreeVisitor<?, ExecutionContext> getVisitor() {
         return new JavaIsoVisitor<ExecutionContext>() {
             @Override
-            public J.NewClass visitNewClass(J.NewClass newClass, ExecutionContext executionContext) {
-                J.NewClass n = super.visitNewClass(newClass, executionContext);
+            public J.NewClass visitNewClass(J.NewClass newClass, ExecutionContext ctx) {
+                J.NewClass n = super.visitNewClass(newClass, ctx);
                 if (TypeUtils.isOfClassType(newClass.getType(), "java.util.Random")) {
                     maybeAddImport("java.security.SecureRandom");
                     return n.withTemplate(JavaTemplate.builder(this::getCursor, "new SecureRandom()")

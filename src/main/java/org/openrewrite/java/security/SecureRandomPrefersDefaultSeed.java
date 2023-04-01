@@ -69,8 +69,8 @@ public class SecureRandomPrefersDefaultSeed extends Recipe {
         private final JavaType dateType = JavaType.buildType("java.util.Date");
 
         @Override
-        public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, ExecutionContext executionContext) {
-            J.MethodInvocation mi = super.visitMethodInvocation(method, executionContext);
+        public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, ExecutionContext ctx) {
+            J.MethodInvocation mi = super.visitMethodInvocation(method, ctx);
             if (SET_SEED_MATCHER.matches(mi)) {
                 boolean isWeakSeed = false;
                 for (Expression arg : mi.getArguments()) {

@@ -88,8 +88,8 @@ public class FindTextDirectionChanges extends Recipe {
         return new JavaIsoVisitor<ExecutionContext>() {
 
             @Override
-            public @Nullable J visit(@Nullable Tree tree, ExecutionContext context) {
-                J j = super.visit(tree, context);
+            public @Nullable J visit(@Nullable Tree tree, ExecutionContext ctx) {
+                J j = super.visit(tree, ctx);
                 Object foundCodes = getCursor().pollMessage("foundSneakyCodes");
                 if (j != null && foundCodes != null) {
                     //noinspection unchecked
@@ -101,7 +101,7 @@ public class FindTextDirectionChanges extends Recipe {
             }
 
             @Override
-            public Space visitSpace(Space s, Space.Location loc, ExecutionContext context) {
+            public Space visitSpace(Space s, Space.Location loc, ExecutionContext ctx) {
                 Set<String> foundCodes = null;
                 if (containsSneakyCodes(s.getWhitespace())) {
                     foundCodes = listSneakyCodes(s.getWhitespace());
@@ -125,8 +125,8 @@ public class FindTextDirectionChanges extends Recipe {
             }
 
             @Override
-            public J.Literal visitLiteral(J.Literal literal, ExecutionContext context) {
-                J.Literal l = super.visitLiteral(literal, context);
+            public J.Literal visitLiteral(J.Literal literal, ExecutionContext ctx) {
+                J.Literal l = super.visitLiteral(literal, ctx);
                 if (l.getType() == JavaType.Primitive.String && l.getValueSource() != null && containsSneakyCodes(l.getValueSource())) {
                     l = SearchResult.found(l, "Found text-direction altering unicode control characters: " +
                                               String.join(",", listSneakyCodes(l.getValueSource())));

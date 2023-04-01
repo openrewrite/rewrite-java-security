@@ -61,7 +61,7 @@ public class SecureSnakeYamlConstructor extends Recipe {
         );
         return new JavaVisitor<ExecutionContext>() {
             @Override
-            public J visitMemberReference(J.MemberReference memberRef, ExecutionContext executionContext) {
+            public J visitMemberReference(J.MemberReference memberRef, ExecutionContext ctx) {
                 if (snakeYamlZeroArgumentConstructor.matches(memberRef.getMethodType())) {
                     maybeAddImport("org.yaml.snakeyaml.constructor.SafeConstructor");
                     return memberRef.withTemplate(
@@ -70,13 +70,13 @@ public class SecureSnakeYamlConstructor extends Recipe {
                                     .imports("org.yaml.snakeyaml.Yaml")
                                     .imports("org.yaml.snakeyaml.constructor.SafeConstructor")
                                     .javaParser(() -> JavaParser.fromJavaVersion()
-                                            .classpathFromResources(executionContext, "snakeyaml-1.33")
+                                            .classpathFromResources(ctx, "snakeyaml-1.33")
                                             .build())
                                     .build(),
                             memberRef.getCoordinates().replace()
                     );
                 }
-                return super.visitMemberReference(memberRef, executionContext);
+                return super.visitMemberReference(memberRef, ctx);
             }
 
             @Override

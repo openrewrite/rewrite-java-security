@@ -65,7 +65,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
     protected JavaVisitor<ExecutionContext> getSingleSourceApplicableTest() {
         return new JavaVisitor<ExecutionContext>() {
             @Override
-            public J visitJavaSourceFile(JavaSourceFile cu, ExecutionContext executionContext) {
+            public J visitJavaSourceFile(JavaSourceFile cu, ExecutionContext ctx) {
                 doAfterVisit(new UsesMethod<>("java.io.File createTempFile(..)"));
                 doAfterVisit(new UsesMethod<>("java.io.File mkdir(..)"));
                 doAfterVisit(new UsesMethod<>("java.io.File mkdirs(..)"));
@@ -81,17 +81,17 @@ public class UseFilesCreateTempDirectory extends Recipe {
 
     private static class UsesFilesCreateTempDirVisitor extends JavaIsoVisitor<ExecutionContext> {
         @Override
-        public JavaSourceFile visitJavaSourceFile(JavaSourceFile cu, ExecutionContext executionContext) {
+        public JavaSourceFile visitJavaSourceFile(JavaSourceFile cu, ExecutionContext ctx) {
             Optional<JavaVersion> javaVersion = cu.getMarkers().findFirst(JavaVersion.class);
             if (javaVersion.isPresent() && javaVersion.get().getMajorVersion() < 7) {
                 return cu;
             }
-            return super.visitJavaSourceFile(cu, executionContext);
+            return super.visitJavaSourceFile(cu, ctx);
         }
 
         @Override
-        public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, ExecutionContext executionContext) {
-            J.MethodInvocation mi = super.visitMethodInvocation(method, executionContext);
+        public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, ExecutionContext ctx) {
+            J.MethodInvocation mi = super.visitMethodInvocation(method, ctx);
             if (CREATE_TEMP_FILE_MATCHER.matches(mi)) {
                 J.Block block = getCursor().firstEnclosing(J.Block.class);
                 if (block != null) {
@@ -253,19 +253,19 @@ public class UseFilesCreateTempDirectory extends Recipe {
             }
         }
 
-        private J.Block deleteOrReplaceStatement(J.Block bl, Statement stmt, Expression replacement, ExecutionContext executionContext) {
+        private J.Block deleteOrReplaceStatement(J.Block bl, Statement stmt, Expression replacement, ExecutionContext ctx) {
             bl = (J.Block) new DeleteStatement<>(stmt)
-                    .visitNonNull(bl, executionContext, getCursor().getParentOrThrow());
+                    .visitNonNull(bl, ctx, getCursor().getParentOrThrow());
             bl = (J.Block) new ReplaceStatement<>(
                     stmt,
                     replacement
-            ).visitNonNull(bl, executionContext, getCursor().getParentOrThrow());
+            ).visitNonNull(bl, ctx, getCursor().getParentOrThrow());
             return bl;
         }
 
         @Override
-        public J.Block visitBlock(J.Block block, ExecutionContext executionContext) {
-            J.Block bl = super.visitBlock(block, executionContext);
+        public J.Block visitBlock(J.Block block, ExecutionContext ctx) {
+            J.Block bl = super.visitBlock(block, ctx);
             List<J> createFileStatements = getCursor().pollMessage("CREATE_FILE_STATEMENT");
             if (createFileStatements != null) {
                 for (J createFileStatement : createFileStatements) {
@@ -284,14 +284,14 @@ public class UseFilesCreateTempDirectory extends Recipe {
                         }));
                         maybeAddImport("java.nio.file.Files");
                         Statement delete = stateMachine.getDeleteStatement();
-                        bl = deleteOrReplaceStatement(bl, delete, trueLiteral(delete.getPrefix()), executionContext);
+                        bl = deleteOrReplaceStatement(bl, delete, trueLiteral(delete.getPrefix()), ctx);
                         Statement mkdir = stateMachine.getMkdirStatement();
-                        bl = deleteOrReplaceStatement(bl, mkdir, trueLiteral(mkdir.getPrefix()), executionContext);
+                        bl = deleteOrReplaceStatement(bl, mkdir, trueLiteral(mkdir.getPrefix()), ctx);
                         bl = (J.Block) new SimplifyConstantIfBranchExecution()
                                 .getVisitor()
-                                .visitNonNull(bl, executionContext, getCursor().getParentOrThrow());
+                                .visitNonNull(bl, ctx, getCursor().getParentOrThrow());
                         bl = (J.Block) new SimplifyCompoundVisitor<>()
-                                .visitNonNull(bl, executionContext, getCursor().getParentOrThrow());
+                                .visitNonNull(bl, ctx, getCursor().getParentOrThrow());
                         // Remove any silly assertions that may be lingering like `assertTrue(true)`
                         doAfterVisit(new RemoveUnneededAssertion());
                     }

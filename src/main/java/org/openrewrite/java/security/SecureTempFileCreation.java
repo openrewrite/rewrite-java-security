@@ -72,26 +72,26 @@ public class SecureTempFileCreation extends Recipe {
                 .build();
 
         @Override
-        public void visit(@Nullable List<? extends J> nodes, ExecutionContext executionContext) {
-            super.visit(nodes, executionContext);
+        public void visit(@Nullable List<? extends J> nodes, ExecutionContext ctx) {
+            super.visit(nodes, ctx);
         }
 
         @Override
-        public J.Block visitBlock(J.Block block, ExecutionContext executionContext) {
+        public J.Block visitBlock(J.Block block, ExecutionContext ctx) {
             J.Block createTempDirectoryFix = (J.Block) new UseFilesCreateTempDirectory()
                     .getVisitor()
-                    .visitNonNull(block, executionContext, getCursor().getParentOrThrow());
+                    .visitNonNull(block, ctx, getCursor().getParentOrThrow());
             if (createTempDirectoryFix != block) {
                 // If the issue could be fixed by the UseFilesCreateTempDirectory's visitor
                 // then this visitor should not be applied.
                 return block;
             } else {
-                return super.visitBlock(block, executionContext);
+                return super.visitBlock(block, ctx);
             }
         }
 
         @Override
-        public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, ExecutionContext executionContext) {
+        public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, ExecutionContext ctx) {
             J.MethodInvocation m = method;
             if (MATCHER.matches(m)) {
                 maybeAddImport("java.nio.file.Files");

@@ -53,7 +53,7 @@ public class SecureJacksonDefaultTyping extends Recipe {
         MethodMatcher enableDefaultTyping = new MethodMatcher("com.fasterxml.jackson.databind.ObjectMapper enableDefaultTyping(..)", true);
         return new JavaVisitor<ExecutionContext>() {
             @Override
-            public J visitMethodInvocation(J.MethodInvocation method, ExecutionContext executionContext) {
+            public J visitMethodInvocation(J.MethodInvocation method, ExecutionContext ctx) {
                 if (enableDefaultTyping.matches(method)) {
                     JavaType.Method methodType = method.getMethodType();
                     assert methodType != null;
@@ -85,7 +85,7 @@ public class SecureJacksonDefaultTyping extends Recipe {
                     }
                 }
 
-                return super.visitMethodInvocation(method, executionContext);
+                return super.visitMethodInvocation(method, ctx);
             }
         };
     }
