@@ -69,9 +69,8 @@ public class SecureSnakeYamlConstructor extends Recipe {
                                     .builder(this::getCursor, "() -> new Yaml(new SafeConstructor())")
                                     .imports("org.yaml.snakeyaml.Yaml")
                                     .imports("org.yaml.snakeyaml.constructor.SafeConstructor")
-                                    .javaParser(() -> JavaParser.fromJavaVersion()
-                                            .classpathFromResources(ctx, "snakeyaml-1.33")
-                                            .build())
+                                    .javaParser(JavaParser.fromJavaVersion()
+                                            .classpathFromResources(ctx, "snakeyaml-1.33"))
                                     .build(),
                             memberRef.getCoordinates().replace()
                     );
@@ -95,9 +94,8 @@ public class SecureSnakeYamlConstructor extends Recipe {
                                     .builder(this::getCursor, "new Yaml(new SafeConstructor())")
                                     .imports("org.yaml.snakeyaml.Yaml")
                                     .imports("org.yaml.snakeyaml.constructor.SafeConstructor")
-                                    .javaParser(() -> JavaParser.fromJavaVersion()
-                                            .classpathFromResources(ctx, "snakeyaml-1.33")
-                                            .build())
+                                    .javaParser(JavaParser.fromJavaVersion()
+                                            .classpathFromResources(ctx, "snakeyaml-1.33"))
                                     .build(),
                             newClass.getCoordinates().replace()
                     );
@@ -116,9 +114,8 @@ public class SecureSnakeYamlConstructor extends Recipe {
                                             "org.yaml.snakeyaml.constructor.SafeConstructor",
                                             "org.yaml.snakeyaml.representer.Representer"
                                     )
-                                    .javaParser(() -> JavaParser.fromJavaVersion()
-                                            .classpathFromResources(ctx, "snakeyaml-1.33")
-                                            .build())
+                                    .javaParser(JavaParser.fromJavaVersion()
+                                            .classpathFromResources(ctx, "snakeyaml-1.33"))
                                     .build(),
                             newClass.getCoordinates().replace(),
                             newClass.getArguments().get(0)
@@ -138,9 +135,8 @@ public class SecureSnakeYamlConstructor extends Recipe {
                                             "org.yaml.snakeyaml.constructor.SafeConstructor",
                                             "org.yaml.snakeyaml.representer.Representer"
                                     )
-                                    .javaParser(() -> JavaParser.fromJavaVersion()
-                                            .classpathFromResources(ctx, "snakeyaml-1.33")
-                                            .build())
+                                    .javaParser(JavaParser.fromJavaVersion()
+                                            .classpathFromResources(ctx, "snakeyaml-1.33"))
                                     .build(),
                             newClass.getCoordinates().replace(),
                             newClass.getArguments().get(0)

@@ -75,9 +75,8 @@ public class PreventClickjacking extends Recipe {
                 return block.withTemplate(
                         JavaTemplate
                                 .builder(this::getCursor, "http.headers().frameOptions().deny();")
-                                .javaParser(() -> JavaParser.fromJavaVersion()
-                                        .classpath("spring-security-config", "spring-context", "jakarta.servlet-api")
-                                        .build())
+                                .javaParser(JavaParser.fromJavaVersion()
+                                        .classpath("spring-security-config", "spring-context", "jakarta.servlet-api"))
                                 .build(),
                         block.getCoordinates().lastStatement()
                 );

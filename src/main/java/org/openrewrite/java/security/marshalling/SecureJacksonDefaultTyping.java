@@ -75,9 +75,8 @@ public class SecureJacksonDefaultTyping extends Recipe {
                                 JavaTemplate
                                         .builder(this::getCursor, template.toString())
                                         .imports("com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator")
-                                        .javaParser(() -> JavaParser.fromJavaVersion()
-                                                .classpath("jackson-databind", "jackson-core")
-                                                .build())
+                                        .javaParser(JavaParser.fromJavaVersion()
+                                                .classpath("jackson-databind", "jackson-core"))
                                         .build(),
                                 method.getCoordinates().replace(),
                                 ListUtils.concat(method.getSelect(), method.getArguments().get(0) instanceof J.Empty ? emptyList() : method.getArguments()).toArray()
