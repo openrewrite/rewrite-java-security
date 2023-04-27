@@ -16,6 +16,7 @@
 package org.openrewrite.java.security.internal;
 
 import org.junit.jupiter.api.Test;
+import org.openrewrite.DocumentExample;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
@@ -27,6 +28,7 @@ class StringToFileConstructorVisitorTest implements RewriteTest {
         spec.recipe(RewriteTest.toRecipe(() -> new StringToFileConstructorVisitor<>()));
     }
 
+    @DocumentExample
     @SuppressWarnings("RedundantFileCreation")
     @Test
     void stringLiteralFileOutputStreamToNewFile() {

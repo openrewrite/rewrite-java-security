@@ -16,6 +16,7 @@
 package org.openrewrite.java.security;
 
 import org.junit.jupiter.api.Test;
+import org.openrewrite.DocumentExample;
 import org.openrewrite.Issue;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
@@ -29,6 +30,7 @@ class SecureTempFileCreationTest implements RewriteTest {
         spec.recipe(new SecureTempFileCreation());
     }
 
+    @DocumentExample
     @Test
     void twoArgCreateTempFile() {
         //language=java

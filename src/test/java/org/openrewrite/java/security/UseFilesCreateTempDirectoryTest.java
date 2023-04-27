@@ -16,6 +16,7 @@
 package org.openrewrite.java.security;
 
 import org.junit.jupiter.api.Test;
+import org.openrewrite.DocumentExample;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
@@ -30,6 +31,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
         spec.recipe(new UseFilesCreateTempDirectory());
     }
 
+    @DocumentExample
     @Test
     void useFilesCreateTempDirectory() {
         //language=java
