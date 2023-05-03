@@ -16,18 +16,16 @@
 package org.openrewrite.java.security;
 
 import org.openrewrite.ExecutionContext;
+import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.JavaTemplate;
-import org.openrewrite.java.JavaVisitor;
 import org.openrewrite.java.search.InJavaSourceSet;
 import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.J;
-import org.openrewrite.java.tree.JavaSourceFile;
 import org.openrewrite.java.tree.TypeUtils;
 
-import java.time.Duration;
 import java.util.Collections;
 import java.util.Set;
 
@@ -50,25 +48,11 @@ public class SecureRandom extends Recipe {
     }
 
     @Override
-    public Duration getEstimatedEffortPerOccurrence() {
-        return Duration.ofMinutes(5);
-    }
-
-    @Override
-    protected TreeVisitor<?, ExecutionContext> getSingleSourceApplicableTest() {
-        return new JavaVisitor<ExecutionContext>() {
-            @Override
-            public J visitJavaSourceFile(JavaSourceFile cu, ExecutionContext ctx) {
-                doAfterVisit(new UsesType<>("java.util.Random", false));
-                doAfterVisit(new InJavaSourceSet<>("main"));
-                return cu;
-            }
-        };
-    }
-
-    @Override
-    protected TreeVisitor<?, ExecutionContext> getVisitor() {
-        return new JavaIsoVisitor<ExecutionContext>() {
+    public TreeVisitor<?, ExecutionContext> getVisitor() {
+        return Preconditions.check(Preconditions.and(
+                new UsesType<>("java.util.Random", false),
+                new InJavaSourceSet<>("main")
+        ), new JavaIsoVisitor<ExecutionContext>() {
             @Override
             public J.NewClass visitNewClass(J.NewClass newClass, ExecutionContext ctx) {
                 J.NewClass n = super.visitNewClass(newClass, ctx);
@@ -80,6 +64,6 @@ public class SecureRandom extends Recipe {
                 }
                 return n;
             }
-        };
+        });
     }
 }

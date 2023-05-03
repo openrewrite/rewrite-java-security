@@ -18,7 +18,9 @@ package org.openrewrite.java.security;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.ExecutionContext;
+import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
+import org.openrewrite.TreeVisitor;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.JavaTemplate;
@@ -27,7 +29,6 @@ import org.openrewrite.java.search.UsesMethod;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
 
-import java.time.Duration;
 import java.util.List;
 
 
@@ -46,18 +47,8 @@ public class SecureTempFileCreation extends Recipe {
     }
 
     @Override
-    public Duration getEstimatedEffortPerOccurrence() {
-        return Duration.ofMinutes(5);
-    }
-
-    @Override
-    protected JavaIsoVisitor<ExecutionContext> getSingleSourceApplicableTest() {
-        return new UsesMethod<>(SecureTempFileCreationVisitor.MATCHER);
-    }
-
-    @Override
-    protected JavaIsoVisitor<ExecutionContext> getVisitor() {
-        return new SecureTempFileCreationVisitor();
+    public TreeVisitor<?, ExecutionContext> getVisitor() {
+        return Preconditions.check(new UsesMethod<>(SecureTempFileCreationVisitor.MATCHER), new SecureTempFileCreationVisitor());
     }
 
     static class SecureTempFileCreationVisitor extends JavaIsoVisitor<ExecutionContext> {

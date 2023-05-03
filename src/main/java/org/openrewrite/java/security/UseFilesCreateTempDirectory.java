@@ -17,23 +17,20 @@ package org.openrewrite.java.security;
 
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import org.openrewrite.ExecutionContext;
-import org.openrewrite.Recipe;
-import org.openrewrite.Tree;
+import org.openrewrite.*;
 import org.openrewrite.internal.ListUtils;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.*;
-import org.openrewrite.java.cleanup.RemoveUnneededAssertion;
-import org.openrewrite.java.cleanup.SimplifyCompoundVisitor;
-import org.openrewrite.java.cleanup.SimplifyConstantIfBranchExecution;
 import org.openrewrite.java.dataflow.internal.InvocationMatcher;
 import org.openrewrite.java.marker.JavaVersion;
 import org.openrewrite.java.search.UsesMethod;
 import org.openrewrite.java.tree.*;
 import org.openrewrite.marker.Markers;
+import org.openrewrite.staticanalysis.RemoveUnneededAssertion;
+import org.openrewrite.staticanalysis.SimplifyCompoundVisitor;
+import org.openrewrite.staticanalysis.SimplifyConstantIfBranchExecution;
 
 import java.io.File;
-import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 
@@ -62,31 +59,21 @@ public class UseFilesCreateTempDirectory extends Recipe {
     }
 
     @Override
-    protected JavaVisitor<ExecutionContext> getSingleSourceApplicableTest() {
-        return new JavaVisitor<ExecutionContext>() {
-            @Override
-            public J visitJavaSourceFile(JavaSourceFile cu, ExecutionContext ctx) {
-                doAfterVisit(new UsesMethod<>("java.io.File createTempFile(..)"));
-                doAfterVisit(new UsesMethod<>("java.io.File mkdir(..)"));
-                doAfterVisit(new UsesMethod<>("java.io.File mkdirs(..)"));
-                return cu;
-            }
-        };
-    }
-
-    @Override
-    public JavaIsoVisitor<ExecutionContext> getVisitor() {
-        return new UsesFilesCreateTempDirVisitor();
+    public TreeVisitor<?, ExecutionContext> getVisitor() {
+        return Preconditions.check(Preconditions.or(
+                new UsesMethod<>("java.io.File createTempFile(..)"),
+                new UsesMethod<>("java.io.File mkdir(..)"),
+                new UsesMethod<>("java.io.File mkdirs(..)")), new UsesFilesCreateTempDirVisitor());
     }
 
     private static class UsesFilesCreateTempDirVisitor extends JavaIsoVisitor<ExecutionContext> {
         @Override
-        public JavaSourceFile visitJavaSourceFile(JavaSourceFile cu, ExecutionContext ctx) {
+        public J.CompilationUnit visitCompilationUnit(J.CompilationUnit cu, ExecutionContext ctx) {
             Optional<JavaVersion> javaVersion = cu.getMarkers().findFirst(JavaVersion.class);
             if (javaVersion.isPresent() && javaVersion.get().getMajorVersion() < 7) {
                 return cu;
             }
-            return super.visitJavaSourceFile(cu, ctx);
+            return super.visitCompilationUnit(cu, ctx);
         }
 
         @Override
@@ -132,6 +119,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
                  */
                 MKDIR
             }
+
             private State state = State.INIT;
             private final Map<String, Statement> stmtMap = new HashMap<>(4);
 
@@ -290,7 +278,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
                         bl = (J.Block) new SimplifyConstantIfBranchExecution()
                                 .getVisitor()
                                 .visitNonNull(bl, ctx, getCursor().getParentOrThrow());
-                        bl = (J.Block) new SimplifyCompoundVisitor<>()
+                        bl = (J.Block) new SimplifyCompoundVisitor()
                                 .visitNonNull(bl, ctx, getCursor().getParentOrThrow());
                         // Remove any silly assertions that may be lingering like `assertTrue(true)`
                         doAfterVisit(new RemoveUnneededAssertion());
@@ -384,7 +372,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
             J.MethodInvocation m = method;
             if (CREATE_TEMP_FILE_MATCHER.matches(m)) {
                 if (m.getArguments().size() == 2
-                    || (m.getArguments().size() == 3 && m.getArguments().get(2).getType() == JavaType.Primitive.Null)) {
+                        || (m.getArguments().size() == 3 && m.getArguments().get(2).getType() == JavaType.Primitive.Null)) {
                     // File.createTempFile(String prefix, String suffix)
                     m = maybeAutoFormat(m, m.withTemplate(twoArg,
                                     m.getCoordinates().replace(),
@@ -406,12 +394,12 @@ public class UseFilesCreateTempDirectory extends Recipe {
                 //noinspection ConstantConditions
                 select = select.withArguments(ListUtils.map(select.getArguments(), arg -> {
                     if (arg instanceof J.Binary) {
-                        J.Binary binaryArg = (J.Binary)arg;
+                        J.Binary binaryArg = (J.Binary) arg;
                         Expression rightArg = binaryArg.getRight();
                         if (rightArg.getType() == JavaType.Primitive.Null) {
                             return binaryArg.getLeft();
                         } else if (rightArg instanceof J.Literal) {
-                            J.Literal literalRight = (J.Literal)rightArg;
+                            J.Literal literalRight = (J.Literal) rightArg;
                             if (literalRight.getValueSource() != null && "\"\"".equals(((J.Literal) rightArg).getValueSource())) {
                                 return binaryArg.getLeft();
                             }

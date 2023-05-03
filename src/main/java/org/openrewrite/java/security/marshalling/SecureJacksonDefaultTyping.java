@@ -27,8 +27,6 @@ import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.java.tree.TypeUtils;
 
-import java.time.Duration;
-
 import static java.util.Collections.emptyList;
 
 public class SecureJacksonDefaultTyping extends Recipe {
@@ -44,12 +42,7 @@ public class SecureJacksonDefaultTyping extends Recipe {
     }
 
     @Override
-    public Duration getEstimatedEffortPerOccurrence() {
-        return Duration.ofMinutes(5);
-    }
-
-    @Override
-    protected JavaVisitor<ExecutionContext> getVisitor() {
+    public JavaVisitor<ExecutionContext> getVisitor() {
         MethodMatcher enableDefaultTyping = new MethodMatcher("com.fasterxml.jackson.databind.ObjectMapper enableDefaultTyping(..)", true);
         return new JavaVisitor<ExecutionContext>() {
             @Override

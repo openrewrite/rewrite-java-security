@@ -17,12 +17,10 @@ package org.openrewrite.java.security;
 
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
-import org.openrewrite.java.search.IsLikelyNotTest;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
 import static org.openrewrite.java.Assertions.*;
-import static org.openrewrite.test.RewriteTest.toRecipe;
 
 public class SecureTempFileCreationFilteringTest implements RewriteTest {
 
@@ -92,10 +90,11 @@ public class SecureTempFileCreationFilteringTest implements RewriteTest {
 
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(toRecipe()
-          .addApplicableTest(new IsLikelyNotTest())
-          .addApplicableTest(new SecureTempFileCreation())
-          .doNext(new SecureTempFileCreation()));
+// FIXME requires applicability tests for declarative recipes or similar
+//        spec.recipe(toRecipe()
+//          .addApplicableTest(new IsLikelyNotTest())
+//          .addApplicableTest(new SecureTempFileCreation())
+//          .doNext(new SecureTempFileCreation()));
     }
 
     @Test

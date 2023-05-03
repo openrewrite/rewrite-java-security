@@ -82,20 +82,11 @@ public class ZipSlip extends Recipe {
     }
 
     @Override
-    protected @Nullable TreeVisitor<?, ExecutionContext> getSingleSourceApplicableTest() {
-        return new JavaIsoVisitor<ExecutionContext>() {
-            @Override
-            public JavaSourceFile visitJavaSourceFile(JavaSourceFile cu, ExecutionContext ctx) {
-                doAfterVisit(new UsesMethod<>(ZIP_ENTRY_GET_NAME_METHOD_MATCHER));
-                doAfterVisit(new UsesMethod<>(ZIP_ARCHIVE_ENTRY_GET_NAME_METHOD_MATCHER));
-                return cu;
-            }
-        };
-    }
-
-    @Override
-    protected TreeVisitor<?, ExecutionContext> getVisitor() {
-        return new ZipSlipComplete<>(true, debug);
+    public TreeVisitor<?, ExecutionContext> getVisitor() {
+        return Preconditions.check(Preconditions.or(
+                new UsesMethod<>(ZIP_ENTRY_GET_NAME_METHOD_MATCHER),
+                new UsesMethod<>(ZIP_ARCHIVE_ENTRY_GET_NAME_METHOD_MATCHER)
+        ), new ZipSlipComplete<>(true, debug));
     }
 
     @AllArgsConstructor

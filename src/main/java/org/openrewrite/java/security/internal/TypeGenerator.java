@@ -24,13 +24,15 @@ import org.openrewrite.java.tree.JavaType;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class TypeGenerator {
 
     public static JavaType generate(String fqn) {
         List<J.CompilationUnit> compilationUnits =
-                JavaParser.fromJavaVersion().build().parse("class Stub { " + fqn + " name;}");
+                JavaParser.fromJavaVersion().build().parse("class Stub { " + fqn + " name;}")
+                        .collect(Collectors.toList());
         if (compilationUnits.size() != 1) {
             throw new IllegalArgumentException("Could not parse type: " + fqn);
         }
