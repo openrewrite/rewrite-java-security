@@ -98,7 +98,7 @@ public class PreventClickjacking extends ScanningRecipe<GenerateWebSecurityConfi
             public @Nullable Tree preVisit(Tree tree, ExecutionContext ctx) {
                 stopAfterPreVisit();
                 if (tree instanceof JavaSourceFile) {
-                    return acc.modify((SourceFile) tree, ctx);
+                    return acc.modify((JavaSourceFile) tree, ctx);
                 }
                 return tree;
             }

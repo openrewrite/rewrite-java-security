@@ -23,10 +23,7 @@ import org.openrewrite.java.JavaParser;
 import org.openrewrite.java.JavaVisitor;
 import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.format.AutoFormatVisitor;
-import org.openrewrite.java.tree.J;
-import org.openrewrite.java.tree.JavaType;
-import org.openrewrite.java.tree.Space;
-import org.openrewrite.java.tree.TypeUtils;
+import org.openrewrite.java.tree.*;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -100,7 +97,7 @@ public class GenerateWebSecurityConfigurerAdapter {
         return Collections.singletonList(visitConfigureMethod(generated, ctx, onConfigureBlock));
     }
 
-    SourceFile modify(SourceFile sourceFile, ExecutionContext ctx) {
+    JavaSourceFile modify(JavaSourceFile sourceFile, ExecutionContext ctx) {
         if (sourceFile instanceof J.CompilationUnit && sourceFile.getSourcePath().equals(configurationSourcePath)) {
             J.CompilationUnit cu = (J.CompilationUnit) sourceFile;
             for (JavaType.Method declaredMethod : cu.getTypesInUse().getDeclaredMethods()) {
@@ -112,13 +109,12 @@ public class GenerateWebSecurityConfigurerAdapter {
         return sourceFile;
     }
 
-    private static SourceFile visitConfigureMethod(J.CompilationUnit cu, ExecutionContext ctx, JavaVisitor<ExecutionContext> onConfigureBlock) {
-        return (SourceFile) new JavaVisitor<ExecutionContext>() {
+    private static J.CompilationUnit visitConfigureMethod(J.CompilationUnit cu, ExecutionContext ctx, JavaVisitor<ExecutionContext> onConfigureBlock) {
+        return (J.CompilationUnit) new JavaVisitor<ExecutionContext>() {
             @Override
             public J visitMethodDeclaration(J.MethodDeclaration method, ExecutionContext ctx) {
                 if (CONFIGURE.matches(method.getMethodType())) {
-                    return method.withBody((J.Block) onConfigureBlock.visit(method.getBody(),
-                            ctx, getCursor()));
+                    return method.withBody((J.Block) onConfigureBlock.visit(method.getBody(), ctx, getCursor()));
                 }
                 return method;
             }

@@ -19,10 +19,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
 import org.openrewrite.internal.lang.Nullable;
-import org.openrewrite.java.JavaParser;
-import org.openrewrite.java.JavaTemplate;
-import org.openrewrite.java.JavaVisitor;
-import org.openrewrite.java.MethodMatcher;
+import org.openrewrite.java.*;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaSourceFile;
 import org.openrewrite.java.tree.JavaType;
@@ -62,7 +59,6 @@ public class CsrfProtection extends ScanningRecipe<GenerateWebSecurityConfigurer
                     }
                 }
 
-                maybeAddImport("org.springframework.security.web.csrf.CookieCsrfTokenRepository");
                 return block.withTemplate(
                         JavaTemplate
                                 .builder(this::getCursor, "http" +
@@ -103,12 +99,13 @@ public class CsrfProtection extends ScanningRecipe<GenerateWebSecurityConfigurer
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor(GenerateWebSecurityConfigurerAdapter acc) {
-        return new TreeVisitor<Tree, ExecutionContext>() {
+        return new JavaIsoVisitor<ExecutionContext>() {
             @Override
-            public @Nullable Tree preVisit(Tree tree, ExecutionContext ctx) {
+            public J preVisit(J tree, ExecutionContext ctx) {
                 stopAfterPreVisit();
                 if (tree instanceof JavaSourceFile) {
-                    return super.preVisit(tree, ctx);
+                    maybeAddImport("org.springframework.security.web.csrf.CookieCsrfTokenRepository");
+                    return acc.modify((JavaSourceFile) tree, ctx);
                 }
                 return tree;
             }
