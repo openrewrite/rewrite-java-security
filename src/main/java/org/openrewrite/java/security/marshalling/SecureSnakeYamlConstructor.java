@@ -17,11 +17,9 @@ package org.openrewrite.java.security.marshalling;
 
 import org.openrewrite.Cursor;
 import org.openrewrite.ExecutionContext;
-import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.Recipe;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.*;
-import org.openrewrite.java.dataflow.internal.InvocationMatcher;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.java.tree.TypeUtils;
@@ -54,7 +52,7 @@ public class SecureSnakeYamlConstructor extends Recipe {
 
     @Override
     protected JavaVisitor<ExecutionContext> getVisitor() {
-        InvocationMatcher yamlConstructor = InvocationMatcher.fromMethodMatchers(
+        InvocationMatcher yamlConstructor = InvocationMatcher.fromInvocationMatchers(
                 snakeYamlZeroArgumentConstructor,
                 snakeYamlRepresenterArgumentConstructor,
                 snakeYamlDumperArgumentConstructor

@@ -19,11 +19,12 @@ dependencies {
     compileOnly("org.projectlombok:lombok:latest.release")
     annotationProcessor("org.projectlombok:lombok:latest.release")
 
-    implementation(platform("org.openrewrite:rewrite-bom:${rewriteVersion}"))
+    implementation(platform("org.openrewrite:rewrite-bom:$rewriteVersion"))
     implementation("org.openrewrite:rewrite-java")
     implementation("org.openrewrite:rewrite-maven")
     implementation("org.openrewrite:rewrite-yaml")
     implementation("org.openrewrite:rewrite-xml")
+    implementation("org.openrewrite.meta:rewrite-analysis:$rewriteVersion")
     implementation("com.nimbusds:nimbus-jose-jwt:9.+")
 
     runtimeOnly("org.openrewrite:rewrite-java-17")

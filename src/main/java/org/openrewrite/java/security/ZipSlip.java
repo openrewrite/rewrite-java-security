@@ -19,21 +19,20 @@ import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
+import org.openrewrite.analysis.controlflow.Guard;
+import org.openrewrite.analysis.dataflow.ExternalSinkModels;
+import org.openrewrite.analysis.dataflow.LocalFlowSpec;
+import org.openrewrite.analysis.dataflow.LocalTaintFlowSpec;
 import org.openrewrite.internal.lang.NonNull;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.*;
-import org.openrewrite.java.controlflow.Guard;
-import org.openrewrite.java.dataflow.Dataflow;
-import org.openrewrite.java.dataflow.ExternalSinkModels;
-import org.openrewrite.java.dataflow.LocalFlowSpec;
-import org.openrewrite.java.dataflow.LocalTaintFlowSpec;
-import org.openrewrite.java.dataflow.internal.InvocationMatcher;
 import org.openrewrite.java.search.UsesMethod;
 import org.openrewrite.java.security.internal.CursorUtil;
 import org.openrewrite.java.security.internal.FileConstructorFixVisitor;
 import org.openrewrite.java.security.internal.StringToFileConstructorVisitor;
 import org.openrewrite.java.security.internal.TypeGenerator;
 import org.openrewrite.java.tree.*;
+import org.openrewrite.analysis.dataflow.Dataflow;
 import org.openrewrite.marker.Markers;
 
 import java.time.Duration;
@@ -50,7 +49,7 @@ public class ZipSlip extends Recipe {
     private static final MethodMatcher ZIP_ARCHIVE_ENTRY_GET_NAME_METHOD_MATCHER =
             new MethodMatcher("org.apache.commons.compress.archivers.zip.ZipArchiveEntry getName()", true);
 
-    private static final InvocationMatcher ZIP_ENTRY_GET_NAME = InvocationMatcher.fromMethodMatchers(
+    private static final InvocationMatcher ZIP_ENTRY_GET_NAME = InvocationMatcher.fromInvocationMatchers(
             ZIP_ENTRY_GET_NAME_METHOD_MATCHER,
             ZIP_ARCHIVE_ENTRY_GET_NAME_METHOD_MATCHER
     );
@@ -185,10 +184,10 @@ public class ZipSlip extends Recipe {
     }
 
     private static class ZipEntryToFileOrPathCreationLocalFlowSpec extends LocalFlowSpec<J.MethodInvocation, Expression> {
-        private static final InvocationMatcher FILE_CREATE = InvocationMatcher.fromMethodMatcher(
+        private static final InvocationMatcher FILE_CREATE = InvocationMatcher.fromInvocationMatchers(
                 new MethodMatcher("java.io.File <constructor>(.., java.lang.String)")
         );
-        private static final InvocationMatcher PATH_RESOLVE = InvocationMatcher.fromMethodMatcher(
+        private static final InvocationMatcher PATH_RESOLVE = InvocationMatcher.fromInvocationMatchers(
                 new MethodMatcher("java.nio.file.Path resolve(..)")
         );
 
