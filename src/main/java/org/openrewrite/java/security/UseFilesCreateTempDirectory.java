@@ -26,7 +26,6 @@ import org.openrewrite.java.*;
 import org.openrewrite.java.cleanup.RemoveUnneededAssertion;
 import org.openrewrite.java.cleanup.SimplifyCompoundVisitor;
 import org.openrewrite.java.cleanup.SimplifyConstantIfBranchExecution;
-import org.openrewrite.java.dataflow.internal.InvocationMatcher;
 import org.openrewrite.java.marker.JavaVersion;
 import org.openrewrite.java.search.UsesMethod;
 import org.openrewrite.java.tree.*;
@@ -193,14 +192,14 @@ public class UseFilesCreateTempDirectory extends Recipe {
 
         @AllArgsConstructor
         private static class TempDirHijackingChainFinderVisitor extends JavaIsoVisitor<TempDirHijackingChainStateMachine> {
-            private final InvocationMatcher DELETE_MATCHER = InvocationMatcher.fromMethodMatchers(
+            private final InvocationMatcher DELETE_MATCHER = InvocationMatcher.fromInvocationMatchers(
                     new MethodMatcher("java.io.File delete()"),
                     new MethodMatcher("org.apache.commons.io.FileUtils delete(..)"),
                     new MethodMatcher("org.apache.commons.io.FileUtils forceDelete(..)"),
                     new MethodMatcher("org.apache.commons.io.FileUtils deleteQuietly(..)")
             );
 
-            private final InvocationMatcher MKDIR_OR_MKDIRS_MATCHER = InvocationMatcher.fromMethodMatchers(
+            private final InvocationMatcher MKDIR_OR_MKDIRS_MATCHER = InvocationMatcher.fromInvocationMatchers(
                     new MethodMatcher("java.io.File mkdir()"),
                     new MethodMatcher("java.io.File mkdirs()"),
                     new MethodMatcher("org.apache.commons.io.FileUtils mkdirs(..)"),
