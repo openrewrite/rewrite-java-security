@@ -61,9 +61,10 @@ public class CsrfProtection extends ScanningRecipe<GenerateWebSecurityConfigurer
 
                 return block.withTemplate(
                         JavaTemplate
-                                .builder(this::getCursor, "http" +
+                                .builder("http" +
                                         ".csrf()" +
                                         ".csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());")
+                                .context(getCursor())
                                 .imports("org.springframework.security.web.csrf.CookieCsrfTokenRepository")
                                 .javaParser(JavaParser.fromJavaVersion()
                                         .classpath(
@@ -73,6 +74,7 @@ public class CsrfProtection extends ScanningRecipe<GenerateWebSecurityConfigurer
                                                 "spring-security-web"
                                         ))
                                 .build(),
+                        getCursor(),
                         block.getCoordinates().lastStatement()
                 );
             }

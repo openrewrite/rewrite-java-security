@@ -63,10 +63,12 @@ public class PreventClickjacking extends ScanningRecipe<GenerateWebSecurityConfi
                 }
                 return block.withTemplate(
                         JavaTemplate
-                                .builder(this::getCursor, "http.headers().frameOptions().deny();")
+                                .builder("http.headers().frameOptions().deny();")
+                                .context(getCursor())
                                 .javaParser(JavaParser.fromJavaVersion()
                                         .classpath("spring-security-config", "spring-context", "jakarta.servlet-api"))
                                 .build(),
+                        getCursor(),
                         block.getCoordinates().lastStatement()
                 );
             }
@@ -95,7 +97,7 @@ public class PreventClickjacking extends ScanningRecipe<GenerateWebSecurityConfi
     public TreeVisitor<?, ExecutionContext> getVisitor(GenerateWebSecurityConfigurerAdapter acc) {
         return Preconditions.check(new HasTypeOnClasspathSourceSet<>(WEB_SECURITY_CONFIGURER_ADAPTER), new TreeVisitor<Tree, ExecutionContext>() {
             @Override
-            public @Nullable Tree preVisit(Tree tree, ExecutionContext ctx) {
+            public Tree preVisit(Tree tree, ExecutionContext ctx) {
                 stopAfterPreVisit();
                 if (tree instanceof JavaSourceFile) {
                     return acc.modify((JavaSourceFile) tree, ctx);

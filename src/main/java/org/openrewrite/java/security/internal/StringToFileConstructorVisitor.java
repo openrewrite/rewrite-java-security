@@ -32,7 +32,7 @@ import java.util.function.Supplier;
  */
 public class StringToFileConstructorVisitor<P> extends JavaVisitor<P> {
     private final JavaTemplate fileConstructorTemplate =
-            JavaTemplate.builder(this::getCursor, "new File(#{any(java.lang.String)})")
+            JavaTemplate.builder("new File(#{any(java.lang.String)})")
                     .imports("java.io.File").build();
 
     private final Supplier<FileConstructorFixVisitor<P>> fileConstructorFixVisitorFactory;
@@ -55,6 +55,7 @@ public class StringToFileConstructorVisitor<P> extends JavaVisitor<P> {
             ) {
                 Expression replacementConstructor = expression.withTemplate(
                         fileConstructorTemplate,
+                        getCursor(),
                         expression.getCoordinates().replace(),
                         expression
                 );

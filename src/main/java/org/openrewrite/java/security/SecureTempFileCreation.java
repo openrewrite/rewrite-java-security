@@ -54,11 +54,11 @@ public class SecureTempFileCreation extends Recipe {
     static class SecureTempFileCreationVisitor extends JavaIsoVisitor<ExecutionContext> {
 
         static final MethodMatcher MATCHER = new MethodMatcher("java.io.File createTempFile(..)");
-        private final JavaTemplate twoArg = JavaTemplate.builder(this::getCursor, "Files.createTempFile(#{any(String)}, #{any(String)}).toFile()")
+        private final JavaTemplate twoArg = JavaTemplate.builder("Files.createTempFile(#{any(String)}, #{any(String)}).toFile()")
                 .imports("java.nio.file.Files")
                 .build();
 
-        private final JavaTemplate threeArg = JavaTemplate.builder(this::getCursor, "Files.createTempFile(#{any(java.io.File)}.toPath(), #{any(String)}, #{any(String)}).toFile()")
+        private final JavaTemplate threeArg = JavaTemplate.builder("Files.createTempFile(#{any(java.io.File)}.toPath(), #{any(String)}, #{any(String)}).toFile()")
                 .imports("java.nio.file.Files")
                 .build();
 
@@ -89,6 +89,7 @@ public class SecureTempFileCreation extends Recipe {
                 if (m.getArguments().size() == 2 || (m.getArguments().size() == 3 && m.getArguments().get(2).getType() == JavaType.Primitive.Null)) {
                     // File.createTempFile(String prefix, String suffix)
                     m = m.withTemplate(twoArg,
+                            getCursor(),
                             m.getCoordinates().replace(),
                             m.getArguments().get(0),
                             m.getArguments().get(1)
@@ -96,6 +97,7 @@ public class SecureTempFileCreation extends Recipe {
                 } else if (m.getArguments().size() == 3) {
                     // File.createTempFile(String prefix, String suffix, File dir)
                     m = m.withTemplate(threeArg,
+                            getCursor(),
                             m.getCoordinates().replace(),
                             m.getArguments().get(2),
                             m.getArguments().get(0),

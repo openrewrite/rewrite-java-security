@@ -21,7 +21,6 @@ import org.openrewrite.*;
 import org.openrewrite.internal.ListUtils;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.*;
-import org.openrewrite.java.dataflow.internal.InvocationMatcher;
 import org.openrewrite.java.marker.JavaVersion;
 import org.openrewrite.java.search.UsesMethod;
 import org.openrewrite.java.tree.*;
@@ -358,11 +357,11 @@ public class UseFilesCreateTempDirectory extends Recipe {
     }
 
     private static class SecureTempDirectoryCreation<P> extends JavaIsoVisitor<P> {
-        private final JavaTemplate twoArg = JavaTemplate.builder(this::getCursor, "Files.createTempDirectory(#{any(String)} + #{any(String)}).toFile()")
+        private final JavaTemplate twoArg = JavaTemplate.builder("Files.createTempDirectory(#{any(String)} + #{any(String)}).toFile()")
                 .imports("java.nio.file.Files")
                 .build();
 
-        private final JavaTemplate threeArg = JavaTemplate.builder(this::getCursor, "Files.createTempDirectory(#{any(java.io.File)}.toPath(), #{any(String)} + #{any(String)}).toFile()")
+        private final JavaTemplate threeArg = JavaTemplate.builder("Files.createTempDirectory(#{any(java.io.File)}.toPath(), #{any(String)} + #{any(String)}).toFile()")
                 .imports("java.nio.file.Files")
                 .build();
 
@@ -374,6 +373,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
                         || (m.getArguments().size() == 3 && m.getArguments().get(2).getType() == JavaType.Primitive.Null)) {
                     // File.createTempFile(String prefix, String suffix)
                     m = maybeAutoFormat(m, m.withTemplate(twoArg,
+                                    getCursor(),
                                     m.getCoordinates().replace(),
                                     m.getArguments().get(0),
                                     m.getArguments().get(1)),
@@ -382,6 +382,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
                 } else if (m.getArguments().size() == 3) {
                     // File.createTempFile(String prefix, String suffix, File dir)
                     m = maybeAutoFormat(m, m.withTemplate(threeArg,
+                                    getCursor(),
                                     m.getCoordinates().replace(),
                                     m.getArguments().get(2),
                                     m.getArguments().get(0),
