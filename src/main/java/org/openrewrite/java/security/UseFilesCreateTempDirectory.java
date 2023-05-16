@@ -119,7 +119,6 @@ public class UseFilesCreateTempDirectory extends Recipe {
                  */
                 MKDIR
             }
-
             private State state = State.INIT;
             private final Map<String, Statement> stmtMap = new HashMap<>(4);
 
@@ -181,14 +180,14 @@ public class UseFilesCreateTempDirectory extends Recipe {
 
         @AllArgsConstructor
         private static class TempDirHijackingChainFinderVisitor extends JavaIsoVisitor<TempDirHijackingChainStateMachine> {
-            private final InvocationMatcher DELETE_MATCHER = InvocationMatcher.fromMethodMatchers(
+            private final InvocationMatcher DELETE_MATCHER = InvocationMatcher.fromInvocationMatchers(
                     new MethodMatcher("java.io.File delete()"),
                     new MethodMatcher("org.apache.commons.io.FileUtils delete(..)"),
                     new MethodMatcher("org.apache.commons.io.FileUtils forceDelete(..)"),
                     new MethodMatcher("org.apache.commons.io.FileUtils deleteQuietly(..)")
             );
 
-            private final InvocationMatcher MKDIR_OR_MKDIRS_MATCHER = InvocationMatcher.fromMethodMatchers(
+            private final InvocationMatcher MKDIR_OR_MKDIRS_MATCHER = InvocationMatcher.fromInvocationMatchers(
                     new MethodMatcher("java.io.File mkdir()"),
                     new MethodMatcher("java.io.File mkdirs()"),
                     new MethodMatcher("org.apache.commons.io.FileUtils mkdirs(..)"),

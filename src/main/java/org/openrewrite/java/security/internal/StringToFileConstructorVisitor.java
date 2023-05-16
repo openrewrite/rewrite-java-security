@@ -15,9 +15,9 @@
  */
 package org.openrewrite.java.security.internal;
 
+import org.openrewrite.analysis.dataflow.ExternalSinkModels;
 import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.JavaVisitor;
-import org.openrewrite.java.dataflow.ExternalSinkModels;
 import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.TypeUtils;
