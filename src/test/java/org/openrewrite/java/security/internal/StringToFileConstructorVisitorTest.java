@@ -64,7 +64,7 @@ class StringToFileConstructorVisitorTest implements RewriteTest {
     }
 
     @Test
-    void stringAppendedFileOutputStreamToFileSeperator() {
+    void stringAppendedFileOutputStreamToFileSeparator() {
         //language=java
         rewriteRun(
           java(
