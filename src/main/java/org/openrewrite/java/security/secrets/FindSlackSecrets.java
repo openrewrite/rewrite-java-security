@@ -16,11 +16,9 @@
 package org.openrewrite.java.security.secrets;
 
 import org.openrewrite.ExecutionContext;
-import org.openrewrite.HttpSenderExecutionContextView;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
 import org.openrewrite.internal.lang.Nullable;
-import org.openrewrite.ipc.http.HttpSender;
 
 import java.util.regex.Pattern;
 

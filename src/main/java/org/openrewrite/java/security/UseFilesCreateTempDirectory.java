@@ -32,7 +32,6 @@ import org.openrewrite.java.tree.*;
 import org.openrewrite.marker.Markers;
 
 import java.io.File;
-import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 
