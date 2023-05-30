@@ -49,7 +49,7 @@ public class CsrfProtection extends ScanningRecipe<GenerateWebSecurityConfigurer
     static final MethodMatcher CSRF = new MethodMatcher("org.springframework.security.config.annotation.web.builders.HttpSecurity csrf()");
 
     @Override
-    public GenerateWebSecurityConfigurerAdapter getInitialValue() {
+    public GenerateWebSecurityConfigurerAdapter getInitialValue(ExecutionContext ctx) {
         return new GenerateWebSecurityConfigurerAdapter(Boolean.TRUE.equals(onlyIfSecurityConfig), new JavaVisitor<ExecutionContext>() {
             @Override
             public J visitBlock(J.Block block, ExecutionContext ctx) {
