@@ -20,6 +20,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
 import org.openrewrite.analysis.controlflow.Guard;
+import org.openrewrite.analysis.dataflow.Dataflow;
 import org.openrewrite.analysis.dataflow.ExternalSinkModels;
 import org.openrewrite.analysis.dataflow.LocalFlowSpec;
 import org.openrewrite.analysis.dataflow.LocalTaintFlowSpec;
@@ -32,7 +33,6 @@ import org.openrewrite.java.security.internal.FileConstructorFixVisitor;
 import org.openrewrite.java.security.internal.StringToFileConstructorVisitor;
 import org.openrewrite.java.security.internal.TypeGenerator;
 import org.openrewrite.java.tree.*;
-import org.openrewrite.analysis.dataflow.Dataflow;
 import org.openrewrite.marker.Markers;
 
 import java.time.Duration;

@@ -5,11 +5,7 @@ plugins {
 group = "org.openrewrite.recipe"
 description = "Enforce logging best practices and migrate between logging frameworks. Automatically."
 
-val rewriteVersion = if (project.hasProperty("releasing")) {
-    "latest.release"
-} else {
-    "latest.integration"
-}
+val rewriteVersion = rewriteRecipe.rewriteVersion.get()
 
 recipeDependencies {
     parserClasspath("org.yaml:snakeyaml:1.33")
