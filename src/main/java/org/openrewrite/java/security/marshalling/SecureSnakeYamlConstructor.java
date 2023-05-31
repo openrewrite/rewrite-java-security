@@ -24,7 +24,6 @@ import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.java.tree.TypeUtils;
 
-import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Stack;
@@ -46,12 +45,7 @@ public class SecureSnakeYamlConstructor extends Recipe {
     }
 
     @Override
-    public Duration getEstimatedEffortPerOccurrence() {
-        return Duration.ofMinutes(5);
-    }
-
-    @Override
-    protected JavaVisitor<ExecutionContext> getVisitor() {
+    public JavaVisitor<ExecutionContext> getVisitor() {
         InvocationMatcher yamlConstructor = InvocationMatcher.fromInvocationMatchers(
                 snakeYamlZeroArgumentConstructor,
                 snakeYamlRepresenterArgumentConstructor,
@@ -64,12 +58,13 @@ public class SecureSnakeYamlConstructor extends Recipe {
                     maybeAddImport("org.yaml.snakeyaml.constructor.SafeConstructor");
                     return memberRef.withTemplate(
                             JavaTemplate
-                                    .builder(this::getCursor, "() -> new Yaml(new SafeConstructor())")
+                                    .builder("() -> new Yaml(new SafeConstructor())")
                                     .imports("org.yaml.snakeyaml.Yaml")
                                     .imports("org.yaml.snakeyaml.constructor.SafeConstructor")
                                     .javaParser(JavaParser.fromJavaVersion()
                                             .classpathFromResources(ctx, "snakeyaml-1.33"))
                                     .build(),
+                            getCursor(),
                             memberRef.getCoordinates().replace()
                     );
                 }
@@ -89,12 +84,13 @@ public class SecureSnakeYamlConstructor extends Recipe {
                     maybeAddImport("org.yaml.snakeyaml.constructor.SafeConstructor");
                     return newClass.withTemplate(
                             JavaTemplate
-                                    .builder(this::getCursor, "new Yaml(new SafeConstructor())")
+                                    .builder("new Yaml(new SafeConstructor())")
                                     .imports("org.yaml.snakeyaml.Yaml")
                                     .imports("org.yaml.snakeyaml.constructor.SafeConstructor")
                                     .javaParser(JavaParser.fromJavaVersion()
                                             .classpathFromResources(ctx, "snakeyaml-1.33"))
                                     .build(),
+                            getCursor(),
                             newClass.getCoordinates().replace()
                     );
                 } else if (snakeYamlRepresenterArgumentConstructor.matches(newClass)) {
@@ -105,7 +101,7 @@ public class SecureSnakeYamlConstructor extends Recipe {
                     maybeAddImport("org.yaml.snakeyaml.DumperOptions");
                     return newClass.withTemplate(
                             JavaTemplate
-                                    .builder(this::getCursor, "new Yaml(new SafeConstructor(), #{any(org.yaml.snakeyaml.representer.Representer)}, new DumperOptions())")
+                                    .builder("new Yaml(new SafeConstructor(), #{any(org.yaml.snakeyaml.representer.Representer)}, new DumperOptions())")
                                     .imports(
                                             "org.yaml.snakeyaml.Yaml",
                                             "org.yaml.snakeyaml.DumperOptions",
@@ -115,6 +111,7 @@ public class SecureSnakeYamlConstructor extends Recipe {
                                     .javaParser(JavaParser.fromJavaVersion()
                                             .classpathFromResources(ctx, "snakeyaml-1.33"))
                                     .build(),
+                            getCursor(),
                             newClass.getCoordinates().replace(),
                             newClass.getArguments().get(0)
                     );
@@ -126,7 +123,7 @@ public class SecureSnakeYamlConstructor extends Recipe {
                     maybeAddImport("org.yaml.snakeyaml.representer.Representer");
                     return newClass.withTemplate(
                             JavaTemplate
-                                    .builder(this::getCursor, "new Yaml(new SafeConstructor(), new Representer(), #{any(org.yaml.snakeyaml.DumperOptions)})")
+                                    .builder("new Yaml(new SafeConstructor(), new Representer(), #{any(org.yaml.snakeyaml.DumperOptions)})")
                                     .imports(
                                             "org.yaml.snakeyaml.Yaml",
                                             "org.yaml.snakeyaml.DumperOptions",
@@ -136,6 +133,7 @@ public class SecureSnakeYamlConstructor extends Recipe {
                                     .javaParser(JavaParser.fromJavaVersion()
                                             .classpathFromResources(ctx, "snakeyaml-1.33"))
                                     .build(),
+                            getCursor(),
                             newClass.getCoordinates().replace(),
                             newClass.getArguments().get(0)
                     );

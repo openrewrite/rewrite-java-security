@@ -41,11 +41,12 @@ public class FileConstructorFixVisitor<P> extends JavaIsoVisitor<P> {
             new MethodMatcher("java.io.File <constructor>(java.lang.String)");
 
     private final JavaTemplate fileConstructorTemplate =
-            JavaTemplate.builder(this::getCursor, "new File(#{any(java.lang.String)}, #{any(java.lang.String)})")
+            JavaTemplate.builder("new File(#{any(java.lang.String)}, #{any(java.lang.String)})")
                     .imports("java.io.File")
                     .build();
     private final JavaTemplate stringAppendTemplate =
-            JavaTemplate.builder(this::getCursor, "#{any()} + #{any(java.lang.String)}")
+            JavaTemplate.builder("#{any()} + #{any(java.lang.String)}")
+                    .context(this::getCursor)
                     .build();
 
     private final Predicate<Expression> overrideShouldBreakBefore;
@@ -68,6 +69,7 @@ public class FileConstructorFixVisitor<P> extends JavaIsoVisitor<P> {
                 return computeNewArguments(binary)
                         .map(newArguments -> n.<J.NewClass>withTemplate(
                                 fileConstructorTemplate,
+                                getCursor(),
                                 n.getCoordinates().replace(),
                                 newArguments.first,
                                 newArguments.second
@@ -101,6 +103,7 @@ public class FileConstructorFixVisitor<P> extends JavaIsoVisitor<P> {
                                     leftLeftNewArguments.withSecond(
                                             binary.withTemplate(
                                                     stringAppendTemplate,
+                                                    getCursor(),
                                                     binary.getCoordinates().replace(),
                                                     leftLeftNewArguments.second,
                                                     binary.getRight()

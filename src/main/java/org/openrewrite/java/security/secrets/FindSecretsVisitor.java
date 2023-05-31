@@ -43,7 +43,7 @@ public abstract class FindSecretsVisitor extends TreeVisitor<Tree, ExecutionCont
         if (tree == null) {
             return null;
         } else if (tree instanceof J) {
-            return new JavaVisitor<ExecutionContext>() {
+            tree = new JavaVisitor<ExecutionContext>() {
                 @Override
                 public Space visitSpace(Space space, Space.Location loc, ExecutionContext ctx) {
                     return space.withComments(ListUtils.map(space.getComments(), comment -> {
@@ -70,8 +70,8 @@ public abstract class FindSecretsVisitor extends TreeVisitor<Tree, ExecutionCont
                     return literal;
                 }
             }.visit(tree, ctx);
-        } else if(tree instanceof Yaml) {
-            return new YamlIsoVisitor<ExecutionContext>() {
+        } else if (tree instanceof Yaml) {
+            tree = new YamlIsoVisitor<ExecutionContext>() {
                 @Override
                 public Yaml.Sequence.Entry visitSequenceEntry(Yaml.Sequence.Entry entry, ExecutionContext ctx) {
                     Yaml.Sequence.Entry ent = super.visitSequenceEntry(entry, ctx);

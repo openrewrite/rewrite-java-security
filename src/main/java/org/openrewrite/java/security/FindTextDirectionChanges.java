@@ -26,7 +26,6 @@ import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.java.tree.Space;
 import org.openrewrite.marker.SearchResult;
 
-import java.time.Duration;
 import java.util.*;
 import java.util.function.Function;
 
@@ -36,11 +35,6 @@ public class FindTextDirectionChanges extends Recipe {
     public static final char RLE = '\u202B';
     public static final char LRO = '\u202D';
     public static final char RLO = '\u202E';
-
-    @Override
-    public Duration getEstimatedEffortPerOccurrence() {
-        return Duration.ofMinutes(5);
-    }
 
     public static final char LRI = '\u2066';
     public static final char RLI = '\u2067';
@@ -84,7 +78,7 @@ public class FindTextDirectionChanges extends Recipe {
     }
 
     @Override
-    protected JavaIsoVisitor<ExecutionContext> getVisitor() {
+    public JavaIsoVisitor<ExecutionContext> getVisitor() {
         return new JavaIsoVisitor<ExecutionContext>() {
 
             @Override

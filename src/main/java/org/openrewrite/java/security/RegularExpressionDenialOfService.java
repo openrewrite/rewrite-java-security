@@ -37,8 +37,8 @@ public class RegularExpressionDenialOfService extends Recipe {
     @Override
     public String getDescription() {
         return "ReDoS is a Denial of Service attack that exploits the fact that most Regular Expression implementations may reach extreme situations that cause them to " +
-               "work very slowly (exponentially related to input size). " +
-               "See the OWASP description of this attack [here](https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS) for more details.";
+                "work very slowly (exponentially related to input size). " +
+                "See the OWASP description of this attack [here](https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS) for more details.";
     }
 
     @Override
@@ -47,7 +47,7 @@ public class RegularExpressionDenialOfService extends Recipe {
     }
 
     @Override
-    protected TreeVisitor<?, ExecutionContext> getVisitor() {
+    public TreeVisitor<?, ExecutionContext> getVisitor() {
         return new RegularExpressionDenialOfServiceVisitor<>();
     }
 
@@ -115,7 +115,7 @@ public class RegularExpressionDenialOfService extends Recipe {
             if (literal.getType() == JavaType.Primitive.String) {
                 for (KnownVulnerableRegex regex : KnownVulnerableRegex.values()) {
                     if (literal.getValue() != null &&
-                        literal.getValue().toString().contains(regex.bad)) {
+                            literal.getValue().toString().contains(regex.bad)) {
 
                         String valueBad = literal.getValue().toString();
                         String replacement = valueBad.replace(regex.bad, regex.good

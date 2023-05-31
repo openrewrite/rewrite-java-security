@@ -81,20 +81,11 @@ public class ZipSlip extends Recipe {
     }
 
     @Override
-    protected @Nullable TreeVisitor<?, ExecutionContext> getSingleSourceApplicableTest() {
-        return new JavaIsoVisitor<ExecutionContext>() {
-            @Override
-            public JavaSourceFile visitJavaSourceFile(JavaSourceFile cu, ExecutionContext ctx) {
-                doAfterVisit(new UsesMethod<>(ZIP_ENTRY_GET_NAME_METHOD_MATCHER));
-                doAfterVisit(new UsesMethod<>(ZIP_ARCHIVE_ENTRY_GET_NAME_METHOD_MATCHER));
-                return cu;
-            }
-        };
-    }
-
-    @Override
-    protected TreeVisitor<?, ExecutionContext> getVisitor() {
-        return new ZipSlipComplete<>(true, debug);
+    public TreeVisitor<?, ExecutionContext> getVisitor() {
+        return Preconditions.check(Preconditions.or(
+                new UsesMethod<>(ZIP_ENTRY_GET_NAME_METHOD_MATCHER),
+                new UsesMethod<>(ZIP_ARCHIVE_ENTRY_GET_NAME_METHOD_MATCHER)
+        ), new ZipSlipComplete<>(true, debug));
     }
 
     @AllArgsConstructor
@@ -235,10 +226,10 @@ public class ZipSlip extends Recipe {
             private JavaTemplate noZipSlipFileTemplate() {
                 boolean canSupportIoException = canSupportIoException();
                 String exceptionLine = canSupportIoException ? IO_EXCEPTION_THROW_LINE : RUNTIME_EXCEPTION_THROW_LINE;
-                JavaTemplate.Builder noZipSlipFileTemplate = JavaTemplate.builder(this::getCursor, "" +
+                JavaTemplate.Builder noZipSlipFileTemplate = JavaTemplate.builder("" +
                         "if (!#{any(java.io.File)}.toPath().normalize().startsWith(#{any(java.io.File)}.toPath().normalize())) {\n" +
                         exceptionLine +
-                        "}");
+                        "}").context(getCursor());
                 if (canSupportIoException) {
                     noZipSlipFileTemplate.imports(IO_EXCEPTION_FQN);
                     maybeAddImportIOException();
@@ -249,10 +240,10 @@ public class ZipSlip extends Recipe {
             private JavaTemplate noZipSlipFileWithStringTemplate() {
                 boolean canSupportIoException = canSupportIoException();
                 String exceptionLine = canSupportIoException ? IO_EXCEPTION_THROW_LINE : RUNTIME_EXCEPTION_THROW_LINE;
-                JavaTemplate.Builder noZipSlipFileWithStringTemplate = JavaTemplate.builder(this::getCursor, "" +
+                JavaTemplate.Builder noZipSlipFileWithStringTemplate = JavaTemplate.builder("" +
                         "if (!#{any(java.io.File)}.toPath().normalize().startsWith(#{any(String)})) {\n" +
                         exceptionLine +
-                        "}");
+                        "}").context(getCursor());
                 if (canSupportIoException) {
                     noZipSlipFileWithStringTemplate.imports(IO_EXCEPTION_FQN);
                     maybeAddImportIOException();
@@ -263,10 +254,10 @@ public class ZipSlip extends Recipe {
             private JavaTemplate noZipSlipPathStartsWithPathTemplate() {
                 boolean canSupportIoException = canSupportIoException();
                 String exceptionLine = canSupportIoException ? IO_EXCEPTION_THROW_LINE : RUNTIME_EXCEPTION_THROW_LINE;
-                JavaTemplate.Builder noZipSlipPathStartsWithPathTemplate = JavaTemplate.builder(this::getCursor, "" +
+                JavaTemplate.Builder noZipSlipPathStartsWithPathTemplate = JavaTemplate.builder("" +
                         "if (!#{any(java.nio.file.Path)}.normalize().startsWith(#{any(java.nio.file.Path)}.normalize())) {\n" +
                         exceptionLine +
-                        "}");
+                        "}").context(getCursor());
                 if (canSupportIoException) {
                     noZipSlipPathStartsWithPathTemplate.imports(IO_EXCEPTION_FQN);
                     maybeAddImportIOException();
@@ -450,9 +441,9 @@ public class ZipSlip extends Recipe {
                     if (isTypePath(zipSlipCreateNewVariableInfo.extractToVariable.getType())) {
                         newVariableTemplate = JavaTemplate
                                 .builder(
-                                        this::getCursor,
                                         "final Path " + zipSlipCreateNewVariableInfo.newVariableName + " = #{any(java.nio.file.Path)};"
                                 )
+                                .context(getCursor())
                                 .imports("java.nio.file.Path")
                                 .build();
                         maybeAddImport("java.nio.file.Path");
@@ -460,15 +451,16 @@ public class ZipSlip extends Recipe {
                         assert isTypeFile(zipSlipCreateNewVariableInfo.extractToVariable.getType());
                         newVariableTemplate = JavaTemplate
                                 .builder(
-                                        this::getCursor,
                                         "final File " + zipSlipCreateNewVariableInfo.newVariableName + " = #{any(java.io.File)};"
                                 )
+                                .context(getCursor())
                                 .imports("java.io.File")
                                 .build();
                         maybeAddImport("java.io.File");
                     }
                     return b.withTemplate(
                             newVariableTemplate,
+                            getCursor(),
                             zipSlipCreateNewVariableInfo.statement.getCoordinates().before(),
                             zipSlipCreateNewVariableInfo.extractToVariable
                     );
@@ -489,6 +481,7 @@ public class ZipSlip extends Recipe {
                     }
                     return b.withTemplate(
                             template,
+                            getCursor(),
                             zipSlipSimpleInjectGuardInfo.statement.getCoordinates().after(),
                             zipSlipSimpleInjectGuardInfo.zipEntry,
                             zipSlipSimpleInjectGuardInfo.parentDir

@@ -15,9 +15,7 @@
  */
 package org.openrewrite.java.security.secrets;
 
-import org.openrewrite.ExecutionContext;
-import org.openrewrite.Recipe;
-import org.openrewrite.TreeVisitor;
+import org.openrewrite.*;
 import org.openrewrite.internal.lang.Nullable;
 
 import java.util.regex.Pattern;
@@ -34,15 +32,19 @@ public class FindSlackSecrets extends Recipe {
         return "Locates Slack secrets stored in plain text in code.";
     }
 
-    public FindSlackSecrets() {
-        doNext(new FindSecretsByPattern("Slack", null, "(xox[pboa]-[0-9]{12}-[0-9]{12}-[0-9]{12}-[a-z0-9]{32})"));
-        doNext(new FindSecretsByPattern("Slack", null, "xox(?:a|b|p|o|s|r)-(?:\\d+-)+[a-z0-9]+"));
-    }
-
     @Override
-    protected TreeVisitor<?, ExecutionContext> getVisitor() {
+    public TreeVisitor<?, ExecutionContext> getVisitor() {
         return new FindSecretsVisitor("Slack") {
             private final Pattern valuePattern = Pattern.compile("https://hooks\\.slack\\.com/services/T[a-zA-Z0-9_]{8}/B[a-zA-Z0-9_]{8}/[a-zA-Z0-9_]{24}");
+
+            @Override
+            public Tree visit(@Nullable Tree tree, ExecutionContext ctx) {
+                if (tree instanceof SourceFile) {
+                    doAfterVisit(new FindSecretsByPattern("Slack", null, "(xox[pboa]-[0-9]{12}-[0-9]{12}-[0-9]{12}-[a-z0-9]{32})").getVisitor());
+                    doAfterVisit(new FindSecretsByPattern("Slack", null, "xox(?:a|b|p|o|s|r)-(?:\\d+-)+[a-z0-9]+").getVisitor());
+                }
+                return super.visit(tree, ctx);
+            }
 
             @Override
             protected boolean isSecret(@Nullable String key, @Nullable String value, ExecutionContext ctx) {

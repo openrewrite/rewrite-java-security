@@ -18,6 +18,7 @@ dependencies {
     implementation(platform("org.openrewrite:rewrite-bom:$rewriteVersion"))
     implementation("org.openrewrite:rewrite-java")
     implementation("org.openrewrite:rewrite-maven")
+    implementation("org.openrewrite.recipe:rewrite-static-analysis:${rewriteVersion}")
     implementation("org.openrewrite:rewrite-yaml")
     implementation("org.openrewrite:rewrite-xml")
     implementation("org.openrewrite.meta:rewrite-analysis:$rewriteVersion")

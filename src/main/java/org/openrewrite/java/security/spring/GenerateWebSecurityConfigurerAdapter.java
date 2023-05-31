@@ -19,103 +19,105 @@ import lombok.RequiredArgsConstructor;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Parser;
 import org.openrewrite.SourceFile;
-import org.openrewrite.internal.ListUtils;
-import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.java.JavaVisitor;
 import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.format.AutoFormatVisitor;
-import org.openrewrite.java.tree.J;
-import org.openrewrite.java.tree.JavaType;
-import org.openrewrite.java.tree.Space;
-import org.openrewrite.java.tree.TypeUtils;
+import org.openrewrite.java.tree.*;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Collection;
+import java.util.Collections;
 
 import static java.util.Collections.singletonList;
 import static org.openrewrite.Tree.randomId;
 
 @RequiredArgsConstructor
 public class GenerateWebSecurityConfigurerAdapter {
-    private static final MethodMatcher CONFIGURE = new MethodMatcher("org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter configure(org.springframework.security.config.annotation.web.builders.HttpSecurity)", true);
+    static final String WEB_SECURITY_CONFIGURER_ADAPTER = "org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter";
+    static final MethodMatcher CONFIGURE = new MethodMatcher(WEB_SECURITY_CONFIGURER_ADAPTER + " configure(org.springframework.security.config.annotation.web.builders.HttpSecurity)", true);
 
     private final boolean onlyIfExistingConfig;
     private final JavaVisitor<ExecutionContext> onConfigureBlock;
 
-    public List<SourceFile> maybeAddConfiguration(List<SourceFile> sourceFiles,
-                                                  ExecutionContext ctx) {
-        AtomicBoolean found = new AtomicBoolean(false);
-        AtomicReference<J.CompilationUnit> springBootApplication = new AtomicReference<>();
+    J.CompilationUnit springBootApplication;
+    Path configurationSourcePath;
 
-        List<SourceFile> after = ListUtils.map(sourceFiles, sourceFile -> {
-            if (sourceFile instanceof J.CompilationUnit) {
-                J.CompilationUnit cu = (J.CompilationUnit) sourceFile;
+    void scan(SourceFile sourceFile, ExecutionContext ctx) {
+        if (sourceFile instanceof J.CompilationUnit) {
+            J.CompilationUnit cu = (J.CompilationUnit) sourceFile;
+            if (springBootApplication == null) {
                 for (JavaType javaType : cu.getTypesInUse().getTypesInUse()) {
                     if (TypeUtils.isOfClassType(javaType, "org.springframework.boot.autoconfigure.SpringBootApplication")) {
-                        springBootApplication.set(cu);
+                        springBootApplication = cu;
                     }
                 }
+            }
 
+            if (configurationSourcePath == null) {
                 for (JavaType.Method declaredMethod : cu.getTypesInUse().getDeclaredMethods()) {
                     if (CONFIGURE.matches(declaredMethod)) {
-                        found.set(true);
-                        return visitConfigureMethod(cu, ctx, onConfigureBlock);
+                        configurationSourcePath = cu.getSourcePath();
                     }
                 }
             }
-            return sourceFile;
-        });
-
-        if (found.get()) {
-            return after;
-        } else if(!onlyIfExistingConfig) {
-            J.CompilationUnit springBootApp = springBootApplication.get();
-            if (springBootApp != null) {
-                J.CompilationUnit generated = JavaParser.fromJavaVersion()
-                        .classpath("spring-security-config", "spring-context", "jakarta.servlet-api")
-                        .build()
-                        .parseInputs(singletonList(new Parser.Input(
-                                (springBootApp.getSourcePath().getParent() == null ? Paths.get("") :
-                                        springBootApp.getSourcePath().getParent())
-                                        .resolve("SecurityConfig.java")
-                                        .normalize(),
-                                () -> GenerateWebSecurityConfigurerAdapter.class
-                                        .getResourceAsStream("/WebSecurityConfigurerAdapterTemplate.java")
-                        )), null, ctx)
-                        .get(0);
-
-                J.Package pkg = springBootApp.getPackageDeclaration();
-                if (pkg != null) {
-                    generated = generated
-                            .withPackageDeclaration(pkg.withId(randomId()))
-                            .withPrefix(Space.EMPTY);
-                }
-
-                generated = generated.withMarkers(springBootApp.getMarkers());
-                generated = (J.CompilationUnit) new AutoFormatVisitor<ExecutionContext>().visit(generated, ctx);
-                assert generated != null;
-
-                return ListUtils.concat(after, visitConfigureMethod(generated, ctx, onConfigureBlock));
-            }
         }
-
-        return sourceFiles;
     }
 
-    @Nullable
-    private static SourceFile visitConfigureMethod(J.CompilationUnit cu, ExecutionContext ctx, JavaVisitor<ExecutionContext> onConfigureBlock) {
-        return (SourceFile) new JavaVisitor<ExecutionContext>() {
+    Collection<? extends SourceFile> generate(ExecutionContext ctx) {
+        if (configurationSourcePath != null || onlyIfExistingConfig || springBootApplication == null) {
+            return Collections.emptyList();
+        }
+
+        J.CompilationUnit generated = JavaParser.fromJavaVersion()
+                .classpath("spring-security-config", "spring-context", "jakarta.servlet-api")
+                .build()
+                .parseInputs(singletonList(new Parser.Input(
+                        (springBootApplication.getSourcePath().getParent() == null ? Paths.get("") :
+                                springBootApplication.getSourcePath().getParent())
+                                .resolve("SecurityConfig.java")
+                                .normalize(),
+                        () -> GenerateWebSecurityConfigurerAdapter.class
+                                .getResourceAsStream("/WebSecurityConfigurerAdapterTemplate.java")
+                )), null, ctx)
+                .findAny().get();
+
+        J.Package pkg = springBootApplication.getPackageDeclaration();
+        if (pkg != null) {
+            generated = generated
+                    .withPackageDeclaration(pkg.withId(randomId()))
+                    .withPrefix(Space.EMPTY);
+        }
+
+        generated = generated.withMarkers(springBootApplication.getMarkers());
+        generated = (J.CompilationUnit) new AutoFormatVisitor<ExecutionContext>().visit(generated, ctx);
+        assert generated != null;
+
+        return Collections.singletonList(visitConfigureMethod(generated, ctx, onConfigureBlock));
+    }
+
+    JavaSourceFile modify(JavaSourceFile sourceFile, ExecutionContext ctx) {
+        if (sourceFile instanceof J.CompilationUnit && sourceFile.getSourcePath().equals(configurationSourcePath)) {
+            J.CompilationUnit cu = (J.CompilationUnit) sourceFile;
+            for (JavaType.Method declaredMethod : cu.getTypesInUse().getDeclaredMethods()) {
+                if (CONFIGURE.matches(declaredMethod)) {
+                    return visitConfigureMethod(cu, ctx, onConfigureBlock);
+                }
+            }
+        }
+        return sourceFile;
+    }
+
+    private static J.CompilationUnit visitConfigureMethod(J.CompilationUnit cu, ExecutionContext ctx, JavaVisitor<ExecutionContext> onConfigureBlock) {
+        return (J.CompilationUnit) new JavaVisitor<ExecutionContext>() {
             @Override
             public J visitMethodDeclaration(J.MethodDeclaration method, ExecutionContext ctx) {
                 if (CONFIGURE.matches(method.getMethodType())) {
-                    return method.withBody((J.Block) onConfigureBlock.visit(method.getBody(),
-                            ctx, getCursor()));
+                    return method.withBody((J.Block) onConfigureBlock.visit(method.getBody(), ctx, getCursor()));
                 }
                 return method;
             }
-        }.visit(cu, ctx);
+        }.visitNonNull(cu, ctx);
     }
 }

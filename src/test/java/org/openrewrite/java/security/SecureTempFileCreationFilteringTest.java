@@ -17,12 +17,18 @@ package org.openrewrite.java.security;
 
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
+import org.openrewrite.ExecutionContext;
+import org.openrewrite.ScanningRecipe;
+import org.openrewrite.Tree;
+import org.openrewrite.TreeVisitor;
+import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.search.IsLikelyNotTest;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import static org.openrewrite.java.Assertions.*;
-import static org.openrewrite.test.RewriteTest.toRecipe;
 
 public class SecureTempFileCreationFilteringTest implements RewriteTest {
 
@@ -92,10 +98,7 @@ public class SecureTempFileCreationFilteringTest implements RewriteTest {
 
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(toRecipe()
-          .addApplicableTest(new IsLikelyNotTest())
-          .addApplicableTest(new SecureTempFileCreation())
-          .doNext(new SecureTempFileCreation()));
+        spec.recipe(new FilteringSecureTempFileCreation());
     }
 
     @Test
@@ -138,5 +141,43 @@ public class SecureTempFileCreationFilteringTest implements RewriteTest {
             java(TEST_VULNERABLE)
           )
         );
+    }
+
+    private static class FilteringSecureTempFileCreation extends ScanningRecipe<AtomicBoolean> {
+
+        @Override
+        public String getDisplayName() {
+            return "SecureTempFileCreation with filtering";
+        }
+
+        @Override
+        public String getDescription() {
+            return "Applies `SecureTempFileCreation` using `IsLikelyNotTest` and `SecureTempFileCreation` as applicability tests.";
+        }
+
+        @Override
+        public AtomicBoolean getInitialValue(ExecutionContext ctx) {
+            return new AtomicBoolean(false);
+        }
+
+        @Override
+        public TreeVisitor<?, ExecutionContext> getScanner(AtomicBoolean acc) {
+            return new TreeVisitor<>() {
+                @Override
+                public @Nullable Tree visit(@Nullable Tree tree, ExecutionContext ctx) {
+                    if (!acc.get()
+                      && new IsLikelyNotTest().getVisitor().visit(tree, ctx) != tree
+                      && new SecureTempFileCreation().getVisitor().visit(tree, ctx) != tree) {
+                        acc.set(true);
+                    }
+                    return tree;
+                }
+            };
+        }
+
+        @Override
+        public TreeVisitor<?, ExecutionContext> getVisitor(AtomicBoolean acc) {
+            return acc.get() ? new SecureTempFileCreation().getVisitor() : TreeVisitor.noop();
+        }
     }
 }

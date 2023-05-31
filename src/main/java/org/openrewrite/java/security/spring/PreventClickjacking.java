@@ -19,21 +19,20 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
 import org.openrewrite.internal.lang.Nullable;
-import org.openrewrite.java.JavaParser;
-import org.openrewrite.java.JavaTemplate;
-import org.openrewrite.java.JavaVisitor;
-import org.openrewrite.java.MethodMatcher;
+import org.openrewrite.java.*;
 import org.openrewrite.java.search.HasTypeOnClasspathSourceSet;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaSourceFile;
 import org.openrewrite.java.tree.JavaType;
 
-import java.time.Duration;
-import java.util.List;
+import java.util.Collection;
+
+import static org.openrewrite.java.security.spring.GenerateWebSecurityConfigurerAdapter.WEB_SECURITY_CONFIGURER_ADAPTER;
 
 @Value
 @EqualsAndHashCode(callSuper = true)
-public class PreventClickjacking extends Recipe {
+public class PreventClickjacking extends ScanningRecipe<GenerateWebSecurityConfigurerAdapter> {
+
     @Option(displayName = "Only if security configuration exists",
             description = "Only patch existing implementations of `WebSecurityConfigurerAdapter`.",
             required = false)
@@ -46,24 +45,14 @@ public class PreventClickjacking extends Recipe {
     }
 
     @Override
-    public Duration getEstimatedEffortPerOccurrence() {
-        return Duration.ofMinutes(5);
-    }
-
-    @Override
     public String getDescription() {
         return "The `frame-ancestors` directive can be used in a Content-Security-Policy HTTP response header to indicate whether or not a browser should be allowed to render a page in a `<frame>` or `<iframe>`. Sites can use this to avoid Clickjacking attacks by ensuring that their content is not embedded into other sites.";
-    }
-
-    @Override
-    protected TreeVisitor<?, ExecutionContext> getApplicableTest() {
-        return new HasTypeOnClasspathSourceSet<>("org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter");
     }
 
     private static final MethodMatcher FRAME_OPTIONS = new MethodMatcher("org.springframework.security.config.annotation.web.configurers.HeadersConfigurer frameOptions()");
 
     @Override
-    protected List<SourceFile> visit(List<SourceFile> before, ExecutionContext ctx) {
+    public GenerateWebSecurityConfigurerAdapter getInitialValue(ExecutionContext ctx) {
         return new GenerateWebSecurityConfigurerAdapter(Boolean.TRUE.equals(onlyIfSecurityConfig), new JavaVisitor<ExecutionContext>() {
             @Override
             public J visitBlock(J.Block block, ExecutionContext ctx) {
@@ -74,13 +63,48 @@ public class PreventClickjacking extends Recipe {
                 }
                 return block.withTemplate(
                         JavaTemplate
-                                .builder(this::getCursor, "http.headers().frameOptions().deny();")
+                                .builder("http.headers().frameOptions().deny();")
+                                .context(getCursor())
                                 .javaParser(JavaParser.fromJavaVersion()
                                         .classpath("spring-security-config", "spring-context", "jakarta.servlet-api"))
                                 .build(),
+                        getCursor(),
                         block.getCoordinates().lastStatement()
                 );
             }
-        }).maybeAddConfiguration(before, ctx);
+        });
     }
+
+    @Override
+    public TreeVisitor<?, ExecutionContext> getScanner(GenerateWebSecurityConfigurerAdapter acc) {
+        return new TreeVisitor<Tree, ExecutionContext>() {
+            @Override
+            public @Nullable Tree visit(@Nullable Tree tree, ExecutionContext ctx) {
+                if (tree instanceof SourceFile) {
+                    acc.scan((SourceFile) tree, ctx);
+                }
+                return tree;
+            }
+        };
+    }
+
+    @Override
+    public Collection<? extends SourceFile> generate(GenerateWebSecurityConfigurerAdapter acc, ExecutionContext ctx) {
+        return acc.generate(ctx);
+    }
+
+    @Override
+    public TreeVisitor<?, ExecutionContext> getVisitor(GenerateWebSecurityConfigurerAdapter acc) {
+        return Preconditions.check(new HasTypeOnClasspathSourceSet<>(WEB_SECURITY_CONFIGURER_ADAPTER), new TreeVisitor<Tree, ExecutionContext>() {
+            @Override
+            public Tree preVisit(Tree tree, ExecutionContext ctx) {
+                stopAfterPreVisit();
+                if (tree instanceof JavaSourceFile) {
+                    return acc.modify((JavaSourceFile) tree, ctx);
+                }
+                return tree;
+            }
+        });
+    }
+
 }

@@ -47,7 +47,6 @@ class CsrfProtectionTest implements RewriteTest {
     void withSecurityConfig() {
         //language=java
         rewriteRun(
-          spec -> spec.expectedCyclesThatMakeChanges(2).cycles(2),
           java("""
             import org.springframework.boot.autoconfigure.SpringBootApplication;
             

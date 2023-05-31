@@ -87,7 +87,7 @@ public class FindSecretsByPattern extends Recipe {
     }
 
     @Override
-    protected TreeVisitor<?, ExecutionContext> getVisitor() {
+    public TreeVisitor<?, ExecutionContext> getVisitor() {
         Pattern keyPatternCompiled = keyPattern == null ? null : Pattern.compile(keyPattern);
         Pattern valuePatternCompiled = Pattern.compile(valuePattern);
 

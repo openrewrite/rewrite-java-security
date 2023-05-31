@@ -16,7 +16,9 @@
 package org.openrewrite.java.security;
 
 import org.openrewrite.ExecutionContext;
+import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
+import org.openrewrite.TreeVisitor;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.search.UsesMethod;
@@ -52,13 +54,8 @@ public class SecureRandomPrefersDefaultSeed extends Recipe {
     }
 
     @Override
-    protected UsesMethod<ExecutionContext> getSingleSourceApplicableTest() {
-        return new UsesMethod<>("java.security.SecureRandom setSeed(..)");
-    }
-
-    @Override
-    protected SecureRandomUseDefaultSeedVisitor getVisitor() {
-        return new SecureRandomUseDefaultSeedVisitor();
+    public TreeVisitor<?, ExecutionContext> getVisitor() {
+        return Preconditions.check(new UsesMethod<>("java.security.SecureRandom setSeed(..)"), new SecureRandomUseDefaultSeedVisitor());
     }
 
     private static class SecureRandomUseDefaultSeedVisitor extends JavaIsoVisitor<ExecutionContext> {

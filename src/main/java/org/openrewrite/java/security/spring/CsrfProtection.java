@@ -20,17 +20,16 @@ import lombok.Value;
 import org.openrewrite.*;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.*;
-import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaSourceFile;
 import org.openrewrite.java.tree.JavaType;
 
-import java.time.Duration;
-import java.util.List;
+import java.util.Collection;
 
 @Value
 @EqualsAndHashCode(callSuper = true)
-public class CsrfProtection extends Recipe {
+public class CsrfProtection extends ScanningRecipe<GenerateWebSecurityConfigurerAdapter> {
+
     @Option(displayName = "Only if security configuration exists",
             description = "Only patch existing implementations of `WebSecurityConfigurerAdapter`.",
             required = false)
@@ -47,21 +46,11 @@ public class CsrfProtection extends Recipe {
         return "Cross-Site Request Forgery (CSRF) is a type of attack that occurs when a malicious web site, email, blog, instant message, or program causes a user's web browser to perform an unwanted action on a trusted site when the user is authenticated. See the full [OWASP cheatsheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html).";
     }
 
-    @Override
-    public Duration getEstimatedEffortPerOccurrence() {
-        return Duration.ofMinutes(5);
-    }
+    static final MethodMatcher CSRF = new MethodMatcher("org.springframework.security.config.annotation.web.builders.HttpSecurity csrf()");
 
     @Override
-    protected TreeVisitor<?, ExecutionContext> getSingleSourceApplicableTest() {
-        return new UsesType<>("org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter", false);
-    }
-
-    private static final MethodMatcher CSRF = new MethodMatcher("org.springframework.security.config.annotation.web.builders.HttpSecurity csrf()");
-
-    @Override
-    protected List<SourceFile> visit(List<SourceFile> before, ExecutionContext ctx) {
-        return super.visit(new GenerateWebSecurityConfigurerAdapter(Boolean.TRUE.equals(onlyIfSecurityConfig), new JavaVisitor<ExecutionContext>() {
+    public GenerateWebSecurityConfigurerAdapter getInitialValue(ExecutionContext ctx) {
+        return new GenerateWebSecurityConfigurerAdapter(Boolean.TRUE.equals(onlyIfSecurityConfig), new JavaVisitor<ExecutionContext>() {
             @Override
             public J visitBlock(J.Block block, ExecutionContext ctx) {
                 for (JavaType.Method method : getCursor().firstEnclosingOrThrow(JavaSourceFile.class).getTypesInUse().getUsedMethods()) {
@@ -72,9 +61,10 @@ public class CsrfProtection extends Recipe {
 
                 return block.withTemplate(
                         JavaTemplate
-                                .builder(this::getCursor, "http" +
+                                .builder("http" +
                                         ".csrf()" +
                                         ".csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());")
+                                .context(getCursor())
                                 .imports("org.springframework.security.web.csrf.CookieCsrfTokenRepository")
                                 .javaParser(JavaParser.fromJavaVersion()
                                         .classpath(
@@ -84,14 +74,43 @@ public class CsrfProtection extends Recipe {
                                                 "spring-security-web"
                                         ))
                                 .build(),
+                        getCursor(),
                         block.getCoordinates().lastStatement()
                 );
             }
-        }).maybeAddConfiguration(before, ctx), ctx);
+        });
     }
 
     @Override
-    protected JavaVisitor<ExecutionContext> getVisitor() {
-        return new AddImport<>("org.springframework.security.web.csrf.CookieCsrfTokenRepository", null, true);
+    public TreeVisitor<?, ExecutionContext> getScanner(GenerateWebSecurityConfigurerAdapter acc) {
+        return new TreeVisitor<Tree, ExecutionContext>() {
+            @Override
+            public @Nullable Tree visit(@Nullable Tree tree, ExecutionContext ctx) {
+                if (tree instanceof SourceFile) {
+                    acc.scan((SourceFile) tree, ctx);
+                }
+                return tree;
+            }
+        };
+    }
+
+    @Override
+    public Collection<? extends SourceFile> generate(GenerateWebSecurityConfigurerAdapter acc, ExecutionContext ctx) {
+        return acc.generate(ctx);
+    }
+
+    @Override
+    public TreeVisitor<?, ExecutionContext> getVisitor(GenerateWebSecurityConfigurerAdapter acc) {
+        return new JavaIsoVisitor<ExecutionContext>() {
+            @Override
+            public J preVisit(J tree, ExecutionContext ctx) {
+                stopAfterPreVisit();
+                if (tree instanceof JavaSourceFile) {
+                    maybeAddImport("org.springframework.security.web.csrf.CookieCsrfTokenRepository");
+                    return acc.modify((JavaSourceFile) tree, ctx);
+                }
+                return tree;
+            }
+        };
     }
 }
