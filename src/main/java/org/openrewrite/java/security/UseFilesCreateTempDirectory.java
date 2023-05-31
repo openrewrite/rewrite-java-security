@@ -279,7 +279,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
                         bl = (J.Block) new SimplifyCompoundVisitor()
                                 .visitNonNull(bl, ctx, getCursor().getParentOrThrow());
                         // Remove any silly assertions that may be lingering like `assertTrue(true)`
-                        doAfterVisit(new RemoveUnneededAssertion());
+                        doAfterVisit(new RemoveUnneededAssertion().getVisitor());
                     }
                 }
             }

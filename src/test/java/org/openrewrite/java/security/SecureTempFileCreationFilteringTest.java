@@ -156,7 +156,7 @@ public class SecureTempFileCreationFilteringTest implements RewriteTest {
         }
 
         @Override
-        public AtomicBoolean getInitialValue() {
+        public AtomicBoolean getInitialValue(ExecutionContext ctx) {
             return new AtomicBoolean(false);
         }
 

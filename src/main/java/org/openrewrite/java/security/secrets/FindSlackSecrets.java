@@ -40,8 +40,8 @@ public class FindSlackSecrets extends Recipe {
             @Override
             public Tree visit(@Nullable Tree tree, ExecutionContext ctx) {
                 if (tree instanceof SourceFile) {
-                    doAfterVisit(new FindSecretsByPattern("Slack", null, "(xox[pboa]-[0-9]{12}-[0-9]{12}-[0-9]{12}-[a-z0-9]{32})"));
-                    doAfterVisit(new FindSecretsByPattern("Slack", null, "xox(?:a|b|p|o|s|r)-(?:\\d+-)+[a-z0-9]+"));
+                    doAfterVisit(new FindSecretsByPattern("Slack", null, "(xox[pboa]-[0-9]{12}-[0-9]{12}-[0-9]{12}-[a-z0-9]{32})").getVisitor());
+                    doAfterVisit(new FindSecretsByPattern("Slack", null, "xox(?:a|b|p|o|s|r)-(?:\\d+-)+[a-z0-9]+").getVisitor());
                 }
                 return super.visit(tree, ctx);
             }

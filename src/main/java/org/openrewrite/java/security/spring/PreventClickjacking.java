@@ -52,7 +52,7 @@ public class PreventClickjacking extends ScanningRecipe<GenerateWebSecurityConfi
     private static final MethodMatcher FRAME_OPTIONS = new MethodMatcher("org.springframework.security.config.annotation.web.configurers.HeadersConfigurer frameOptions()");
 
     @Override
-    public GenerateWebSecurityConfigurerAdapter getInitialValue() {
+    public GenerateWebSecurityConfigurerAdapter getInitialValue(ExecutionContext ctx) {
         return new GenerateWebSecurityConfigurerAdapter(Boolean.TRUE.equals(onlyIfSecurityConfig), new JavaVisitor<ExecutionContext>() {
             @Override
             public J visitBlock(J.Block block, ExecutionContext ctx) {
