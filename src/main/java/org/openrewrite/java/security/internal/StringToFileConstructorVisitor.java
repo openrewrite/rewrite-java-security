@@ -53,12 +53,8 @@ public class StringToFileConstructorVisitor<P> extends JavaVisitor<P> {
                     parentConstructor.getArguments().get(0) == expression &&
                     TypeUtils.isString(expression.getType())
             ) {
-                Expression replacementConstructor = expression.withTemplate(
-                        fileConstructorTemplate,
-                        getCursor(),
-                        expression.getCoordinates().replace(),
-                        expression
-                );
+                Expression replacementConstructor = fileConstructorTemplate
+                        .apply(getCursor(), expression.getCoordinates().replace(), expression);
                 return (Expression) fileConstructorFixVisitorFactory
                         .get()
                         .visitNonNull(

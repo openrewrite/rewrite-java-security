@@ -229,7 +229,7 @@ public class ZipSlip extends Recipe {
                 JavaTemplate.Builder noZipSlipFileTemplate = JavaTemplate.builder("" +
                         "if (!#{any(java.io.File)}.toPath().normalize().startsWith(#{any(java.io.File)}.toPath().normalize())) {\n" +
                         exceptionLine +
-                        "}").context(getCursor());
+                        "}").contextSensitive();
                 if (canSupportIoException) {
                     noZipSlipFileTemplate.imports(IO_EXCEPTION_FQN);
                     maybeAddImportIOException();
@@ -243,7 +243,7 @@ public class ZipSlip extends Recipe {
                 JavaTemplate.Builder noZipSlipFileWithStringTemplate = JavaTemplate.builder("" +
                         "if (!#{any(java.io.File)}.toPath().normalize().startsWith(#{any(String)})) {\n" +
                         exceptionLine +
-                        "}").context(getCursor());
+                        "}").contextSensitive();
                 if (canSupportIoException) {
                     noZipSlipFileWithStringTemplate.imports(IO_EXCEPTION_FQN);
                     maybeAddImportIOException();
@@ -257,7 +257,7 @@ public class ZipSlip extends Recipe {
                 JavaTemplate.Builder noZipSlipPathStartsWithPathTemplate = JavaTemplate.builder("" +
                         "if (!#{any(java.nio.file.Path)}.normalize().startsWith(#{any(java.nio.file.Path)}.normalize())) {\n" +
                         exceptionLine +
-                        "}").context(getCursor());
+                        "}").contextSensitive();
                 if (canSupportIoException) {
                     noZipSlipPathStartsWithPathTemplate.imports(IO_EXCEPTION_FQN);
                     maybeAddImportIOException();
@@ -443,7 +443,7 @@ public class ZipSlip extends Recipe {
                                 .builder(
                                         "final Path " + zipSlipCreateNewVariableInfo.newVariableName + " = #{any(java.nio.file.Path)};"
                                 )
-                                .context(getCursor())
+                                .contextSensitive()
                                 .imports("java.nio.file.Path")
                                 .build();
                         maybeAddImport("java.nio.file.Path");
@@ -453,17 +453,15 @@ public class ZipSlip extends Recipe {
                                 .builder(
                                         "final File " + zipSlipCreateNewVariableInfo.newVariableName + " = #{any(java.io.File)};"
                                 )
-                                .context(getCursor())
+                                .contextSensitive()
                                 .imports("java.io.File")
                                 .build();
                         maybeAddImport("java.io.File");
                     }
-                    return b.withTemplate(
-                            newVariableTemplate,
-                            getCursor(),
+                    return newVariableTemplate.apply(
+                            new Cursor(getCursor().getParent(), b),
                             zipSlipCreateNewVariableInfo.statement.getCoordinates().before(),
-                            zipSlipCreateNewVariableInfo.extractToVariable
-                    );
+                            zipSlipCreateNewVariableInfo.extractToVariable);
                 }
                 ZipSlipSimpleInjectGuardInfo zipSlipSimpleInjectGuardInfo = getCursor().pollMessage(ZipSlipSimpleInjectGuardInfo.CURSOR_KEY);
                 if (zipSlipSimpleInjectGuardInfo != null) {
@@ -479,13 +477,11 @@ public class ZipSlip extends Recipe {
                         assert isTypePath(zipSlipSimpleInjectGuardInfo.zipEntry.getType());
                         template = noZipSlipPathStartsWithPathTemplate();
                     }
-                    return b.withTemplate(
-                            template,
-                            getCursor(),
+                    return template.apply(
+                            new Cursor(getCursor().getParent(), b),
                             zipSlipSimpleInjectGuardInfo.statement.getCoordinates().after(),
                             zipSlipSimpleInjectGuardInfo.zipEntry,
-                            zipSlipSimpleInjectGuardInfo.parentDir
-                    );
+                            zipSlipSimpleInjectGuardInfo.parentDir);
                 }
                 return b;
             }

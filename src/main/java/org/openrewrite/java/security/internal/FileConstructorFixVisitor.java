@@ -17,6 +17,7 @@ package org.openrewrite.java.security.internal;
 
 import lombok.Value;
 import lombok.With;
+import org.openrewrite.Cursor;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.MethodMatcher;
@@ -46,7 +47,7 @@ public class FileConstructorFixVisitor<P> extends JavaIsoVisitor<P> {
                     .build();
     private final JavaTemplate stringAppendTemplate =
             JavaTemplate.builder("#{any()} + #{any(java.lang.String)}")
-                    .context(this::getCursor)
+                    .contextSensitive()
                     .build();
 
     private final Predicate<Expression> overrideShouldBreakBefore;
@@ -62,18 +63,18 @@ public class FileConstructorFixVisitor<P> extends JavaIsoVisitor<P> {
     @Override
     public J.NewClass visitNewClass(J.NewClass newClass, P p) {
         J.NewClass n = super.visitNewClass(newClass, p);
+        Cursor cursor = new Cursor(getCursor().getParent(), n);
         if (FILE_CONSTRUCTOR.matches(n)) {
             Expression argument = n.getArguments().get(0);
             if (argument instanceof J.Binary) {
                 J.Binary binary = (J.Binary) argument;
-                return computeNewArguments(binary)
-                        .map(newArguments -> n.<J.NewClass>withTemplate(
-                                fileConstructorTemplate,
-                                getCursor(),
-                                n.getCoordinates().replace(),
-                                newArguments.first,
-                                newArguments.second
-                        ))
+                return (J.NewClass) computeNewArguments(new Cursor(cursor, binary))
+                        .map(newArguments -> fileConstructorTemplate
+                                .apply(cursor,
+                                        n.getCoordinates().replace(),
+                                        newArguments.first,
+                                        newArguments.second
+                                ))
                         .orElse(n);
             }
         }
@@ -87,7 +88,8 @@ public class FileConstructorFixVisitor<P> extends JavaIsoVisitor<P> {
         Expression second;
     }
 
-    private Optional<NewArguments> computeNewArguments(J.Binary binary) {
+    private Optional<NewArguments> computeNewArguments(Cursor cursor) {
+        J.Binary binary = cursor.getValue();
         Expression newFirstArgument = null;
         if (overrideShouldBreakBefore.test(binary.getRight())) {
             newFirstArgument = binary.getLeft();
@@ -98,16 +100,13 @@ public class FileConstructorFixVisitor<P> extends JavaIsoVisitor<P> {
                 if (FileSeparatorUtil.isFileSeparatorExpression(left.getRight())) {
                     newFirstArgument = left.getLeft();
                 } else if (left.getLeft() instanceof J.Binary) {
-                    return computeNewArguments(left)
+                    return computeNewArguments(new Cursor(cursor, left))
                             .map(leftLeftNewArguments ->
                                     leftLeftNewArguments.withSecond(
-                                            binary.withTemplate(
-                                                    stringAppendTemplate,
-                                                    getCursor(),
+                                            stringAppendTemplate.apply(cursor,
                                                     binary.getCoordinates().replace(),
                                                     leftLeftNewArguments.second,
-                                                    binary.getRight()
-                                            )
+                                                    binary.getRight())
                                     ));
                 }
             }

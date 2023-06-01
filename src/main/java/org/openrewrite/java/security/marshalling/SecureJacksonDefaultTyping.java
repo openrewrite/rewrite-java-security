@@ -64,17 +64,15 @@ public class SecureJacksonDefaultTyping extends Recipe {
                         }
                         template.append(')');
 
-                        return method.withTemplate(
-                                JavaTemplate
-                                        .builder(template.toString())
-                                        .imports("com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator")
-                                        .javaParser(JavaParser.fromJavaVersion()
-                                                .classpath("jackson-databind", "jackson-core"))
-                                        .build(),
-                                getCursor(),
-                                method.getCoordinates().replace(),
-                                ListUtils.concat(method.getSelect(), method.getArguments().get(0) instanceof J.Empty ? emptyList() : method.getArguments()).toArray()
-                        );
+                        return JavaTemplate
+                                .builder(template.toString())
+                                .imports("com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator")
+                                .javaParser(JavaParser.fromJavaVersion()
+                                        .classpath("jackson-databind", "jackson-core"))
+                                .build()
+                                .apply(getCursor(),
+                                        method.getCoordinates().replace(),
+                                        ListUtils.concat(method.getSelect(), method.getArguments().get(0) instanceof J.Empty ? emptyList() : method.getArguments()).toArray());
                     }
                 }
 
