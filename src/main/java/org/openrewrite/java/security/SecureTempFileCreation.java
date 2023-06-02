@@ -88,7 +88,7 @@ public class SecureTempFileCreation extends Recipe {
                 maybeAddImport("java.nio.file.Files");
                 if (m.getArguments().size() == 2 || (m.getArguments().size() == 3 && m.getArguments().get(2).getType() == JavaType.Primitive.Null)) {
                     // File.createTempFile(String prefix, String suffix)
-                    m = m.withTemplate(twoArg,
+                    m = twoArg.apply(
                             getCursor(),
                             m.getCoordinates().replace(),
                             m.getArguments().get(0),
@@ -96,7 +96,7 @@ public class SecureTempFileCreation extends Recipe {
                     );
                 } else if (m.getArguments().size() == 3) {
                     // File.createTempFile(String prefix, String suffix, File dir)
-                    m = m.withTemplate(threeArg,
+                    m = threeArg.apply(
                             getCursor(),
                             m.getCoordinates().replace(),
                             m.getArguments().get(2),

@@ -61,16 +61,13 @@ public class PreventClickjacking extends ScanningRecipe<GenerateWebSecurityConfi
                         return block;
                     }
                 }
-                return block.withTemplate(
-                        JavaTemplate
-                                .builder("http.headers().frameOptions().deny();")
-                                .context(getCursor())
-                                .javaParser(JavaParser.fromJavaVersion()
-                                        .classpath("spring-security-config", "spring-context", "jakarta.servlet-api"))
-                                .build(),
-                        getCursor(),
-                        block.getCoordinates().lastStatement()
-                );
+                return JavaTemplate
+                        .builder("http.headers().frameOptions().deny();")
+                        .contextSensitive()
+                        .javaParser(JavaParser.fromJavaVersion()
+                                .classpath("spring-security-config", "spring-context", "jakarta.servlet-api"))
+                        .build()
+                        .apply(getCursor(), block.getCoordinates().lastStatement());
             }
         });
     }

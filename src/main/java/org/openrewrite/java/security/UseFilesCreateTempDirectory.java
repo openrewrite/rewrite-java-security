@@ -118,6 +118,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
                  */
                 MKDIR
             }
+
             private State state = State.INIT;
             private final Map<String, Statement> stmtMap = new HashMap<>(4);
 
@@ -231,8 +232,8 @@ public class UseFilesCreateTempDirectory extends Recipe {
             public J visitExpression(Expression expression, P p) {
                 // The statement should only be replaced when removing would cause invalid code.
                 if (expression == statement &&
-                        // If the direct parent of this expression is a `J.Block` then it should be removed by `DeleteStatementNonIso`.
-                        !(getCursor().getParentOrThrow(2).getValue() instanceof J.Block)) {
+                    // If the direct parent of this expression is a `J.Block` then it should be removed by `DeleteStatementNonIso`.
+                    !(getCursor().getParentOrThrow(2).getValue() instanceof J.Block)) {
                     return replacement;
                 }
                 return super.visitExpression(expression, p);
@@ -315,7 +316,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
                 if (variable instanceof J.Identifier) {
                     J.Identifier variableIdent = (J.Identifier) variable;
                     return ident.getSimpleName().equals(variableIdent.getSimpleName()) &&
-                            TypeUtils.isOfClassType(variableIdent.getType(), "java.io.File");
+                           TypeUtils.isOfClassType(variableIdent.getType(), "java.io.File");
                 }
             }
             return false;
@@ -370,9 +371,9 @@ public class UseFilesCreateTempDirectory extends Recipe {
             J.MethodInvocation m = method;
             if (CREATE_TEMP_FILE_MATCHER.matches(m)) {
                 if (m.getArguments().size() == 2
-                        || (m.getArguments().size() == 3 && m.getArguments().get(2).getType() == JavaType.Primitive.Null)) {
+                    || (m.getArguments().size() == 3 && m.getArguments().get(2).getType() == JavaType.Primitive.Null)) {
                     // File.createTempFile(String prefix, String suffix)
-                    m = maybeAutoFormat(m, m.withTemplate(twoArg,
+                    m = maybeAutoFormat(m, twoArg.apply(
                                     getCursor(),
                                     m.getCoordinates().replace(),
                                     m.getArguments().get(0),
@@ -381,7 +382,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
                     );
                 } else if (m.getArguments().size() == 3) {
                     // File.createTempFile(String prefix, String suffix, File dir)
-                    m = maybeAutoFormat(m, m.withTemplate(threeArg,
+                    m = maybeAutoFormat(m, threeArg.apply(
                                     getCursor(),
                                     m.getCoordinates().replace(),
                                     m.getArguments().get(2),

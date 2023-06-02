@@ -59,24 +59,21 @@ public class CsrfProtection extends ScanningRecipe<GenerateWebSecurityConfigurer
                     }
                 }
 
-                return block.withTemplate(
-                        JavaTemplate
-                                .builder("http" +
-                                        ".csrf()" +
-                                        ".csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());")
-                                .context(getCursor())
-                                .imports("org.springframework.security.web.csrf.CookieCsrfTokenRepository")
-                                .javaParser(JavaParser.fromJavaVersion()
-                                        .classpath(
-                                                "spring-security-config",
-                                                "spring-context",
-                                                "jakarta.servlet-api",
-                                                "spring-security-web"
-                                        ))
-                                .build(),
-                        getCursor(),
-                        block.getCoordinates().lastStatement()
-                );
+                return JavaTemplate
+                        .builder("http" +
+                                 ".csrf()" +
+                                 ".csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());")
+                        .contextSensitive()
+                        .imports("org.springframework.security.web.csrf.CookieCsrfTokenRepository")
+                        .javaParser(JavaParser.fromJavaVersion()
+                                .classpath(
+                                        "spring-security-config",
+                                        "spring-context",
+                                        "jakarta.servlet-api",
+                                        "spring-security-web"
+                                ))
+                        .build()
+                        .apply(getCursor(), block.getCoordinates().lastStatement());
             }
         });
     }

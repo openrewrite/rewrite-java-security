@@ -15,10 +15,7 @@
  */
 package org.openrewrite.java.security;
 
-import org.openrewrite.ExecutionContext;
-import org.openrewrite.Preconditions;
-import org.openrewrite.Recipe;
-import org.openrewrite.TreeVisitor;
+import org.openrewrite.*;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.search.InJavaSourceSet;
@@ -58,9 +55,10 @@ public class SecureRandom extends Recipe {
                 J.NewClass n = super.visitNewClass(newClass, ctx);
                 if (TypeUtils.isOfClassType(newClass.getType(), "java.util.Random")) {
                     maybeAddImport("java.security.SecureRandom");
-                    return n.withTemplate(JavaTemplate.builder("new SecureRandom()")
+                    return JavaTemplate.builder("new SecureRandom()")
                             .imports("java.security.SecureRandom")
-                            .build(), getCursor(), newClass.getCoordinates().replace());
+                            .build()
+                            .apply(new Cursor(getCursor().getParent(), n), newClass.getCoordinates().replace());
                 }
                 return n;
             }

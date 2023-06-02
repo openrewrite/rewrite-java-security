@@ -56,17 +56,14 @@ public class SecureSnakeYamlConstructor extends Recipe {
             public J visitMemberReference(J.MemberReference memberRef, ExecutionContext ctx) {
                 if (snakeYamlZeroArgumentConstructor.matches(memberRef.getMethodType())) {
                     maybeAddImport("org.yaml.snakeyaml.constructor.SafeConstructor");
-                    return memberRef.withTemplate(
-                            JavaTemplate
-                                    .builder("() -> new Yaml(new SafeConstructor())")
-                                    .imports("org.yaml.snakeyaml.Yaml")
-                                    .imports("org.yaml.snakeyaml.constructor.SafeConstructor")
-                                    .javaParser(JavaParser.fromJavaVersion()
-                                            .classpathFromResources(ctx, "snakeyaml-1.33"))
-                                    .build(),
-                            getCursor(),
-                            memberRef.getCoordinates().replace()
-                    );
+                    return JavaTemplate
+                            .builder("() -> new Yaml(new SafeConstructor())")
+                            .imports("org.yaml.snakeyaml.Yaml")
+                            .imports("org.yaml.snakeyaml.constructor.SafeConstructor")
+                            .javaParser(JavaParser.fromJavaVersion()
+                                    .classpathFromResources(ctx, "snakeyaml-1.33"))
+                            .build()
+                            .apply(getCursor(), memberRef.getCoordinates().replace());
                 }
                 return super.visitMemberReference(memberRef, ctx);
             }
@@ -82,61 +79,50 @@ public class SecureSnakeYamlConstructor extends Recipe {
                     assert ctorType != null;
 
                     maybeAddImport("org.yaml.snakeyaml.constructor.SafeConstructor");
-                    return newClass.withTemplate(
-                            JavaTemplate
-                                    .builder("new Yaml(new SafeConstructor())")
-                                    .imports("org.yaml.snakeyaml.Yaml")
-                                    .imports("org.yaml.snakeyaml.constructor.SafeConstructor")
-                                    .javaParser(JavaParser.fromJavaVersion()
-                                            .classpathFromResources(ctx, "snakeyaml-1.33"))
-                                    .build(),
-                            getCursor(),
-                            newClass.getCoordinates().replace()
-                    );
+                    return JavaTemplate
+                            .builder("new Yaml(new SafeConstructor())")
+                            .imports("org.yaml.snakeyaml.Yaml")
+                            .imports("org.yaml.snakeyaml.constructor.SafeConstructor")
+                            .javaParser(JavaParser.fromJavaVersion()
+                                    .classpathFromResources(ctx, "snakeyaml-1.33"))
+                            .build()
+                            .apply(getCursor(), newClass.getCoordinates().replace());
                 } else if (snakeYamlRepresenterArgumentConstructor.matches(newClass)) {
                     JavaType.Method ctorType = newClass.getConstructorType();
                     assert ctorType != null;
 
                     maybeAddImport("org.yaml.snakeyaml.constructor.SafeConstructor");
                     maybeAddImport("org.yaml.snakeyaml.DumperOptions");
-                    return newClass.withTemplate(
-                            JavaTemplate
-                                    .builder("new Yaml(new SafeConstructor(), #{any(org.yaml.snakeyaml.representer.Representer)}, new DumperOptions())")
-                                    .imports(
-                                            "org.yaml.snakeyaml.Yaml",
-                                            "org.yaml.snakeyaml.DumperOptions",
-                                            "org.yaml.snakeyaml.constructor.SafeConstructor",
-                                            "org.yaml.snakeyaml.representer.Representer"
-                                    )
-                                    .javaParser(JavaParser.fromJavaVersion()
-                                            .classpathFromResources(ctx, "snakeyaml-1.33"))
-                                    .build(),
-                            getCursor(),
-                            newClass.getCoordinates().replace(),
-                            newClass.getArguments().get(0)
-                    );
+                    return JavaTemplate
+                            .builder("new Yaml(new SafeConstructor(), #{any(org.yaml.snakeyaml.representer.Representer)}, new DumperOptions())")
+                            .imports(
+                                    "org.yaml.snakeyaml.Yaml",
+                                    "org.yaml.snakeyaml.DumperOptions",
+                                    "org.yaml.snakeyaml.constructor.SafeConstructor",
+                                    "org.yaml.snakeyaml.representer.Representer"
+                            )
+                            .javaParser(JavaParser.fromJavaVersion()
+                                    .classpathFromResources(ctx, "snakeyaml-1.33"))
+                            .build()
+                            .apply(getCursor(), newClass.getCoordinates().replace(), newClass.getArguments().get(0));
                 } else if (snakeYamlDumperArgumentConstructor.matches(newClass)) {
                     JavaType.Method ctorType = newClass.getConstructorType();
                     assert ctorType != null;
 
                     maybeAddImport("org.yaml.snakeyaml.constructor.SafeConstructor");
                     maybeAddImport("org.yaml.snakeyaml.representer.Representer");
-                    return newClass.withTemplate(
-                            JavaTemplate
-                                    .builder("new Yaml(new SafeConstructor(), new Representer(), #{any(org.yaml.snakeyaml.DumperOptions)})")
-                                    .imports(
-                                            "org.yaml.snakeyaml.Yaml",
-                                            "org.yaml.snakeyaml.DumperOptions",
-                                            "org.yaml.snakeyaml.constructor.SafeConstructor",
-                                            "org.yaml.snakeyaml.representer.Representer"
-                                    )
-                                    .javaParser(JavaParser.fromJavaVersion()
-                                            .classpathFromResources(ctx, "snakeyaml-1.33"))
-                                    .build(),
-                            getCursor(),
-                            newClass.getCoordinates().replace(),
-                            newClass.getArguments().get(0)
-                    );
+                    return JavaTemplate
+                            .builder("new Yaml(new SafeConstructor(), new Representer(), #{any(org.yaml.snakeyaml.DumperOptions)})")
+                            .imports(
+                                    "org.yaml.snakeyaml.Yaml",
+                                    "org.yaml.snakeyaml.DumperOptions",
+                                    "org.yaml.snakeyaml.constructor.SafeConstructor",
+                                    "org.yaml.snakeyaml.representer.Representer"
+                            )
+                            .javaParser(JavaParser.fromJavaVersion()
+                                    .classpathFromResources(ctx, "snakeyaml-1.33"))
+                            .build()
+                            .apply(getCursor(), newClass.getCoordinates().replace(), newClass.getArguments().get(0));
                 }
 
                 return super.visitNewClass(newClass, ctx);
@@ -151,7 +137,7 @@ public class SecureSnakeYamlConstructor extends Recipe {
      * or if it 'escapes' the scope of the block by being assigned to a variable outside the scope, passed as an argument, or returned.
      */
     private static boolean isSnakeYamlUsedUnsafeOrEscapesScope(Cursor scope) {
-        J.Block block = (J.Block) scope.getValue();
+        J.Block block = scope.getValue();
 
         // The method arguments, if any are present. Not relevant in the scope of a static or init block.
         Set<String> methodArguments = new HashSet<>();
