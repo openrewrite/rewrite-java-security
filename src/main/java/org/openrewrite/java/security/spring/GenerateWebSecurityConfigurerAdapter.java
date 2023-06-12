@@ -81,6 +81,7 @@ public class GenerateWebSecurityConfigurerAdapter {
                         () -> GenerateWebSecurityConfigurerAdapter.class
                                 .getResourceAsStream("/WebSecurityConfigurerAdapterTemplate.java")
                 )), null, ctx)
+                .map(J.CompilationUnit.class::cast)
                 .findAny().get();
 
         J.Package pkg = springBootApplication.getPackageDeclaration();

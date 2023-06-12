@@ -18,6 +18,7 @@ package org.openrewrite.java.security;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.openrewrite.*;
+import org.openrewrite.analysis.InvocationMatcher;
 import org.openrewrite.internal.ListUtils;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.*;
@@ -180,14 +181,14 @@ public class UseFilesCreateTempDirectory extends Recipe {
 
         @AllArgsConstructor
         private static class TempDirHijackingChainFinderVisitor extends JavaIsoVisitor<TempDirHijackingChainStateMachine> {
-            private final InvocationMatcher DELETE_MATCHER = InvocationMatcher.fromInvocationMatchers(
+            private final InvocationMatcher DELETE_MATCHER = InvocationMatcher.from(
                     new MethodMatcher("java.io.File delete()"),
                     new MethodMatcher("org.apache.commons.io.FileUtils delete(..)"),
                     new MethodMatcher("org.apache.commons.io.FileUtils forceDelete(..)"),
                     new MethodMatcher("org.apache.commons.io.FileUtils deleteQuietly(..)")
             );
 
-            private final InvocationMatcher MKDIR_OR_MKDIRS_MATCHER = InvocationMatcher.fromInvocationMatchers(
+            private final InvocationMatcher MKDIR_OR_MKDIRS_MATCHER = InvocationMatcher.from(
                     new MethodMatcher("java.io.File mkdir()"),
                     new MethodMatcher("java.io.File mkdirs()"),
                     new MethodMatcher("org.apache.commons.io.FileUtils mkdirs(..)"),

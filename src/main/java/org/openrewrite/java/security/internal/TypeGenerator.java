@@ -32,6 +32,7 @@ public final class TypeGenerator {
     public static JavaType generate(String fqn) {
         List<J.CompilationUnit> compilationUnits =
                 JavaParser.fromJavaVersion().build().parse("class Stub { " + fqn + " name;}")
+                        .map(J.CompilationUnit.class::cast)
                         .collect(Collectors.toList());
         if (compilationUnits.size() != 1) {
             throw new IllegalArgumentException("Could not parse type: " + fqn);

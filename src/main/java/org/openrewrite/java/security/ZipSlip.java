@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.*;
+import org.openrewrite.analysis.InvocationMatcher;
 import org.openrewrite.analysis.controlflow.Guard;
 import org.openrewrite.analysis.dataflow.Dataflow;
 import org.openrewrite.analysis.dataflow.ExternalSinkModels;
@@ -49,7 +50,7 @@ public class ZipSlip extends Recipe {
     private static final MethodMatcher ZIP_ARCHIVE_ENTRY_GET_NAME_METHOD_MATCHER =
             new MethodMatcher("org.apache.commons.compress.archivers.zip.ZipArchiveEntry getName()", true);
 
-    private static final InvocationMatcher ZIP_ENTRY_GET_NAME = InvocationMatcher.fromInvocationMatchers(
+    private static final InvocationMatcher ZIP_ENTRY_GET_NAME = InvocationMatcher.from(
             ZIP_ENTRY_GET_NAME_METHOD_MATCHER,
             ZIP_ARCHIVE_ENTRY_GET_NAME_METHOD_MATCHER
     );
@@ -175,10 +176,10 @@ public class ZipSlip extends Recipe {
     }
 
     private static class ZipEntryToFileOrPathCreationLocalFlowSpec extends LocalFlowSpec<J.MethodInvocation, Expression> {
-        private static final InvocationMatcher FILE_CREATE = InvocationMatcher.fromInvocationMatchers(
+        private static final InvocationMatcher FILE_CREATE = InvocationMatcher.from(
                 new MethodMatcher("java.io.File <constructor>(.., java.lang.String)")
         );
-        private static final InvocationMatcher PATH_RESOLVE = InvocationMatcher.fromInvocationMatchers(
+        private static final InvocationMatcher PATH_RESOLVE = InvocationMatcher.from(
                 new MethodMatcher("java.nio.file.Path resolve(..)")
         );
 
