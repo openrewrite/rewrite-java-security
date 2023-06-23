@@ -47,11 +47,6 @@ public class SecureSnakeYamlConstructor extends Recipe {
 
     @Override
     public JavaVisitor<ExecutionContext> getVisitor() {
-        InvocationMatcher yamlConstructor = InvocationMatcher.from(
-                snakeYamlZeroArgumentConstructor,
-                snakeYamlRepresenterArgumentConstructor,
-                snakeYamlDumperArgumentConstructor
-        );
         return new JavaVisitor<ExecutionContext>() {
             @Override
             public J visitMemberReference(J.MemberReference memberRef, ExecutionContext ctx) {

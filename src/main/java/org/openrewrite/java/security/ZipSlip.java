@@ -50,7 +50,7 @@ public class ZipSlip extends Recipe {
     private static final MethodMatcher ZIP_ARCHIVE_ENTRY_GET_NAME_METHOD_MATCHER =
             new MethodMatcher("org.apache.commons.compress.archivers.zip.ZipArchiveEntry getName()", true);
 
-    private static final InvocationMatcher ZIP_ENTRY_GET_NAME = InvocationMatcher.from(
+    private static final InvocationMatcher ZIP_ENTRY_GET_NAME = InvocationMatcher.fromMethodMatchers(
             ZIP_ENTRY_GET_NAME_METHOD_MATCHER,
             ZIP_ARCHIVE_ENTRY_GET_NAME_METHOD_MATCHER
     );
@@ -176,10 +176,10 @@ public class ZipSlip extends Recipe {
     }
 
     private static class ZipEntryToFileOrPathCreationLocalFlowSpec extends LocalFlowSpec<J.MethodInvocation, Expression> {
-        private static final InvocationMatcher FILE_CREATE = InvocationMatcher.from(
+        private static final InvocationMatcher FILE_CREATE = InvocationMatcher.fromMethodMatcher(
                 new MethodMatcher("java.io.File <constructor>(.., java.lang.String)")
         );
-        private static final InvocationMatcher PATH_RESOLVE = InvocationMatcher.from(
+        private static final InvocationMatcher PATH_RESOLVE = InvocationMatcher.fromMethodMatcher(
                 new MethodMatcher("java.nio.file.Path resolve(..)")
         );
 
