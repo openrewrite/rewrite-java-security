@@ -21,10 +21,8 @@ import lombok.Value;
 import org.openrewrite.*;
 import org.openrewrite.analysis.InvocationMatcher;
 import org.openrewrite.analysis.controlflow.Guard;
-import org.openrewrite.analysis.dataflow.Dataflow;
-import org.openrewrite.analysis.dataflow.ExternalSinkModels;
-import org.openrewrite.analysis.dataflow.LocalFlowSpec;
-import org.openrewrite.analysis.dataflow.LocalTaintFlowSpec;
+import org.openrewrite.analysis.dataflow.*;
+import org.openrewrite.analysis.trait.expr.Call;
 import org.openrewrite.internal.lang.NonNull;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.*;
@@ -165,12 +163,12 @@ public class ZipSlip extends Recipe {
 
     private static class ZipEntryToAnyLocalFlowSpec extends LocalFlowSpec<J.MethodInvocation, Expression> {
         @Override
-        public boolean isSource(J.MethodInvocation methodInvocation, Cursor cursor) {
-            return ZIP_ENTRY_GET_NAME.matches(methodInvocation);
+        public boolean isSource(DataFlowNode srcNode) {
+            return srcNode.asExprParent(Call.class).map(call -> call.matches(ZIP_ENTRY_GET_NAME)).orElse(false);
         }
 
         @Override
-        public boolean isSink(Expression expression, Cursor cursor) {
+        public boolean isSink(DataFlowNode sinkNode) {
             return true;
         }
     }
@@ -184,14 +182,14 @@ public class ZipSlip extends Recipe {
         );
 
         @Override
-        public boolean isSource(J.MethodInvocation methodInvocation, Cursor cursor) {
-            return ZIP_ENTRY_GET_NAME.matches(methodInvocation);
+        public boolean isSource(DataFlowNode srcNode) {
+            return srcNode.asExprParent(Call.class).map(call -> call.matches(ZIP_ENTRY_GET_NAME)).orElse(false);
         }
 
         @Override
-        public boolean isSink(Expression expression, Cursor cursor) {
-            return FILE_CREATE.advanced().isParameter(cursor, 1) ||
-                    PATH_RESOLVE.advanced().isFirstParameter(cursor);
+        public boolean isSink(DataFlowNode sinkNode) {
+            return FILE_CREATE.advanced().isParameter(sinkNode.getCursor(), 1) ||
+                    PATH_RESOLVE.advanced().isFirstParameter(sinkNode.getCursor());
         }
     }
 
@@ -495,13 +493,13 @@ public class ZipSlip extends Recipe {
                     new MethodMatcher("java.lang.String startsWith(..) ");
 
             @Override
-            public boolean isSource(Expression expression, Cursor cursor) {
+            public boolean isSource(DataFlowNode srcNode) {
                 return true;
             }
 
             @Override
-            public boolean isSink(Expression expression, Cursor cursor) {
-                return ExternalSinkModels.getInstance().isSinkNode(expression, cursor, "create-file");
+            public boolean isSink(DataFlowNode sinkNode) {
+                return ExternalSinkModels.instance().isSinkNode(sinkNode, "create-file");
             }
 
             @Override
