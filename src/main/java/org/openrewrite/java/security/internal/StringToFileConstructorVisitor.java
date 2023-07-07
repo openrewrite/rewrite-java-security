@@ -17,7 +17,6 @@ package org.openrewrite.java.security.internal;
 
 import org.openrewrite.analysis.dataflow.DataFlowNode;
 import org.openrewrite.analysis.dataflow.ExternalSinkModels;
-import org.openrewrite.analysis.trait.expr.Expr;
 import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.JavaVisitor;
 import org.openrewrite.java.tree.Expression;
@@ -49,7 +48,9 @@ public class StringToFileConstructorVisitor<P> extends JavaVisitor<P> {
 
     @Override
     public Expression visitExpression(Expression expression, P p) {
-        if (ExternalSinkModels.instance().isSinkNode(DataFlowNode.of(getCursor()), "create-file")) {
+        DataFlowNode dataFlowNode =
+                DataFlowNode.ofOrThrow(getCursor(), "Expression always expected to be of type data flow node");
+        if (ExternalSinkModels.instance().isSinkNode(dataFlowNode, "create-file")) {
             J.NewClass parentConstructor = getCursor().firstEnclosing(J.NewClass.class);
             if (parentConstructor != null &&
                     parentConstructor.getArguments().get(0) == expression &&
