@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.openrewrite.java.security;
+package org.openrewrite.java.security.xml;
 
-import net.bytebuddy.asm.Advice;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -24,25 +23,23 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class XmlEntitySplitterTest {
-
+public class ExternalDTDAccumulatorTest {
     @ParameterizedTest
     @MethodSource("provideEntitySplitTestArguments")
     void testEntitySplit(String initial, String expected){
-        assertEquals(expected, XmlParserXXEVulnerability.extractURLFromEntity(initial));
+        assertEquals(expected, ExternalDTDAccumulator.extractURLFromEntity(initial));
     }
 
     private static Stream<Arguments> provideEntitySplitTestArguments(){
         return Stream.of(
-                Arguments.of("<!ENTITY open-hatch-public\n" +
-                             "      PUBLIC \"-//Textuality//TEXT Standard open-hatch boilerplate//EN\"\n" +
-                             "      \"http://www.texty.com/boilerplate/OpenHatch.xml\">",
-                        "http://www.texty.com/boilerplate/OpenHatch.xml"),
-                Arguments.of("<!ENTITY hatch-pic\n" +
-                             "      SYSTEM \"../grafix/OpenHatch.gif\"\n" +
-                             "      NDATA gif>",
-                        "../grafix/OpenHatch.gif")
-          );
+          Arguments.of("<!ENTITY open-hatch-public\n" +
+              "      PUBLIC \"-//Textuality//TEXT Standard open-hatch boilerplate//EN\"\n" +
+              "      \"http://www.texty.com/boilerplate/OpenHatch.xml\">",
+            "http://www.texty.com/boilerplate/OpenHatch.xml"),
+          Arguments.of("<!ENTITY hatch-pic\n" +
+              "      SYSTEM \"../grafix/OpenHatch.gif\"\n" +
+              "      NDATA gif>",
+            "../grafix/OpenHatch.gif")
+        );
     }
-
 }
