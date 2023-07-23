@@ -39,6 +39,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static java.util.Collections.emptyList;
+
 @Value
 @EqualsAndHashCode(callSuper = true)
 public class ZipSlip extends Recipe {
@@ -415,6 +417,7 @@ public class ZipSlip extends Recipe {
                                 Tree.randomId(),
                                 Space.EMPTY,
                                 Markers.EMPTY,
+                                emptyList(),
                                 newVariableName,
                                 methodCall.getType(),
                                 null
