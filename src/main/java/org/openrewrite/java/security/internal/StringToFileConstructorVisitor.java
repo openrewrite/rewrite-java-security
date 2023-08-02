@@ -15,6 +15,7 @@
  */
 package org.openrewrite.java.security.internal;
 
+import fj.data.Option;
 import org.openrewrite.analysis.dataflow.DataFlowNode;
 import org.openrewrite.analysis.dataflow.ExternalSinkModels;
 import org.openrewrite.java.JavaTemplate;
@@ -48,25 +49,32 @@ public class StringToFileConstructorVisitor<P> extends JavaVisitor<P> {
 
     @Override
     public Expression visitExpression(Expression expression, P p) {
-        DataFlowNode dataFlowNode =
-                DataFlowNode.ofOrThrow(getCursor(), "Expression always expected to be of type data flow node");
-        if (ExternalSinkModels.instance().isSinkNode(dataFlowNode, "create-file")) {
-            J.NewClass parentConstructor = getCursor().firstEnclosing(J.NewClass.class);
-            if (parentConstructor != null &&
-                    parentConstructor.getArguments().get(0) == expression &&
-                    TypeUtils.isString(expression.getType())
-            ) {
-                Expression replacementConstructor = fileConstructorTemplate
-                        .apply(getCursor(), expression.getCoordinates().replace(), expression);
-                return (Expression) fileConstructorFixVisitorFactory
-                        .get()
-                        .visitNonNull(
-                                replacementConstructor,
-                                p,
-                                getCursor()
-                        );
-            }
-        }
-        return expression;
+        return DataFlowNode
+                .of(getCursor())
+                .filter(n -> ExternalSinkModels.instance().isSinkNode(n, "create-file"))
+                .bind(__ -> {
+                    J.NewClass parentConstructor = getCursor().firstEnclosing(J.NewClass.class);
+                    if (parentConstructor != null &&
+                        parentConstructor.getArguments().get(0) == expression &&
+                        TypeUtils.isString(expression.getType())
+                    ) {
+                        Expression replacementConstructor =
+                                fileConstructorTemplate.apply(
+                                        getCursor(),
+                                        expression.getCoordinates().replace(),
+                                        expression
+                                );
+                        return Option
+                                .some((Expression) fileConstructorFixVisitorFactory
+                                        .get()
+                                        .visitNonNull(
+                                                replacementConstructor,
+                                                p,
+                                                getCursor()
+                                        ));
+                    }
+                    return Option.none();
+                })
+                .orSome(expression);
     }
 }

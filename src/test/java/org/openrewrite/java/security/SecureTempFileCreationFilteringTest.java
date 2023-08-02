@@ -143,7 +143,7 @@ public class SecureTempFileCreationFilteringTest implements RewriteTest {
         );
     }
 
-    private static class FilteringSecureTempFileCreation extends ScanningRecipe<AtomicBoolean> {
+    public static class FilteringSecureTempFileCreation extends ScanningRecipe<AtomicBoolean> {
 
         @Override
         public String getDisplayName() {
