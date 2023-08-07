@@ -144,7 +144,7 @@ public class SecureSnakeYamlConstructor extends Recipe {
             methodDeclaration
                     .getParameters()
                     .stream()
-                    .filter(p -> p instanceof J.VariableDeclarations)
+                    .filter(org.openrewrite.java.tree.J.VariableDeclarations.class::isInstance)
                     .flatMap(p -> ((J.VariableDeclarations) p).getVariables().stream())
                     .forEach(v -> methodArguments.add(v.getSimpleName()));
         }
