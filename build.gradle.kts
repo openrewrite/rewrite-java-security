@@ -41,6 +41,11 @@ dependencies {
 
     testImplementation("org.assertj:assertj-core:latest.release")
 
+    testImplementation("com.arakelian:faker:latest.release")
+    testImplementation("org.springframework:spring-web:5.+")
+    testImplementation("org.springframework:spring-webflux:5.+")
+    testImplementation("javax:javaee-api:7.+")
+
     testRuntimeOnly("org.openrewrite:rewrite-java-17:${rewriteVersion}")
     testRuntimeOnly("junit:junit:latest.release")
     testRuntimeOnly("com.fasterxml.jackson.core:jackson-databind:2.13.4")
