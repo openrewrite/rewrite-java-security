@@ -75,6 +75,9 @@ public class FindSensitiveApiEndpoints extends Recipe {
                 if (endpoint == null) {
                     return super.visitMethodDeclaration(method, ctx);
                 }
+                if (method.getReturnTypeExpression() == null) {
+                    return method;
+                }
                 List<List<JavaType.Method>> sensitive = sensitiveFieldPaths(requireNonNull(method.getReturnTypeExpression()).getType());
                 if (sensitive.isEmpty()) {
                     return method;
