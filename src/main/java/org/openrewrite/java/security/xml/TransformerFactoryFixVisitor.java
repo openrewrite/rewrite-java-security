@@ -19,6 +19,7 @@ import org.openrewrite.Cursor;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.TreeVisitor;
+import org.openrewrite.analysis.InvocationMatcher;
 import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.J;
@@ -26,9 +27,9 @@ import org.openrewrite.java.tree.J;
 import javax.xml.XMLConstants;
 
 public class TransformerFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
-    static final MethodMatcher TRANSFORMER_FACTORY_INSTANCE = new MethodMatcher("javax.xml.transform.TransformerFactory new*()");
-    static final MethodMatcher TRANSFORMER_FACTORY_SET_ATTRIBUTE = new MethodMatcher("javax.xml.transform.TransformerFactory setAttribute(java.lang.String, ..)");
-    static final MethodMatcher TRANSFORMER_FACTORY_SET_FEATURE = new MethodMatcher("javax.xml.transform.TransformerFactory setFeature(java.lang.String, ..)");
+    static final InvocationMatcher TRANSFORMER_FACTORY_INSTANCE = new MethodMatcher("javax.xml.transform.TransformerFactory new*()")::matches;
+    static final InvocationMatcher TRANSFORMER_FACTORY_SET_ATTRIBUTE = new MethodMatcher("javax.xml.transform.TransformerFactory setAttribute(java.lang.String, ..)")::matches;
+    static final InvocationMatcher TRANSFORMER_FACTORY_SET_FEATURE = new MethodMatcher("javax.xml.transform.TransformerFactory setFeature(java.lang.String, ..)")::matches;
 
     private static final String TRANSFORMER_FACTORY_FQN = "javax.xml.transform.TransformerFactory";
     private static final String ACCESS_EXTERNAL_DTD_NAME = "ACCESS_EXTERNAL_DTD";

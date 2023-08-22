@@ -18,6 +18,7 @@ package org.openrewrite.java.security.xml;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.openrewrite.Cursor;
+import org.openrewrite.analysis.InvocationMatcher;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.MethodMatcher;
@@ -33,8 +34,8 @@ public abstract class XmlFactoryInsertVisitor<P> extends JavaIsoVisitor<P> {
     private final StringBuilder template = new StringBuilder();
     private final J.Block scope;
     private final String factoryVariableName;
-    private final MethodMatcher factoryInstanceMatcher;
-    private final MethodMatcher factoryMethodCallMatcher;
+    private final InvocationMatcher factoryInstanceMatcher;
+    private final InvocationMatcher factoryMethodCallMatcher;
 
     public Statement getInsertStatement(J.Block b) {
         Statement beforeStatement = null;

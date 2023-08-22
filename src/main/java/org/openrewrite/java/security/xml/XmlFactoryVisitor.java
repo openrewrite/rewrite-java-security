@@ -17,6 +17,7 @@ package org.openrewrite.java.security.xml;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.openrewrite.analysis.InvocationMatcher;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.tree.J;
@@ -25,7 +26,7 @@ import org.openrewrite.java.tree.TypeUtils;
 @AllArgsConstructor
 @Getter
 public abstract class XmlFactoryVisitor<P> extends JavaIsoVisitor<P> {
-    private final MethodMatcher FACTORY_INSTANCE;
+    private final InvocationMatcher FACTORY_INSTANCE;
 
     private final String FACTORY_FQN;
 

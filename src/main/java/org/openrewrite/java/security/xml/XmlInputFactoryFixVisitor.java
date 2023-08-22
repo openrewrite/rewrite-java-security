@@ -19,6 +19,7 @@ import org.openrewrite.Cursor;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.TreeVisitor;
+import org.openrewrite.analysis.InvocationMatcher;
 import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.J;
@@ -28,9 +29,9 @@ import javax.xml.stream.XMLInputFactory;
 
 public class XmlInputFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
 
-    static final MethodMatcher XML_PARSER_FACTORY_INSTANCE = new MethodMatcher("javax.xml.stream.XMLInputFactory new*()");
-    static final MethodMatcher XML_PARSER_FACTORY_SET_PROPERTY = new MethodMatcher("javax.xml.stream.XMLInputFactory setProperty(java.lang.String, ..)");
-    static final MethodMatcher XML_PARSER_FACTORY_SET_RESOLVER = new MethodMatcher("javax.xml.stream.XMLInputFactory setXMLResolver(javax.xml.stream.XMLResolver)");
+    static final InvocationMatcher XML_PARSER_FACTORY_INSTANCE = new MethodMatcher("javax.xml.stream.XMLInputFactory new*()")::matches;
+    static final InvocationMatcher XML_PARSER_FACTORY_SET_PROPERTY = new MethodMatcher("javax.xml.stream.XMLInputFactory setProperty(java.lang.String, ..)")::matches;
+    static final InvocationMatcher XML_PARSER_FACTORY_SET_RESOLVER = new MethodMatcher("javax.xml.stream.XMLInputFactory setXMLResolver(javax.xml.stream.XMLResolver)")::matches;
 
     private static final String XML_FACTORY_FQN = "javax.xml.stream.XMLInputFactory";
     private static final String SUPPORTING_EXTERNAL_ENTITIES_PROPERTY_NAME = "IS_SUPPORTING_EXTERNAL_ENTITIES";
