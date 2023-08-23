@@ -16,11 +16,17 @@
 package org.openrewrite.java.security.xml;
 
 import org.openrewrite.java.tree.J;
-import org.openrewrite.java.tree.Statement;
 
 import java.util.Collections;
+import java.util.Set;
 
 public class TransformerFactoryInsertAttributeStatementVisitor<P> extends XmlFactoryInsertVisitor<P> {
+    private static final Set<String> IMPORTS = Collections.singleton("javax.xml.XMLConstants");
+
+    private final boolean needsExternalEntitiesDisabled;
+    private final boolean needsStylesheetsDisabled;
+    private final boolean needsFeatureSecureProcessing;
+
     public TransformerFactoryInsertAttributeStatementVisitor(
             J.Block scope,
             String factoryVariableName,
@@ -32,9 +38,17 @@ public class TransformerFactoryInsertAttributeStatementVisitor<P> extends XmlFac
                 scope,
                 factoryVariableName,
                 TransformerFactoryFixVisitor.TRANSFORMER_FACTORY_INSTANCE,
-                TransformerFactoryFixVisitor.TRANSFORMER_FACTORY_SET_ATTRIBUTE
+                TransformerFactoryFixVisitor.TRANSFORMER_FACTORY_SET_ATTRIBUTE,
+                IMPORTS
         );
 
+        this.needsExternalEntitiesDisabled = needsExternalEntitiesDisabled;
+        this.needsStylesheetsDisabled = needsStylesheetsDisabled;
+        this.needsFeatureSecureProcessing = needsFeatureSecureProcessing;
+    }
+
+    @Override
+    public void updateTemplate() {
         if (needsExternalEntitiesDisabled) {
             getTemplate().append(getFactoryVariableName()).append(".setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, \"\");");
         }
@@ -44,15 +58,5 @@ public class TransformerFactoryInsertAttributeStatementVisitor<P> extends XmlFac
         if (needsFeatureSecureProcessing) {
             getTemplate().append(getFactoryVariableName()).append(".setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);");
         }
-    }
-
-    @Override
-    public J.Block visitBlock(J.Block block, P ctx) {
-        J.Block b = super.visitBlock(block, ctx);
-        Statement beforeStatement = getInsertStatement(b);
-        if (b.isScope(getScope())) {
-            b = updateBlock(b, beforeStatement, Collections.singleton("javax.xml.XMLConstants"));
-        }
-        return b;
     }
 }
