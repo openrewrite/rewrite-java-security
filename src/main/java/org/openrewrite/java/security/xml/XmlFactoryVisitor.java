@@ -15,17 +15,20 @@
  */
 package org.openrewrite.java.security.xml;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.openrewrite.Cursor;
 import org.openrewrite.analysis.InvocationMatcher;
+import org.openrewrite.analysis.trait.expr.VarAccess;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.TypeUtils;
 
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Getter
 public abstract class XmlFactoryVisitor<P> extends JavaIsoVisitor<P> {
+    private int count = 0;
+
     private final InvocationMatcher factoryInstance;
 
     private final String factoryFqn;
@@ -36,23 +39,36 @@ public abstract class XmlFactoryVisitor<P> extends JavaIsoVisitor<P> {
     private final ExternalDTDAccumulator acc;
 
     @Override
-    public J.VariableDeclarations.NamedVariable visitVariable(J.VariableDeclarations.NamedVariable variable, P ctx) {
-        J.VariableDeclarations.NamedVariable v = super.visitVariable(variable, ctx);
-        if (TypeUtils.isOfClassType(v.getType(), factoryFqn)) {
-            XmlFactoryVariable factoryVariable = new XmlFactoryVariable(
-                    v.getSimpleName(),
-                    getCursor().firstEnclosingOrThrow(J.VariableDeclarations.class).getModifiers()
-            );
-            addMessage(factoryVariableName, factoryVariable);
-        }
-        return v;
-    }
-
-    @Override
     public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, P ctx) {
         J.MethodInvocation m = super.visitMethodInvocation(method, ctx);
         if (factoryInstance.matches(m)) {
-            addMessage(factoryInitializationMethod, getCursor().dropParentUntil(J.Block.class::isInstance));
+            count++;
+            addMessage(factoryInitializationMethod);
+
+            J.VariableDeclarations.NamedVariable parentVariable = getCursor().firstEnclosing(J.VariableDeclarations.NamedVariable.class);
+            Cursor maybeParentAssignment = getCursor().dropParentUntil(c -> c instanceof J.Assignment || c instanceof J.ClassDeclaration);
+            if (parentVariable != null) {
+                if (TypeUtils.isOfClassType(parentVariable.getType(), factoryFqn)) {
+                    XmlFactoryVariable factoryVariable = XmlFactoryVariable.from(
+                            parentVariable.getSimpleName(),
+                            getCursor().firstEnclosingOrThrow(J.VariableDeclarations.class).getModifiers()
+                    );
+                    addMessage(factoryVariableName, factoryVariable);
+                }
+            } else if (maybeParentAssignment.getValue() instanceof J.Assignment) {
+                J.Assignment parentAssignment = maybeParentAssignment.getValue();
+                if (TypeUtils.isOfClassType(parentAssignment.getVariable().getType(), factoryFqn)) {
+                    if (parentAssignment.getVariable().unwrap() instanceof J.Identifier) {
+                        J.Identifier ident = (J.Identifier) parentAssignment.getVariable().unwrap();
+                        VarAccess v = VarAccess.viewOf(new Cursor(maybeParentAssignment, ident)).success();
+                        XmlFactoryVariable factoryVariable = new XmlFactoryVariable(
+                                ident.getSimpleName(),
+                                v.getVariable().getFlags()
+                        );
+                        addMessage(factoryVariableName, factoryVariable);
+                    }
+                }
+            }
         }
         return m;
     }
@@ -67,7 +83,7 @@ public abstract class XmlFactoryVisitor<P> extends JavaIsoVisitor<P> {
     }
 
     protected void addMessage(String message, Object value) {
-        putMessageOnFirstEnclosingIfMissing(getCursor(), J.ClassDeclaration.class, message, value);
+        putMessageOnFirstEnclosingIfMissing(getCursor(), J.ClassDeclaration.class, message + getCount(), value);
     }
 
     private static void putMessageOnFirstEnclosingIfMissing(Cursor c, Class<?> enclosing, String key, Object value) {

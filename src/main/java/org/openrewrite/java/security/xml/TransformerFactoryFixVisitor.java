@@ -54,33 +54,35 @@ public class TransformerFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
     @Override
     public J.ClassDeclaration visitClassDeclaration(J.ClassDeclaration classDecl, P ctx) {
         J.ClassDeclaration cd = super.visitClassDeclaration(classDecl, ctx);
-        Cursor supportsExternalCursor = getCursor().getMessage(ACCESS_EXTERNAL_DTD_NAME);
-        Cursor supportsStylesheetCursor = getCursor().getMessage(ACCESS_EXTERNAL_STYLESHEET_NAME);
-        Cursor supportsFeatureSecureProcessing = getCursor().getMessage(FEATURE_SECURE_PROCESSING_NAME);
-        Cursor initializationCursor = getCursor().getMessage(TRANSFORMER_FACTORY_INITIALIZATION_METHOD);
-        Cursor disallowModifyFlagCursor = getCursor().getMessage(DISALLOW_MODIFY_FLAG);
-        XmlFactoryVariable transformerFactoryVariable = getCursor().getMessage(TRANSFORMER_FACTORY_VARIABLE_NAME);
+        for (int i = 1; i <= getCount(); i++) {
+            Cursor supportsExternalCursor = getCursor().getMessage(ACCESS_EXTERNAL_DTD_NAME + i);
+            Cursor supportsStylesheetCursor = getCursor().getMessage(ACCESS_EXTERNAL_STYLESHEET_NAME + i);
+            Cursor supportsFeatureSecureProcessing = getCursor().getMessage(FEATURE_SECURE_PROCESSING_NAME + i);
+            Cursor initializationCursor = getCursor().getMessage(TRANSFORMER_FACTORY_INITIALIZATION_METHOD + i);
+            Cursor disallowModifyFlagCursor = getCursor().getMessage(DISALLOW_MODIFY_FLAG + i);
+            XmlFactoryVariable transformerFactoryVariable = getCursor().getMessage(TRANSFORMER_FACTORY_VARIABLE_NAME + i);
 
-        Cursor setAttributeBlockCursor = null;
-        if (supportsExternalCursor == null && supportsStylesheetCursor == null && supportsFeatureSecureProcessing == null) {
-            setAttributeBlockCursor = initializationCursor;
-        } else if ((supportsExternalCursor == null ^ supportsStylesheetCursor == null) || (supportsStylesheetCursor == null ^ supportsFeatureSecureProcessing == null)) {
-            if (supportsExternalCursor != null) {
-                setAttributeBlockCursor = supportsExternalCursor;
-            } else if (supportsStylesheetCursor != null) {
-                setAttributeBlockCursor = supportsStylesheetCursor;
-            } else {
-                setAttributeBlockCursor = supportsFeatureSecureProcessing;
+            Cursor setAttributeBlockCursor = null;
+            if (supportsExternalCursor == null && supportsStylesheetCursor == null && supportsFeatureSecureProcessing == null) {
+                setAttributeBlockCursor = initializationCursor;
+            } else if ((supportsExternalCursor == null ^ supportsStylesheetCursor == null) || (supportsStylesheetCursor == null ^ supportsFeatureSecureProcessing == null)) {
+                if (supportsExternalCursor != null) {
+                    setAttributeBlockCursor = supportsExternalCursor;
+                } else if (supportsStylesheetCursor != null) {
+                    setAttributeBlockCursor = supportsStylesheetCursor;
+                } else {
+                    setAttributeBlockCursor = supportsFeatureSecureProcessing;
+                }
             }
-        }
-        if (disallowModifyFlagCursor == null && setAttributeBlockCursor != null && transformerFactoryVariable != null) {
-            doAfterVisit(new TransformerFactoryInsertAttributeStatementVisitor<>(
-                    setAttributeBlockCursor.getValue(),
-                    transformerFactoryVariable,
-                    supportsExternalCursor == null,
-                    supportsStylesheetCursor == null,
-                    supportsFeatureSecureProcessing == null
-            ));
+            if (disallowModifyFlagCursor == null && setAttributeBlockCursor != null && transformerFactoryVariable != null) {
+                doAfterVisit(new TransformerFactoryInsertAttributeStatementVisitor<>(
+                        setAttributeBlockCursor.getValue(),
+                        transformerFactoryVariable,
+                        supportsExternalCursor == null,
+                        supportsStylesheetCursor == null,
+                        supportsFeatureSecureProcessing == null
+                ));
+            }
         }
         return cd;
     }

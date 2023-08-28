@@ -56,30 +56,32 @@ public class XmlInputFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
     @Override
     public J.ClassDeclaration visitClassDeclaration(J.ClassDeclaration classDecl, P ctx) {
         J.ClassDeclaration cd = super.visitClassDeclaration(classDecl, ctx);
-        Cursor supportsExternalCursor = getCursor().getMessage(SUPPORTING_EXTERNAL_ENTITIES_PROPERTY_NAME);
-        Cursor supportsFalseDTDCursor = getCursor().getMessage(SUPPORT_DTD_FALSE_PROPERTY_NAME);
-        Cursor supportsDTDTrueCursor = getCursor().getMessage(SUPPORT_DTD_TRUE_PROPERTY_NAME);
-        Cursor initializationCursor = getCursor().getMessage(XML_PARSER_INITIALIZATION_METHOD);
-        XmlFactoryVariable xmlFactoryVariable = getCursor().getMessage(XML_FACTORY_VARIABLE_NAME);
-        Cursor xmlResolverMethod = getCursor().getMessage(XML_RESOLVER_METHOD);
+        for (int i = 1; i <= getCount(); i++) {
+            Cursor supportsExternalCursor = getCursor().getMessage(SUPPORTING_EXTERNAL_ENTITIES_PROPERTY_NAME + i);
+            Cursor supportsFalseDTDCursor = getCursor().getMessage(SUPPORT_DTD_FALSE_PROPERTY_NAME + i);
+            Cursor supportsDTDTrueCursor = getCursor().getMessage(SUPPORT_DTD_TRUE_PROPERTY_NAME + i);
+            Cursor initializationCursor = getCursor().getMessage(XML_PARSER_INITIALIZATION_METHOD + i);
+            XmlFactoryVariable xmlFactoryVariable = getCursor().getMessage(XML_FACTORY_VARIABLE_NAME + i);
+            Cursor xmlResolverMethod = getCursor().getMessage(XML_RESOLVER_METHOD + i);
 
-        Cursor setPropertyBlockCursor = null;
-        if (supportsExternalCursor == null && supportsFalseDTDCursor == null) {
-            setPropertyBlockCursor = initializationCursor;
-        } else if (supportsExternalCursor == null ^ supportsFalseDTDCursor == null) {
-            setPropertyBlockCursor = supportsExternalCursor == null ? supportsFalseDTDCursor : supportsExternalCursor;
-        }
-        if (setPropertyBlockCursor != null && xmlFactoryVariable != null) {
-            doAfterVisit(new XmlFactoryInsertPropertyStatementVisitor<>(
-                    setPropertyBlockCursor.getValue(),
-                    xmlFactoryVariable,
-                    supportsExternalCursor == null,
-                    supportsFalseDTDCursor == null,
-                    getAcc().getExternalDTDs().isEmpty(),
-                    supportsDTDTrueCursor == null,
-                    xmlResolverMethod == null,
-                    getAcc()
-            ));
+            Cursor setPropertyBlockCursor = null;
+            if (supportsExternalCursor == null && supportsFalseDTDCursor == null) {
+                setPropertyBlockCursor = initializationCursor;
+            } else if (supportsExternalCursor == null ^ supportsFalseDTDCursor == null) {
+                setPropertyBlockCursor = supportsExternalCursor == null ? supportsFalseDTDCursor : supportsExternalCursor;
+            }
+            if (setPropertyBlockCursor != null && xmlFactoryVariable != null) {
+                doAfterVisit(new XmlFactoryInsertPropertyStatementVisitor<>(
+                        setPropertyBlockCursor.getValue(),
+                        xmlFactoryVariable,
+                        supportsExternalCursor == null,
+                        supportsFalseDTDCursor == null,
+                        getAcc().getExternalDTDs().isEmpty(),
+                        supportsDTDTrueCursor == null,
+                        xmlResolverMethod == null,
+                        getAcc()
+                ));
+            }
         }
         return cd;
     }
