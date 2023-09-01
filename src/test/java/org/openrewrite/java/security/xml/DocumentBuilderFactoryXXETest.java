@@ -277,4 +277,85 @@ public class DocumentBuilderFactoryXXETest implements RewriteTest{
           )
         );
     }
+
+    @Test
+    void factoryIsNotVulnerableWithDTDsAndXIncludeAwareButPropertiesMissing() {
+        rewriteRun(
+          xml(
+            """
+              <!DOCTYPE xml [
+                  <!ENTITY open-hatch-system
+                    SYSTEM "http://www.textuality.com/boilerplate/OpenHatch.xml">
+                  <!ENTITY open-hatch-public
+                    PUBLIC "-//Textuality//TEXT Standard open-hatch boilerplate//EN"
+                    "http://www.texty.com/boilerplate/OpenHatch.xml">
+                  <!ENTITY hatch-pic
+                    SYSTEM "../grafix/OpenHatch.gif"
+                    NDATA gif>
+              ]>
+              <root>
+                <!-- Your XML content here -->
+              </root>
+              """
+          ),
+          java(
+            """
+              import javax.xml.parsers.DocumentBuilderFactory;
+              import javax.xml.parsers.DocumentBuilder;
+              import javax.xml.parsers.ParserConfigurationException; // catching unsupported features
+              import javax.xml.XMLConstants;
+              
+              class myDBFReader {
+                  DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+                  
+                  {
+                      dbf.setXIncludeAware(false);
+                  }
+                  
+                  DocumentBuilder safebuilder = dbf.newDocumentBuilder();
+              }
+              """,
+            """
+              import javax.xml.parsers.DocumentBuilderFactory;
+              import javax.xml.parsers.DocumentBuilder;
+              import javax.xml.parsers.ParserConfigurationException; // catching unsupported features
+              import javax.xml.XMLConstants;
+              
+              class myDBFReader {
+                  DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+                  
+                  {
+                      String FEATURE = null;
+                      try {
+                          FEATURE = "http://xml.org/sax/features/external-parameter-entities";
+                          dbf.setFeature(FEATURE, false);
+              
+                          FEATURE = "http://apache.org/xml/features/nonvalidating/load-external-dtd";
+                          dbf.setFeature(FEATURE, false);
+              
+                          FEATURE = "http://xml.org/sax/features/external-general-entities";
+                          dbf.setFeature(FEATURE, false);
+              
+                          dbf.setExpandEntityReferences(false);
+              
+                          dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+              
+                      } catch (ParserConfigurationException e) {
+                          throw new IllegalStateException("The feature '"
+                                  + FEATURE + "' is not supported by your XML processor.", e);
+                      }
+                  
+                  }
+                  
+                  {
+                      dbf.setXIncludeAware(false);
+                  }
+                      
+                  DocumentBuilder safebuilder = dbf.newDocumentBuilder();
+              }
+              """
+          )
+        );
+
+    }
 }

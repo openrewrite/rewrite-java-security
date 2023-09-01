@@ -40,7 +40,8 @@ public class DocumentBuilderFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
 
     static final InvocationMatcher DBF_NEW_INSTANCE = InvocationMatcher.fromMethodMatcher(new MethodMatcher("javax.xml.parsers.DocumentBuilderFactory newInstance*()"));
     static final InvocationMatcher DBF_PARSER_SET_FEATURE = InvocationMatcher.fromMethodMatcher(new MethodMatcher("javax.xml.parsers.DocumentBuilderFactory setFeature(java.lang.String, boolean)"));
-
+    static final InvocationMatcher DBF_PARSER_SET_X_INCLUDE_AWARE = InvocationMatcher.fromMethodMatcher(new MethodMatcher("javax.xml.parsers.DocumentBuilderFactory setXIncludeAware(boolean)"));
+    static final InvocationMatcher DBF_PARSER_SET_EXPAND_ENTITY_REFERENCES = InvocationMatcher.fromMethodMatcher(new MethodMatcher("javax.xml.parsers.DocumentBuilderFactory setExpandEntityReferences(boolean)"));
     private static final String DBF_FQN = "javax.xml.parsers.DocumentBuilderFactory";
     private static final String DISALLOW_DOCTYPE_DECLARATIONS = "http://apache.org/xml/features/disallow-doctype-decl";
     private static final String DISABLE_GENERAL_ENTITIES = "http://xml.org/sax/features/external-general-entities";
@@ -128,6 +129,25 @@ public class DocumentBuilderFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
     }
 
     @Override
+    public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, P ctx) {
+        J.MethodInvocation mi = super.visitMethodInvocation(method, ctx);
+        if (DBF_PARSER_SET_X_INCLUDE_AWARE.matches(mi)) {
+            addMessage(SET_X_INCLUDE_AWARE_PROPERTY_NAME);
+        } else if (DBF_PARSER_SET_EXPAND_ENTITY_REFERENCES.matches(mi)){
+            addMessage(SET_EXPAND_ENTITY_REFERENCES_PROPERTY_NAME);
+        }
+        return mi;
+    }
+
+    @Override
+    public J.Block visitBlock(J.Block block, P p) {
+        if (J.Block.isInitBlock(getCursor())) {
+            addMessage(DBF_INITIALIZATION_METHOD);
+        }
+        return super.visitBlock(block, p);
+    }
+
+    @Override
     public J.ClassDeclaration visitClassDeclaration(J.ClassDeclaration classDecl, P ctx) {
         J.ClassDeclaration cd = super.visitClassDeclaration(classDecl, ctx);
         for (int i = 1; i <= getCount(); i++) {
@@ -138,6 +158,8 @@ public class DocumentBuilderFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
             Cursor generalEntitiesDisabledCursor = getCursor().getMessage(DISABLE_GENERAL_ENTITIES + i);
             Cursor parameterEntitiesDisabledCursor = getCursor().getMessage(DISABLE_PARAMETER_ENTITIES + i);
             Cursor loadExternalDTDCursor = getCursor().getMessage(LOAD_EXTERNAL_DTD + i);
+            Cursor setXIncludeAwareCursor = getCursor().getMessage(SET_X_INCLUDE_AWARE_PROPERTY_NAME + i);
+            Cursor setExpandEntityReferencesCursor = getCursor().getMessage(SET_EXPAND_ENTITY_REFERENCES_PROPERTY_NAME + i);
 
             Cursor setPropertyBlockCursor = null;
             if (disallowedDTDTrueCursor == null) {
@@ -154,8 +176,9 @@ public class DocumentBuilderFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
                         disallowedDTDTrueCursor == null,
                         generalEntitiesDisabledCursor == null,
                         parameterEntitiesDisabledCursor == null,
-                        loadExternalDTDCursor == null
-                ));
+                        loadExternalDTDCursor == null,
+                        setXIncludeAwareCursor == null,
+                        setExpandEntityReferencesCursor == null));
             }
         }
         return cd;

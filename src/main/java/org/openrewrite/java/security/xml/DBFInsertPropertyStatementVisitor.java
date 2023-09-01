@@ -27,6 +27,7 @@ public class DBFInsertPropertyStatementVisitor<P> extends XmlFactoryInsertVisito
     private final boolean disallowGeneralEntities;
     private final boolean disallowParameterEntities;
     private final boolean disallowLoadExternalDTD;
+    private final boolean setXIncludeAware;
 
     public DBFInsertPropertyStatementVisitor(
             J.Block scope,
@@ -35,8 +36,9 @@ public class DBFInsertPropertyStatementVisitor<P> extends XmlFactoryInsertVisito
             boolean needsDisallowDoctypesTrue,
             boolean needsDisableGeneralEntities,
             boolean needsDisableParameterEntities,
-            boolean needsLoadExternalDTD
-    ) {
+            boolean needsLoadExternalDTD,
+            boolean needsSetXIncludeAware,
+            boolean needsSetExpandEntityReferences) {
         super(
                 scope,
                 dbfFactoryVariable,
@@ -50,27 +52,32 @@ public class DBFInsertPropertyStatementVisitor<P> extends XmlFactoryInsertVisito
             disallowGeneralEntities = false;
             disallowParameterEntities = false;
             disallowLoadExternalDTD = false;
+            setXIncludeAware = false;
         } else if (needsDisallowDoctypesTrue && !accIsEmpty) {
             disallowDoctypes = false;
             disallowGeneralEntities = needsDisableGeneralEntities;
             disallowParameterEntities = needsDisableParameterEntities;
             disallowLoadExternalDTD = needsLoadExternalDTD;
+            setXIncludeAware = needsSetXIncludeAware;
         } else if (!needsDisallowDoctypesTrue && !accIsEmpty) {
             disallowDoctypes = false;
             disallowGeneralEntities = false;
             disallowLoadExternalDTD = false;
             disallowParameterEntities = false;
+            setXIncludeAware = false;
         } else {
             disallowDoctypes = false;
             disallowGeneralEntities = false;
             disallowLoadExternalDTD = false;
             disallowParameterEntities = false;
+            setXIncludeAware = false;
         }
+
     }
 
     @Override
     public void updateTemplate() {
-        if (disallowDoctypes && !disallowGeneralEntities && !disallowParameterEntities && !disallowLoadExternalDTD) {
+        if (disallowDoctypes && !disallowGeneralEntities && !disallowParameterEntities && !disallowLoadExternalDTD && !setXIncludeAware) {
             getTemplate().append(
                     "String FEATURE = \"http://apache.org/xml/features/disallow-doctype-decl\";\n" +
                     "try {\n" +
@@ -92,17 +99,32 @@ public class DBFInsertPropertyStatementVisitor<P> extends XmlFactoryInsertVisito
                     "\n" +
                     "   FEATURE = \"http://xml.org/sax/features/external-general-entities\";\n" +
                     "   " + getFactoryVariableName() + ".setFeature(FEATURE, false);\n" +
-                    "\n" +
-                    "   " + getFactoryVariableName() + ".setXIncludeAware(false);\n" +
-                    "   " + getFactoryVariableName() + ".setExpandEntityReferences(false);\n" +
-                    "\n" +
-                    "   " + getFactoryVariableName() + ".setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);\n" +
-                    "\n" +
-                    "} catch (ParserConfigurationException e) {\n" +
-                    "    throw new IllegalStateException(\"The feature '\"\n" +
-                    "            + FEATURE + \"' is not supported by your XML processor.\", e);\n" +
-                    "}\n"
+                    "\n"
             );
+            if (setXIncludeAware){
+                getTemplate().append(
+                        "   " + getFactoryVariableName() + ".setXIncludeAware(false);\n" +
+                        "   " + getFactoryVariableName() + ".setExpandEntityReferences(false);\n" +
+                        "\n" +
+                        "   " + getFactoryVariableName() + ".setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);\n" +
+                        "\n" +
+                        "} catch (ParserConfigurationException e) {\n" +
+                        "    throw new IllegalStateException(\"The feature '\"\n" +
+                        "            + FEATURE + \"' is not supported by your XML processor.\", e);\n" +
+                        "}\n"
+                );
+            } else {
+                getTemplate().append(
+                        "   " + getFactoryVariableName() + ".setExpandEntityReferences(false);\n" +
+                        "\n" +
+                        "   " + getFactoryVariableName() + ".setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);\n" +
+                        "\n" +
+                        "} catch (ParserConfigurationException e) {\n" +
+                        "    throw new IllegalStateException(\"The feature '\"\n" +
+                        "            + FEATURE + \"' is not supported by your XML processor.\", e);\n" +
+                        "}\n"
+                );
+            }
         }
     }
 }
