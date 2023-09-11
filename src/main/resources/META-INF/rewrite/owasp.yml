@@ -31,7 +31,7 @@ recipeList:
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.java.security.OwaspA01
-displayName: Remediate OWASP A01:2021 Broken Access Control
+displayName: Remediate OWASP A01:2021 Broken access control
 description: >
   OWASP [A01:2021](https://owasp.org/Top10/A01_2021-Broken_Access_Control/) describes failures related to broken access 
   control.
@@ -42,7 +42,7 @@ recipeList:
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.java.security.OwaspA02
-displayName: Remediate OWASP A02:2021 Cryptographic Failures
+displayName: Remediate OWASP A02:2021 Cryptographic failures
 description: >
   OWASP [A02:2021](https://owasp.org/Top10/A02_2021-Cryptographic_Failures/) describes failures related to cryptography 
   (or lack thereof), which often lead to exposure of sensitive data. This recipe seeks to remediate these vulnerabilities.
@@ -62,7 +62,7 @@ recipeList:
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.java.security.OwaspA05
-displayName: Remediate OWASP A05:2021 Security Misconfiguration
+displayName: Remediate OWASP A05:2021 Security misconfiguration
 description: >
   OWASP [A05:2021](https://owasp.org/Top10/A05_2021-Security_Misconfiguration/) describes failures related to security 
   misconfiguration.
@@ -80,7 +80,7 @@ recipeList:
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.java.security.OwaspA08
-displayName: Remediate OWASP A08:2021 Vulnerable and outdated components
+displayName: Remediate OWASP A08:2021 Software and data integrity failures
 description: >
   OWASP [A08:2021](https://owasp.org/Top10/A08_2021-Software_and_Data_Integrity_Failures/) software and data integrity 
   failures.
@@ -95,7 +95,7 @@ recipeList:
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.java.security.OwaspA10
-displayName: Remediate OWASP A10:2021 Server-Side Request Forgery (SSRF)
+displayName: Remediate OWASP A10:2021 Server-side request forgery (SSRF)
 description: >
   OWASP [A10:2021](https://owasp.org/Top10/A10_2021-Server-Side_Request_Forgery_%28SSRF%29/) Server-Side Request Forgery (SSRF)
 recipeList:
