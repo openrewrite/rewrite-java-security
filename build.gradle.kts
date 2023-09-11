@@ -22,6 +22,7 @@ dependencies {
     implementation("org.openrewrite:rewrite-yaml")
     implementation("org.openrewrite:rewrite-xml")
     implementation("org.openrewrite.meta:rewrite-analysis:$rewriteVersion")
+    implementation("org.openrewrite.recipe:rewrite-spring:$rewriteVersion")
     implementation("com.nimbusds:nimbus-jose-jwt:9.+")
 
     runtimeOnly("org.openrewrite:rewrite-java-17")

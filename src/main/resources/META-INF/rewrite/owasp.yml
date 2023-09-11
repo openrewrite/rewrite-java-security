@@ -1,0 +1,102 @@
+#
+# Copyright 2021 the original author or authors.
+# <p>
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# <p>
+# https://www.apache.org/licenses/LICENSE-2.0
+# <p>
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.java.security.OwaspTopTen
+displayName: Remediate vulnerabilities from the OWASP Top Ten
+description: > 
+  [OWASP](https://owasp.org) publishes a list of the most impactful common security vulnerabilities. 
+  These recipes identify and remediate vulnerabilities from the OWASP Top Ten.
+recipeList:
+  - org.openrewrite.java.security.OwaspA01
+  - org.openrewrite.java.security.OwaspA02
+  - org.openrewrite.java.security.OwaspA03
+  - org.openrewrite.java.security.OwaspA05
+  - org.openrewrite.java.security.OwaspA06
+  - org.openrewrite.java.security.OwaspA08
+  - org.openrewrite.java.security.OwaspA010
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.java.security.OwaspA01
+displayName: Remediate OWASP A01:2021 Broken Access Control
+description: >
+  OWASP [A01:2021](https://owasp.org/Top10/A01_2021-Broken_Access_Control/) describes failures related to broken access 
+  control.
+recipeList:
+  - org.openrewrite.java.spring.security5.search.FindEncryptorsQueryableTextUses
+  - org.openrewrite.java.security.ZipSlip
+  - org.openrewrite.java.security.PartialPathTraversalVulnerability
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.java.security.OwaspA02
+displayName: Remediate OWASP A02:2021 Cryptographic Failures
+description: >
+  OWASP [A02:2021](https://owasp.org/Top10/A02_2021-Cryptographic_Failures/) describes failures related to cryptography 
+  (or lack thereof), which often lead to exposure of sensitive data. This recipe seeks to remediate these vulnerabilities.
+recipeList:
+  - org.openrewrite.java.spring.security5.search.FindEncryptorsQueryableTextUses
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.java.security.OwaspA03
+displayName: Remediate OWASP A03:2021 Injection
+description: >
+  OWASP [A03:2021](https://owasp.org/Top10/A03_2021-Injection/) describes failures related to user-supplied data being
+  used to influence program state to operate outside of its intended bounds. This recipe seeks to remediate these vulnerabilities.
+recipeList:
+  - org.openrewrite.java.security.RegularExpressionDenialOfService
+  - org.openrewrite.staticanalysis.NoEqualityInForCondition
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.java.security.OwaspA05
+displayName: Remediate OWASP A05:2021 Security Misconfiguration
+description: >
+  OWASP [A05:2021](https://owasp.org/Top10/A05_2021-Security_Misconfiguration/) describes failures related to security 
+  misconfiguration.
+recipeList:
+  - org.openrewrite.java.security.XmlParserXXEVulnerability
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.java.security.OwaspA06
+displayName: Remediate OWASP A06:2021 Vulnerable and outdated components
+description: >
+  OWASP [A06:2021](https://owasp.org/Top10/A06_2021-Vulnerable_and_Outdated_Components/) describes failures related to 
+  vulnerable and outdated components.
+recipeList:
+  - org.openrewrite.java.dependencies.DependencyVulnerabilityCheck
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.java.security.OwaspA08
+displayName: Remediate OWASP A08:2021 Vulnerable and outdated components
+description: >
+  OWASP [A08:2021](https://owasp.org/Top10/A08_2021-Software_and_Data_Integrity_Failures/) software and data integrity 
+  failures.
+recipeList:
+  - org.openrewrite.java.security.marshalling.SecureSnakeYamlConstructor
+  - org.openrewrite.java.security.marshalling.SecureJacksonDefaultTyping
+  - org.openrewrite.java.security.search.FindJacksonDefaultTypeMapping
+  - org.openrewrite.java.security.search.FindVulnerableJacksonJsonTypeInfo
+  - org.openrewrite.java.security.SecureTempFileCreation
+  - org.openrewrite.java.security.FindTextDirectionChanges
+  - org.openrewrite.java.security.UseFilesCreateTempDirectory
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.java.security.OwaspA10
+displayName: Remediate OWASP A10:2021 Server-Side Request Forgery (SSRF)
+description: >
+  OWASP [A10:2021](https://owasp.org/Top10/A10_2021-Server-Side_Request_Forgery_%28SSRF%29/) Server-Side Request Forgery (SSRF)
+recipeList:
+  - org.openrewrite.java.security.spring.CsrfProtection
