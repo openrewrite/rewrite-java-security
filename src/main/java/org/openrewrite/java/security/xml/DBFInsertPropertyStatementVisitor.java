@@ -101,7 +101,7 @@ public class DBFInsertPropertyStatementVisitor<P> extends XmlFactoryInsertVisito
                     "   " + getFactoryVariableName() + ".setFeature(FEATURE, false);\n" +
                     "\n"
             );
-            if (setXIncludeAware){
+            if (setXIncludeAware) {
                 getTemplate().append(
                         "   " + getFactoryVariableName() + ".setXIncludeAware(false);\n" +
                         "   " + getFactoryVariableName() + ".setExpandEntityReferences(false);\n" +

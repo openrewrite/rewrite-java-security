@@ -26,11 +26,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class ExternalDTDAccumulatorTest {
     @ParameterizedTest
     @MethodSource("provideEntitySplitTestArguments")
-    void testEntitySplit(String initial, String expected){
+    void testEntitySplit(String initial, String expected) {
         assertEquals(expected, ExternalDTDAccumulator.extractURLFromEntity(initial));
     }
 
-    private static Stream<Arguments> provideEntitySplitTestArguments(){
+    private static Stream<Arguments> provideEntitySplitTestArguments() {
         return Stream.of(
           Arguments.of("<!ENTITY open-hatch-public\n" +
               "      PUBLIC \"-//Textuality//TEXT Standard open-hatch boilerplate//EN\"\n" +

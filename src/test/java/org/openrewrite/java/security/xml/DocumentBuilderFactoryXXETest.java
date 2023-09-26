@@ -23,7 +23,7 @@ import org.openrewrite.test.RewriteTest;
 import static org.openrewrite.java.Assertions.java;
 import static org.openrewrite.xml.Assertions.xml;
 
-public class DocumentBuilderFactoryXXETest implements RewriteTest{
+public class DocumentBuilderFactoryXXETest implements RewriteTest {
 
     @Override
     public void defaults(RecipeSpec spec) {

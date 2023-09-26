@@ -93,7 +93,7 @@ public class DocumentBuilderFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
                 .map(Variable::getAssignedValues)
                 // If there are assigned values
                 .bind(assignedValues -> {
-                    if (assignedValues.size() > 1){
+                    if (assignedValues.size() > 1) {
                         // If there are more than one assigned values,
                         // we can't determine which one is the one we are looking for
                         return Option.none();
@@ -133,7 +133,7 @@ public class DocumentBuilderFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
         J.MethodInvocation mi = super.visitMethodInvocation(method, ctx);
         if (DBF_PARSER_SET_X_INCLUDE_AWARE.matches(mi)) {
             addMessage(SET_X_INCLUDE_AWARE_PROPERTY_NAME);
-        } else if (DBF_PARSER_SET_EXPAND_ENTITY_REFERENCES.matches(mi)){
+        } else if (DBF_PARSER_SET_EXPAND_ENTITY_REFERENCES.matches(mi)) {
             addMessage(SET_EXPAND_ENTITY_REFERENCES_PROPERTY_NAME);
         }
         return mi;
