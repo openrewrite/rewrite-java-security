@@ -17,11 +17,13 @@ package org.openrewrite.java.security.xml;
 
 import org.openrewrite.java.tree.J;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 public class DBFInsertPropertyStatementVisitor<P> extends XmlFactoryInsertVisitor<P> {
-    private static final Set<String> IMPORTS = Collections.singleton("javax.xml.parsers.ParserConfigurationException");
+    private static final Set<String> IMPORTS = new HashSet<>(Arrays.asList("javax.xml.parsers.ParserConfigurationException", "javax.xml.XMLConstants"));
 
     private final boolean disallowDoctypes;
     private final boolean disallowGeneralEntities;
