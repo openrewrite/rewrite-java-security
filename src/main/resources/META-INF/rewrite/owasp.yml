@@ -24,6 +24,7 @@ recipeList:
   - org.openrewrite.java.security.OwaspA01
   - org.openrewrite.java.security.OwaspA02
   - org.openrewrite.java.security.OwaspA03
+  - org.openrewrite.java.security.OwaspA04
   - org.openrewrite.java.security.OwaspA05
   - org.openrewrite.java.security.OwaspA06
   - org.openrewrite.java.security.OwaspA08
@@ -58,7 +59,16 @@ description: >
 recipeList:
   - org.openrewrite.java.security.RegularExpressionDenialOfService
   - org.openrewrite.staticanalysis.NoEqualityInForCondition
-
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.java.security.OwaspA04
+displayName: Remediate OWASP A04:2021 - Insecure Design
+description: >
+  OWASP [A04:2021](https://owasp.org/Top10/A04_2021-Insecure_Design/) focuses on risks related to design and architectural flaws, 
+  with a call for more use of threat modeling, secure design patterns, and reference architectures.
+  This recipe seeks to remediate these vulnerabilities.
+recipeList:
+  - org.openrewrite.java.security.ImproperPrivilegeManagement
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.java.security.OwaspA05
