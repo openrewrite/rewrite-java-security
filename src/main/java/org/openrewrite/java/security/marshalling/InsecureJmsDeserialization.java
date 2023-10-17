@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.openrewrite.java.security;
+package org.openrewrite.java.security.marshalling;
 
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
@@ -23,51 +23,45 @@ import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.search.UsesMethod;
 import org.openrewrite.java.tree.J;
-import org.openrewrite.java.tree.TypeTree;
-import org.openrewrite.java.tree.TypeUtils;
 import org.openrewrite.marker.SearchResult;
 
 import java.util.Set;
 
 import static java.util.Collections.singleton;
 
-public class ImproperPrivilegeManagement extends Recipe {
+public class InsecureJmsDeserialization extends Recipe {
 
     @Override
     public String getDisplayName() {
-        return "Improper privilege management";
+        return "Insecure JMS deserialization";
     }
 
     @Override
     public String getDescription() {
-        return "Marking code as privileged enables a piece of trusted code to temporarily " +
-               "enable access to more resources than are available directly to the code " +
-               "that called it.";
+        return "JMS `Object` messages depend on Java Serialization for marshalling/unmarshalling of the " +
+               "message payload when `ObjectMessage#getObject` is called. Deserialization of untrusted " +
+               "data can lead to security flaws.";
     }
 
     @Override
     public Set<String> getTags() {
-        return singleton("CWE-269");
+        return singleton("CWE-502");
     }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        MethodMatcher privilegedMethod = new MethodMatcher("java.security.AccessController doPrivileged(..)");
-        return Preconditions.check(new UsesMethod<>(privilegedMethod), new JavaIsoVisitor<ExecutionContext>() {
-            @Override
-            public J.ClassDeclaration visitClassDeclaration(J.ClassDeclaration classDecl, ExecutionContext ctx) {
-                if (TypeUtils.isAssignableTo("java.security.PrivilegedAction", classDecl.getType())) {
-                    return SearchResult.found(classDecl);
-                }
-                return super.visitClassDeclaration(classDecl, ctx);
-            }
+        MethodMatcher getObject = new MethodMatcher("javax.jms.ObjectMessage getObject()");
+        MethodMatcher onMessage = new MethodMatcher("javax.jms.MessageListener onMessage(..)", true);
 
+        return Preconditions.check(Preconditions.or(new UsesMethod<>(getObject), new UsesMethod<>(onMessage)), new JavaIsoVisitor<ExecutionContext>() {
             @Override
             public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, ExecutionContext ctx) {
-                if (privilegedMethod.matches(method)) {
+                J.MethodInvocation m = super.visitMethodInvocation(method, ctx);
+                J.MethodDeclaration enclosingMethod = getCursor().firstEnclosing(J.MethodDeclaration.class);
+                if (getObject.matches(method) && enclosingMethod != null && onMessage.matches(enclosingMethod.getMethodType())) {
                     return SearchResult.found(method);
                 }
-                return super.visitMethodInvocation(method, ctx);
+                return m;
             }
         });
     }

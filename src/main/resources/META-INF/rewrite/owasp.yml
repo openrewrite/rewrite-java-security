@@ -95,6 +95,7 @@ description: >
   OWASP [A08:2021](https://owasp.org/Top10/A08_2021-Software_and_Data_Integrity_Failures/) software and data integrity 
   failures.
 recipeList:
+  - org.openrewrite.java.security.marshalling.InsecureJmsDeserialization
   - org.openrewrite.java.security.marshalling.SecureSnakeYamlConstructor
   - org.openrewrite.java.security.marshalling.SecureJacksonDefaultTyping
   - org.openrewrite.java.security.search.FindJacksonDefaultTypeMapping
