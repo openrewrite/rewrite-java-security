@@ -36,6 +36,7 @@ public class DocumentBuilderFactoryXXETest implements RewriteTest {
         rewriteRun(
           java(
             """
+              import javax.xml.parsers.DocumentBuilder;
               import javax.xml.parsers.DocumentBuilderFactory;
               import javax.xml.parsers.ParserConfigurationException;
               import javax.xml.XMLConstants;
@@ -65,6 +66,7 @@ public class DocumentBuilderFactoryXXETest implements RewriteTest {
         rewriteRun(
           java(
             """
+              import javax.xml.parsers.DocumentBuilder;
               import javax.xml.parsers.DocumentBuilderFactory;
               import javax.xml.parsers.ParserConfigurationException; // catching unsupported features
               import javax.xml.XMLConstants;
@@ -77,7 +79,7 @@ public class DocumentBuilderFactoryXXETest implements RewriteTest {
                     try {
                         dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
                     } catch (ParserConfigurationException e) {
-                        logger.info("ParserConfigurationException was thrown. The feature is not supported by your XML processor.");
+                        System.out.println("ParserConfigurationException was thrown. The feature is not supported by your XML processor.");
                     }
                 }
                 DocumentBuilder safebuilder = dbf.newDocumentBuilder();
@@ -135,6 +137,7 @@ public class DocumentBuilderFactoryXXETest implements RewriteTest {
         rewriteRun(
           java(
             """
+              import javax.xml.parsers.DocumentBuilder;
               import javax.xml.parsers.DocumentBuilderFactory;
               import javax.xml.parsers.ParserConfigurationException; // catching unsupported features
               import javax.xml.XMLConstants;
@@ -162,6 +165,7 @@ public class DocumentBuilderFactoryXXETest implements RewriteTest {
         rewriteRun(
           java(
             """
+              import javax.xml.parsers.DocumentBuilder;
               import javax.xml.parsers.DocumentBuilderFactory;
               import javax.xml.parsers.ParserConfigurationException; // catching unsupported features
               import javax.xml.XMLConstants;
