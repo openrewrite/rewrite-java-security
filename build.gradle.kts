@@ -51,4 +51,6 @@ dependencies {
     testRuntimeOnly("junit:junit:latest.release")
     testRuntimeOnly("com.fasterxml.jackson.core:jackson-databind:2.13.4")
     testRuntimeOnly("commons-io:commons-io:2.11.0")
+    testRuntimeOnly("org.apache.commons:commons-lang3:3.11")
+    testRuntimeOnly("commons-lang:commons-lang:2.6")
 }
