@@ -20,11 +20,10 @@ import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.format.AutoFormatVisitor;
+import org.openrewrite.java.search.UsesMethod;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.Statement;
-import org.openrewrite.marker.SearchResult;
 
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
@@ -64,23 +63,7 @@ public class FixCwe338 extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new JavaIsoVisitor<ExecutionContext>() {
-            @Override
-            public J.CompilationUnit visitCompilationUnit(J.CompilationUnit cu, ExecutionContext ctx) {
-                if (cu.getPackageDeclaration() == null) {
-                    return cu;
-                }
-                return super.visitCompilationUnit(cu, ctx);
-            }
-
-            @Override
-            public J.ClassDeclaration visitClassDeclaration(J.ClassDeclaration cd, ExecutionContext ctx) {
-                if ("RandomUtil".equals(cd.getSimpleName())) {
-                    return SearchResult.found(cd);
-                }
-                return cd;
-            }
-        }, new JavaIsoVisitor<ExecutionContext>() {
+        return Preconditions.check(new UsesMethod<>("org.apache.commons.lang*.RandomStringUtils random*(..)"), new JavaIsoVisitor<ExecutionContext>() {
             @Override
             public J.ClassDeclaration visitClassDeclaration(J.ClassDeclaration classDecl, ExecutionContext ctx) {
                 // If the SECURE_RANDOM field already exists the refactoring has already been completed
