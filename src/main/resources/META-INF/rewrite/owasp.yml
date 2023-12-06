@@ -62,7 +62,7 @@ recipeList:
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.java.security.OwaspA04
-displayName: Remediate OWASP A04:2021 Insecure Design
+displayName: Remediate OWASP A04:2021 Insecure design
 description: >
   OWASP [A04:2021](https://owasp.org/Top10/A04_2021-Insecure_Design/) focuses on risks related to design and architectural flaws, 
   with a call for more use of threat modeling, secure design patterns, and reference architectures.
