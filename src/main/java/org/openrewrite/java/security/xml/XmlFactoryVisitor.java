@@ -27,7 +27,7 @@ import org.openrewrite.java.tree.TypeUtils;
 @RequiredArgsConstructor
 @Getter
 public abstract class XmlFactoryVisitor<P> extends JavaIsoVisitor<P> {
-    private int count = 0;
+    private int count;
 
     private final InvocationMatcher factoryInstance;
 

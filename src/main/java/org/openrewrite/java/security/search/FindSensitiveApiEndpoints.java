@@ -231,8 +231,8 @@ public class FindSensitiveApiEndpoints extends Recipe {
                 if (type == null) {
                     continue;
                 }
-                if (type.getClassName().equals("GET") || type.getClassName().equals("POST") ||
-                    type.getClassName().equals("DELETE")) {
+                if ("GET".equals(type.getClassName()) || "POST".equals(type.getClassName()) ||
+                    "DELETE".equals(type.getClassName())) {
                     httpMethod = type.getClassName();
                     break;
                 }
