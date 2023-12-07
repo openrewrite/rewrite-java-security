@@ -30,6 +30,7 @@ dependencies {
     runtimeOnly("org.springframework.security:spring-security-config:5.+")
     runtimeOnly("org.springframework.security:spring-security-web:5.+")
     runtimeOnly("jakarta.servlet:jakarta.servlet-api:4.+")
+    runtimeOnly("javax:javaee-api:7.+")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:latest.release")
     testImplementation("org.junit.jupiter:junit-jupiter-params:latest.release")

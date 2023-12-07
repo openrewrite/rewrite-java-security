@@ -49,6 +49,7 @@ description: >
   (or lack thereof), which often lead to exposure of sensitive data. This recipe seeks to remediate these vulnerabilities.
 recipeList:
   - org.openrewrite.java.spring.security5.search.FindEncryptorsQueryableTextUses
+  - org.openrewrite.java.security.servlet.CookieSetSecure
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.java.security.OwaspA03
@@ -59,6 +60,7 @@ description: >
 recipeList:
   - org.openrewrite.java.security.RegularExpressionDenialOfService
   - org.openrewrite.staticanalysis.NoEqualityInForCondition
+  - org.openrewrite.java.security.servlet.CookieSetSecure
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.java.security.OwaspA04
