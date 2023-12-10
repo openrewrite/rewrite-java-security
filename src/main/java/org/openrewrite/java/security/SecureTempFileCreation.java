@@ -15,17 +15,19 @@
  */
 package org.openrewrite.java.security;
 
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
-import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.search.UsesMethod;
+import org.openrewrite.java.security.sourcefilter.SourceFilterOptions;
+import org.openrewrite.java.security.sourcefilter.SourceFilterRecipe;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
 
@@ -34,7 +36,7 @@ import java.util.List;
 
 @Value
 @EqualsAndHashCode(callSuper = true)
-public class SecureTempFileCreation extends Recipe {
+public class SecureTempFileCreation extends SourceFilterRecipe {
 
     @Override
     public String getDisplayName() {
@@ -46,8 +48,12 @@ public class SecureTempFileCreation extends Recipe {
         return "`java.io.File.createTempFile()` has exploitable default file permissions. This recipe migrates to the more secure `java.nio.file.Files.createTempFile()`.";
     }
 
+    //@NestedOptions
+    @JsonUnwrapped
+    SourceFilterOptions securityRecipeOptions;
+
     @Override
-    public TreeVisitor<?, ExecutionContext> getVisitor() {
+    public TreeVisitor<?, ExecutionContext> getSourceFilteredVisitor() {
         return Preconditions.check(new UsesMethod<>(SecureTempFileCreationVisitor.MATCHER), new SecureTempFileCreationVisitor());
     }
 
