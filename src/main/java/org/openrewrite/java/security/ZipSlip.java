@@ -77,16 +77,11 @@ public class ZipSlip extends Recipe {
     }
 
     @Override
-    public boolean causesAnotherCycle() {
-        return true;
-    }
-
-    @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(Preconditions.or(
                 new UsesMethod<>(ZIP_ENTRY_GET_NAME_METHOD_MATCHER),
                 new UsesMethod<>(ZIP_ARCHIVE_ENTRY_GET_NAME_METHOD_MATCHER)
-        ), new ZipSlipComplete<>(true, debug));
+        ), Repeat.repeatUntilStable(new ZipSlipComplete<>(true, debug)));
     }
 
     @AllArgsConstructor

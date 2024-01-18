@@ -163,7 +163,6 @@ class ZipSlipTest implements RewriteTest {
     void fixesZipSlipUsingPathWhenCreatingAVariableIsRequired() {
         //language=java
         rewriteRun(
-          spec -> spec.expectedCyclesThatMakeChanges(2),
           java(
             """
               import java.io.OutputStream;
@@ -208,7 +207,6 @@ class ZipSlipTest implements RewriteTest {
     void fixesZipSlipUsingString() {
         //language=java
         rewriteRun(
-          spec -> spec.expectedCyclesThatMakeChanges(2),
           java(
             """
               import java.io.File;
@@ -391,7 +389,6 @@ class ZipSlipTest implements RewriteTest {
     void exampleDataLabelSystemBackend() {
         //language=java
         rewriteRun(
-          spec -> spec.expectedCyclesThatMakeChanges(2),
           java(
             """
               import java.io.File;
@@ -758,7 +755,6 @@ class ZipSlipTest implements RewriteTest {
     void exampleInfowangxinSpringMvc() {
         //language=java
         rewriteRun(
-          spec -> spec.expectedCyclesThatMakeChanges(2),
           java(
             """
               import java.io.BufferedInputStream;
@@ -1356,7 +1352,6 @@ class ZipSlipTest implements RewriteTest {
     void exampleCommonsCompressRewritten() {
         //language=java
         rewriteRun(
-          spec -> spec.expectedCyclesThatMakeChanges(2),
           java(
             """
               import java.io.*;
