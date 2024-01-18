@@ -161,13 +161,7 @@ public class DocumentBuilderFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
             Cursor setXIncludeAwareCursor = getCursor().getMessage(SET_X_INCLUDE_AWARE_PROPERTY_NAME + i);
             Cursor setExpandEntityReferencesCursor = getCursor().getMessage(SET_EXPAND_ENTITY_REFERENCES_PROPERTY_NAME + i);
 
-            Cursor setPropertyBlockCursor = null;
-            if (disallowedDTDTrueCursor == null) {
-                setPropertyBlockCursor = initializationCursor;
-
-            } else if (disallowedDTDTrueCursor != null) {
-                setPropertyBlockCursor = disallowedDTDTrueCursor;
-            }
+            Cursor setPropertyBlockCursor = disallowedDTDTrueCursor == null ? initializationCursor : disallowedDTDTrueCursor;
             if (setPropertyBlockCursor != null && dbfFactoryVariable != null) {
                 doAfterVisit(new DBFInsertPropertyStatementVisitor<>(
                         setPropertyBlockCursor.getValue(),

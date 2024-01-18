@@ -214,6 +214,7 @@ public class DocumentBuilderFactoryXXETest implements RewriteTest {
     @Test
     void factoryIsVulnerableWithPublicAndSystemIdPresent() {
         rewriteRun(
+          spec -> spec.recipeOutputStabilityValidation(false),
           xml(
             """
               <!DOCTYPE xml [
@@ -285,6 +286,7 @@ public class DocumentBuilderFactoryXXETest implements RewriteTest {
     @Test
     void factoryIsNotVulnerableWithDTDsAndXIncludeAwareButPropertiesMissing() {
         rewriteRun(
+          spec -> spec.recipeOutputStabilityValidation(false),
           xml(
             """
               <!DOCTYPE xml [
