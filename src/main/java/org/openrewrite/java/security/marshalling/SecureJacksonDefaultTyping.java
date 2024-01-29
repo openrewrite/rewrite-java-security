@@ -19,6 +19,7 @@ import org.openrewrite.ExecutionContext;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
 import org.openrewrite.internal.ListUtils;
+import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.JavaVisitor;
@@ -27,6 +28,11 @@ import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.java.tree.TypeUtils;
+
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import static java.util.Collections.emptyList;
 
@@ -40,6 +46,16 @@ public class SecureJacksonDefaultTyping extends Recipe {
     @Override
     public String getDescription() {
         return "See the [blog post](https://cowtowncoder.medium.com/on-jackson-cves-dont-panic-here-is-what-you-need-to-know-54cd0d6e8062) on this subject.";
+    }
+
+    @Override
+    public Duration getEstimatedEffortPerOccurrence() {
+        return Duration.ofMinutes(10);
+    }
+
+    @Override
+    public Set<String> getTags() {
+        return new HashSet<>(Arrays.asList("CWE-502", "CWE-94"));
     }
 
     @Override

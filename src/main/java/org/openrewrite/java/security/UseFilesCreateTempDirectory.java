@@ -50,7 +50,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
 
     @Override
     public Set<String> getTags() {
-        return Collections.singleton("RSPEC-5445");
+        return new HashSet<>(Arrays.asList("RSPEC-5445", "CWE-379", "CWE-377"));
     }
 
     @Override

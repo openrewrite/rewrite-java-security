@@ -25,6 +25,8 @@ import org.openrewrite.java.tree.JavaSourceFile;
 import org.openrewrite.java.tree.JavaType;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 
 @Value
 @EqualsAndHashCode(callSuper = true)
@@ -44,6 +46,11 @@ public class CsrfProtection extends ScanningRecipe<GenerateWebSecurityConfigurer
     @Override
     public String getDescription() {
         return "Cross-Site Request Forgery (CSRF) is a type of attack that occurs when a malicious web site, email, blog, instant message, or program causes a user's web browser to perform an unwanted action on a trusted site when the user is authenticated. See the full [OWASP cheatsheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html).";
+    }
+
+    @Override
+    public Set<String> getTags() {
+        return Collections.singleton("CWE-352");
     }
 
     static final MethodMatcher CSRF = new MethodMatcher("org.springframework.security.config.annotation.web.builders.HttpSecurity csrf()");

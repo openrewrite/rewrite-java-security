@@ -68,7 +68,12 @@ public class ZipSlip extends Recipe {
     @Override
     public String getDescription() {
         return "Zip slip is an arbitrary file overwrite critical vulnerability, which typically results in remote command execution. " +
-                "A fuller description of this vulnerability is available in the [Snyk documentation](https://snyk.io/research/zip-slip-vulnerability) on it.";
+               "A fuller description of this vulnerability is available in the [Snyk documentation](https://snyk.io/research/zip-slip-vulnerability) on it.";
+    }
+
+    @Override
+    public Set<String> getTags() {
+        return Collections.singleton("CWE-22");
     }
 
     @Override
@@ -186,7 +191,7 @@ public class ZipSlip extends Recipe {
         @Override
         public boolean isSink(DataFlowNode sinkNode) {
             return FILE_CREATE.advanced().isParameter(sinkNode.getCursor(), 1) ||
-                    PATH_RESOLVE.advanced().isFirstParameter(sinkNode.getCursor());
+                   PATH_RESOLVE.advanced().isFirstParameter(sinkNode.getCursor());
         }
     }
 
@@ -222,7 +227,7 @@ public class ZipSlip extends Recipe {
             private JavaTemplate noZipSlipFileTemplate() {
                 boolean canSupportIoException = canSupportIoException();
                 String exceptionLine = canSupportIoException ? IO_EXCEPTION_THROW_LINE : RUNTIME_EXCEPTION_THROW_LINE;
-                JavaTemplate.Builder noZipSlipFileTemplate = JavaTemplate.builder("" +
+                JavaTemplate.Builder noZipSlipFileTemplate = JavaTemplate.builder(
                         "if (!#{any(java.io.File)}.toPath().normalize().startsWith(#{any(java.io.File)}.toPath().normalize())) {\n" +
                         exceptionLine +
                         "}").contextSensitive();
@@ -236,7 +241,7 @@ public class ZipSlip extends Recipe {
             private JavaTemplate noZipSlipFileWithStringTemplate() {
                 boolean canSupportIoException = canSupportIoException();
                 String exceptionLine = canSupportIoException ? IO_EXCEPTION_THROW_LINE : RUNTIME_EXCEPTION_THROW_LINE;
-                JavaTemplate.Builder noZipSlipFileWithStringTemplate = JavaTemplate.builder("" +
+                JavaTemplate.Builder noZipSlipFileWithStringTemplate = JavaTemplate.builder(
                         "if (!#{any(java.io.File)}.toPath().normalize().startsWith(#{any(String)})) {\n" +
                         exceptionLine +
                         "}").contextSensitive();
@@ -250,7 +255,7 @@ public class ZipSlip extends Recipe {
             private JavaTemplate noZipSlipPathStartsWithPathTemplate() {
                 boolean canSupportIoException = canSupportIoException();
                 String exceptionLine = canSupportIoException ? IO_EXCEPTION_THROW_LINE : RUNTIME_EXCEPTION_THROW_LINE;
-                JavaTemplate.Builder noZipSlipPathStartsWithPathTemplate = JavaTemplate.builder("" +
+                JavaTemplate.Builder noZipSlipPathStartsWithPathTemplate = JavaTemplate.builder(
                         "if (!#{any(java.nio.file.Path)}.normalize().startsWith(#{any(java.nio.file.Path)}.normalize())) {\n" +
                         exceptionLine +
                         "}").contextSensitive();
@@ -266,8 +271,8 @@ public class ZipSlip extends Recipe {
                         getCursor()
                                 .getPathAsCursors(
                                         c -> isStaticOrInitBlockSafe(c) ||
-                                                c.getValue() instanceof J.MethodDeclaration ||
-                                                c.getValue() instanceof J.Try
+                                             c.getValue() instanceof J.MethodDeclaration ||
+                                             c.getValue() instanceof J.Try
                                 );
                 while (cursors.hasNext()) {
                     Cursor cursor = cursors.next();
@@ -283,8 +288,8 @@ public class ZipSlip extends Recipe {
                     } else if (cursor.getValue() instanceof J.MethodDeclaration) {
                         J.MethodDeclaration methodDeclaration = cursor.getValue();
                         if (methodDeclaration.getThrows() != null &&
-                                methodDeclaration.getThrows().stream().anyMatch(throwsClause ->
-                                        TypeUtils.isAssignableTo(throwsClause.getType(), ioException))) {
+                            methodDeclaration.getThrows().stream().anyMatch(throwsClause ->
+                                    TypeUtils.isAssignableTo(throwsClause.getType(), ioException))) {
                             return true;
                         }
                     }
@@ -357,7 +362,7 @@ public class ZipSlip extends Recipe {
 
             private <M extends MethodCall> Optional<J.Identifier> visitMethodCall(M methodCall, Function<M, Expression> parentDirExtractor) {
                 if (methodCall.getArguments().stream().anyMatch(taintedSinks::contains)
-                        && Dataflow.startingAt(getCursor()).findSinks(new FileOrPathCreationToVulnerableUsageLocalFlowSpec()).isSome()) {
+                    && Dataflow.startingAt(getCursor()).findSinks(new FileOrPathCreationToVulnerableUsageLocalFlowSpec()).isSome()) {
                     J.Block firstEnclosingBlock = getCursor().firstEnclosingOrThrow(J.Block.class);
                     @SuppressWarnings("SuspiciousMethodCalls")
                     Statement enclosingStatement = getCursor()
@@ -497,8 +502,8 @@ public class ZipSlip extends Recipe {
             public boolean isSanitizerGuard(Guard guard, boolean branch) {
                 if (branch) {
                     return PATH_STARTS_WITH_MATCHER.matches(guard.getExpression()) ||
-                            (STRING_STARTS_WITH_MATCHER.matches(guard.getExpression()) &&
-                                    PartialPathTraversalVulnerability.isSafePartialPathExpression(((J.MethodInvocation) guard.getExpression()).getArguments().get(0)));
+                           (STRING_STARTS_WITH_MATCHER.matches(guard.getExpression()) &&
+                            PartialPathTraversalVulnerability.isSafePartialPathExpression(((J.MethodInvocation) guard.getExpression()).getArguments().get(0)));
                 } else {
                     return false;
                 }
