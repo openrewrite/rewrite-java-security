@@ -28,6 +28,9 @@ import org.openrewrite.java.search.UsesMethod;
 import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 
+import java.util.Collections;
+import java.util.Set;
+
 public class CookieSetSecure extends Recipe {
 
     @Override
@@ -39,6 +42,11 @@ public class CookieSetSecure extends Recipe {
     public String getDescription() {
         return "Check for use of insecure cookies. Cookies should be marked as secure. " +
                "This ensures that the cookie is sent only over HTTPS to prevent cross-site scripting attacks.";
+    }
+
+    @Override
+    public Set<String> getTags() {
+        return Collections.singleton("CWE-614");
     }
 
     @Override

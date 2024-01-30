@@ -25,7 +25,9 @@ import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.Statement;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -41,6 +43,11 @@ public class FixCwe338 extends Recipe {
     @Override
     public String getDescription() {
         return "Use a cryptographically strong pseudo-random number generator (PRNG).";
+    }
+
+    @Override
+    public Set<String> getTags() {
+        return Collections.singleton("CWE-338");
     }
 
     private JavaParser.Builder<?, ?> javaParser() {

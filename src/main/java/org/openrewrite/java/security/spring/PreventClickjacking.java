@@ -25,7 +25,10 @@ import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaSourceFile;
 import org.openrewrite.java.tree.JavaType;
 
+import java.time.Duration;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 
 import static org.openrewrite.java.security.spring.GenerateWebSecurityConfigurerAdapter.WEB_SECURITY_CONFIGURER_ADAPTER;
 
@@ -47,6 +50,16 @@ public class PreventClickjacking extends ScanningRecipe<GenerateWebSecurityConfi
     @Override
     public String getDescription() {
         return "The `frame-ancestors` directive can be used in a Content-Security-Policy HTTP response header to indicate whether or not a browser should be allowed to render a page in a `<frame>` or `<iframe>`. Sites can use this to avoid Clickjacking attacks by ensuring that their content is not embedded into other sites.";
+    }
+
+    @Override
+    public Set<String> getTags() {
+        return Collections.singleton("CWE-1021");
+    }
+
+    @Override
+    public Duration getEstimatedEffortPerOccurrence() {
+        return Duration.ofMinutes(10);
     }
 
     private static final MethodMatcher FRAME_OPTIONS = new MethodMatcher("org.springframework.security.config.annotation.web.configurers.HeadersConfigurer frameOptions()");

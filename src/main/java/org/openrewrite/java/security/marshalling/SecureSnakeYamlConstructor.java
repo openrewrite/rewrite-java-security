@@ -26,6 +26,7 @@ import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.java.tree.TypeUtils;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Stack;
@@ -44,6 +45,11 @@ public class SecureSnakeYamlConstructor extends Recipe {
     @Override
     public String getDescription() {
         return "See the [paper](https://github.com/mbechler/marshalsec) on this subject.";
+    }
+
+    @Override
+    public Set<String> getTags() {
+        return new HashSet<>(Arrays.asList("CWE-502", "CWE-94"));
     }
 
     @Override
