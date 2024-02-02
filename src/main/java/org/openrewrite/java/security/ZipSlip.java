@@ -42,7 +42,7 @@ import java.util.function.Supplier;
 import static java.util.Collections.emptyList;
 
 @Value
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
 public class ZipSlip extends Recipe {
     private static final String ZIP_SLIP_IMPORT_REQUIRED_MESSAGE = "ZIP_SLIP_IMPORT_REQUIRED";
     private static final MethodMatcher ZIP_ENTRY_GET_NAME_METHOD_MATCHER =
@@ -210,7 +210,7 @@ public class ZipSlip extends Recipe {
          * objects that have been tainted by zip entry getName() calls.
          */
         @AllArgsConstructor
-        @EqualsAndHashCode(callSuper = false, onlyExplicitlyIncluded = true)
+        @EqualsAndHashCode(callSuper = false, onlyExplicitlyIncluded = false)
         private static class TaintedFileOrPathVisitor<P> extends JavaVisitor<P> {
             private static final String IO_EXCEPTION_FQN = "java.io.IOException";
             private static final String RUNTIME_EXCEPTION_THROW_LINE = "    throw new RuntimeException(\"Bad zip entry\");\n";

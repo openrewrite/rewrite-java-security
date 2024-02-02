@@ -29,7 +29,7 @@ import java.util.Collections;
 import java.util.Set;
 
 @Value
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
 public class CsrfProtection extends ScanningRecipe<GenerateWebSecurityConfigurerAdapter> {
 
     @Option(displayName = "Only if security configuration exists",

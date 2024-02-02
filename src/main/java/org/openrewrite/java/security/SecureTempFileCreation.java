@@ -36,7 +36,7 @@ import java.util.Set;
 
 
 @Value
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
 public class SecureTempFileCreation extends Recipe {
 
     @Override

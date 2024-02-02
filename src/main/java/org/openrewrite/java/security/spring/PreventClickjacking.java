@@ -33,7 +33,7 @@ import java.util.Set;
 import static org.openrewrite.java.security.spring.GenerateWebSecurityConfigurerAdapter.WEB_SECURITY_CONFIGURER_ADAPTER;
 
 @Value
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
 public class PreventClickjacking extends ScanningRecipe<GenerateWebSecurityConfigurerAdapter> {
 
     @Option(displayName = "Only if security configuration exists",
