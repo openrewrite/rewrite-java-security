@@ -23,7 +23,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class ExternalDTDAccumulatorTest {
+class ExternalDTDAccumulatorTest {
     @ParameterizedTest
     @MethodSource("provideEntitySplitTestArguments")
     void testEntitySplit(String initial, String expected) {
