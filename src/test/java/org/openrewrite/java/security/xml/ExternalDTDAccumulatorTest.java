@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class ExternalDTDAccumulatorTest {
     @ParameterizedTest
     @MethodSource("provideEntitySplitTestArguments")
-    void testEntitySplit(String initial, String expected) {
+    void entitySplit(String initial, String expected) {
         assertEquals(expected, ExternalDTDAccumulator.extractURLFromEntity(initial));
     }
 
