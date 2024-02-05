@@ -64,7 +64,7 @@ public class FindAwsSecretsTest implements RewriteTest {
                   String[] awsSecrets = {
                       "AKIAZZZZZZZZZZZZZZZZ",
                       "akiazzzzzzzzzzzzzzzz",
-                      "AKIAZZZ",
+                      "AKIAZZZ"
                   };
               }
               """,
@@ -73,7 +73,7 @@ public class FindAwsSecretsTest implements RewriteTest {
                   String[] awsSecrets = {
                       /*~~(AWS access key)~~>*/"AKIAZZZZZZZZZZZZZZZZ",
                       "akiazzzzzzzzzzzzzzzz",
-                      "AKIAZZZ",
+                      "AKIAZZZ"
                   };
               }
               """
