@@ -16,6 +16,7 @@
 package org.openrewrite.java.security.search;
 
 import org.junit.jupiter.api.Test;
+import org.openrewrite.DocumentExample;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
@@ -33,6 +34,7 @@ public class FindSensitiveApiEndpointsTest implements RewriteTest {
           .recipe(new FindSensitiveApiEndpoints(List.of("birthdate"), true));
     }
 
+    @DocumentExample
     @Test
     void webmvc() {
         rewriteRun(

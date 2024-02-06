@@ -16,6 +16,7 @@
 package org.openrewrite.java.security.servlet;
 
 import org.junit.jupiter.api.Test;
+import org.openrewrite.DocumentExample;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
@@ -30,6 +31,7 @@ public class CookieSetSecureTest implements RewriteTest {
           .parser(JavaParser.fromJavaVersion().classpath("javaee-api"));
     }
 
+    @DocumentExample
     @Test
     void setSecureFalse() {
         //language=java

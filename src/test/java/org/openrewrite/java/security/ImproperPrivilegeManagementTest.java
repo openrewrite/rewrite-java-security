@@ -16,6 +16,7 @@
 package org.openrewrite.java.security;
 
 import org.junit.jupiter.api.Test;
+import org.openrewrite.DocumentExample;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
@@ -28,6 +29,7 @@ public class ImproperPrivilegeManagementTest implements RewriteTest {
         spec.recipe(new ImproperPrivilegeManagement());
     }
 
+    @DocumentExample
     @SuppressWarnings("removal")
     @Test
     void improper() {

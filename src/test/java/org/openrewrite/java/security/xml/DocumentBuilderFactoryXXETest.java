@@ -16,6 +16,7 @@
 package org.openrewrite.java.security.xml;
 
 import org.junit.jupiter.api.Test;
+import org.openrewrite.DocumentExample;
 import org.openrewrite.java.security.XmlParserXXEVulnerability;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
@@ -89,6 +90,7 @@ public class DocumentBuilderFactoryXXETest implements RewriteTest {
         );
     }
 
+    @DocumentExample
     @Test
     void factoryIsVulnerable() {
         //language=java
