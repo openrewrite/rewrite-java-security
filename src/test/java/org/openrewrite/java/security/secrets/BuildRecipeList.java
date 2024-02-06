@@ -31,7 +31,6 @@ public class BuildRecipeList {
             !r.getName().endsWith(".FindSecrets"))
           .sorted(Comparator.comparing(Recipe::getName))
           .toList()) {
-            System.out.println("  - " + recipe.getName());
         }
     }
 }
