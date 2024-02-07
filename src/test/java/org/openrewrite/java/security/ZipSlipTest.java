@@ -29,7 +29,7 @@ class ZipSlipTest implements RewriteTest {
 
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new ZipSlip(false));
+        spec.recipe(new ZipSlip());
     }
 
     @DocumentExample
@@ -1006,7 +1006,6 @@ class ZipSlipTest implements RewriteTest {
     }
 
     @Test
-    @Disabled("Generates an unexpected diff")
     void exampleKindling() {
         //language=java
         rewriteRun(
@@ -1023,36 +1022,36 @@ class ZipSlipTest implements RewriteTest {
               import java.util.zip.ZipFile;
               import java.util.zip.ZipEntry;
               import java.util.zip.ZipInputStream;
-
+                          
               class Test {
-                static final int BUFFER = 2048;
-
-                private void extractZip(String src, String dest) throws Exception {
-              	  ZipFile zf = new ZipFile(src);
-              	  try {
-              		  for (Enumeration<? extends ZipEntry> e = zf.entries(); e.hasMoreElements();) {
-              			  ZipEntry ze = e.nextElement();
-              			  String name = ze.getName();
-              			  if (name.endsWith(".html") || name.endsWith(".htm") || name.endsWith(".png") || name.endsWith(".css")) {
-              				  InputStream in = zf.getInputStream(ze);
-              				  OutputStream out = new FileOutputStream(dest+name);
-
-              				  byte data[] = new byte[BUFFER];
-              				  int count;
-              				  while((count = in.read(data, 0, BUFFER)) != -1) {
-              					  out.write(data, 0, count);
-              				  }
-
-              				  out.close();
-              				  in.close();
-              			  }
-              		  }
-              	  } finally {
-              		  zf.close();
-              	  }
-                }
+                  static final int BUFFER = 2048;
+                              
+                  private void extractZip(String src, String dest) throws Exception {
+                      ZipFile zf = new ZipFile(src);
+                      try {
+                          for (Enumeration<? extends ZipEntry> e = zf.entries(); e.hasMoreElements();) {
+                              ZipEntry ze = e.nextElement();
+                              String name = ze.getName();
+                              if (name.endsWith(".html") || name.endsWith(".htm") || name.endsWith(".png") || name.endsWith(".css")) {
+                                  InputStream in = zf.getInputStream(ze);
+                                  OutputStream out = new FileOutputStream(dest+name);
+                                              
+                                  byte data[] = new byte[BUFFER];
+                                  int count;
+                                  while((count = in.read(data, 0, BUFFER)) != -1) {
+                                      out.write(data, 0, count);
+                                  }
+                                              
+                                  out.close();
+                                  in.close();
+                              }
+                          }
+                      } finally {
+                          zf.close();
+                      }
+                  }
               }
-              """,
+                """,
             """
               import java.io.File;
               import java.io.InputStream;
@@ -1065,40 +1064,40 @@ class ZipSlipTest implements RewriteTest {
               import java.util.zip.ZipFile;
               import java.util.zip.ZipEntry;
               import java.util.zip.ZipInputStream;
-
+                                
               class Test {
-                static final int BUFFER = 2048;
-
-                private void extractZip(String src, String dest) throws Exception {
-              	  ZipFile zf = new ZipFile(src);
-              	  try {
-              		  for (Enumeration<? extends ZipEntry> e = zf.entries(); e.hasMoreElements();) {
-              			  ZipEntry ze = e.nextElement();
-              			  String name = ze.getName();
-              			  if (name.endsWith(".html") || name.endsWith(".htm") || name.endsWith(".png") || name.endsWith(".css")) {
-              				  InputStream in = zf.getInputStream(ze);
-              				  final File zipEntryFile = new File(dest, name);
-              				  if (!zipEntryFile.toPath().normalize().startsWith(dest)) {
-              					  throw new RuntimeException("Bad zip entry");
-              				  }
-              				  OutputStream out = new FileOutputStream(zipEntryFile);
-
-              				  byte data[] = new byte[BUFFER];
-              				  int count;
-              				  while((count = in.read(data, 0, BUFFER)) != -1) {
-              					  out.write(data, 0, count);
-              				  }
-
-              				  out.close();
-              				  in.close();
-              			  }
-              		  }
-              	  } finally {
-              		  zf.close();
-              	  }
-                }
+                  static final int BUFFER = 2048;
+                                    
+                  private void extractZip(String src, String dest) throws Exception {
+                      ZipFile zf = new ZipFile(src);
+                      try {
+                          for (Enumeration<? extends ZipEntry> e = zf.entries(); e.hasMoreElements();) {
+                              ZipEntry ze = e.nextElement();
+                              String name = ze.getName();
+                              if (name.endsWith(".html") || name.endsWith(".htm") || name.endsWith(".png") || name.endsWith(".css")) {
+                                  InputStream in = zf.getInputStream(ze);
+                                  final File zipEntryFile = new File(dest, name);
+                                  if (!zipEntryFile.toPath().normalize().startsWith(dest)) {
+                                      throw new IOException("Bad zip entry");
+                                  }
+                                  OutputStream out = new FileOutputStream(zipEntryFile);
+                                                    
+                                  byte data[] = new byte[BUFFER];
+                                  int count;
+                                  while((count = in.read(data, 0, BUFFER)) != -1) {
+                                      out.write(data, 0, count);
+                                  }
+                                                    
+                                  out.close();
+                                  in.close();
+                              }
+                          }
+                      } finally {
+                          zf.close();
+                      }
+                  }
               }
-              """
+                """
           )
         );
     }

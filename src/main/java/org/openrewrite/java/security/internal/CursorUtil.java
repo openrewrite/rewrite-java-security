@@ -19,6 +19,8 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.openrewrite.Cursor;
 import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.JavaType;
+import org.openrewrite.java.tree.TypeUtils;
 
 import java.util.Iterator;
 import java.util.Optional;
@@ -50,8 +52,37 @@ public class CursorUtil {
         return Optional.empty();
     }
 
-    public static Cursor findOuterExecutableBlockOrThrow(Cursor start) {
-        return findOuterExecutableBlock(start)
-                .orElseThrow(() -> new IllegalStateException("Could not find outer executable block"));
+    public static boolean canSupportScopeSupportExceptionOfType(Cursor cursor, JavaType exceptionType) {
+        Iterator<Cursor> cursors =
+                cursor.getPathAsCursors(
+                        c -> isStaticOrInitBlockSafe(c) ||
+                             c.getValue() instanceof J.MethodDeclaration ||
+                             c.getValue() instanceof J.Try
+                );
+        while (cursors.hasNext()) {
+            Cursor c = cursors.next();
+            if (isStaticOrInitBlockSafe(c)) {
+                return false;
+            } else if (c.getValue() instanceof J.Try) {
+                J.Try tryBlock = c.getValue();
+                if (tryBlock.getCatches().stream().anyMatch(catchClause ->
+                        catchClause.getParameter().getTree().getVariables().stream().anyMatch(v ->
+                                TypeUtils.isAssignableTo(v.getType(), exceptionType)))) {
+                    return true;
+                }
+            } else if (c.getValue() instanceof J.MethodDeclaration) {
+                J.MethodDeclaration methodDeclaration = c.getValue();
+                if (methodDeclaration.getThrows() != null &&
+                    methodDeclaration.getThrows().stream().anyMatch(throwsClause ->
+                            TypeUtils.isAssignableTo(throwsClause.getType(), exceptionType))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean isStaticOrInitBlockSafe(Cursor cursor) {
+        return cursor.getValue() instanceof J.Block && J.Block.isStaticOrInitBlock(cursor);
     }
 }
