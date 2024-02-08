@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.openrewrite.Cursor;
+import org.openrewrite.Incubating;
 import org.openrewrite.Tree;
 import org.openrewrite.analysis.InvocationMatcher;
 import org.openrewrite.analysis.controlflow.Guard;
@@ -46,10 +47,12 @@ import static java.util.Collections.emptyList;
  * Originally written to handle Zip Slip
  */
 @AllArgsConstructor
+@Incubating(since = "2.4.0")
 public class PathTraversalGuardInsertionVisitor<P> extends JavaIsoVisitor<P> {
     private static final String IMPORT_REQUIRED_MESSAGE = "PATH_TRAVERSAL_IMPORT_REQUIRED";
     final InvocationMatcher userInputMatcher;
     final String newVariablePrefix;
+    final String exceptionMessage;
     final boolean fixPartialPathTraversal;
 
     @Override
@@ -93,7 +96,7 @@ public class PathTraversalGuardInsertionVisitor<P> extends JavaIsoVisitor<P> {
         b = (J.Block) new StringToFileConstructorVisitor<>(fileConstructorFixVisitorSupplier)
                 .visitNonNull(b, p, getCursor().getParentOrThrow());
         J.Block before = b;
-        b = (J.Block) new PathTraversalVisitor<>(newVariablePrefix, userInputMatcher)
+        b = (J.Block) new PathTraversalVisitor<>(newVariablePrefix, exceptionMessage, userInputMatcher)
                 .visitNonNull(b, p, getCursor().getParentOrThrow());
         if (before != b) {
             // Only actually make the change if PathTraversalVisitor actually fixes a vulnerability
@@ -148,7 +151,7 @@ public class PathTraversalGuardInsertionVisitor<P> extends JavaIsoVisitor<P> {
                 "java.nio.file.Path resolve(..)"
         );
 
-        InvocationMatcher userInputMatcher;
+        private final InvocationMatcher userInputMatcher;
 
         @Override
         public boolean isSource(DataFlowNode srcNode) {
@@ -165,12 +168,17 @@ public class PathTraversalGuardInsertionVisitor<P> extends JavaIsoVisitor<P> {
     @AllArgsConstructor
     private static class PathTraversalVisitor<P> extends JavaIsoVisitor<P> {
         private final String newVariablePrefix;
+        private final String exceptionMessage;
         private final InvocationMatcher userInputMatcher;
 
         @Override
         public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, P p) {
             Dataflow.startingAt(getCursor()).findSinks(new UserInputToFileOrPathCreationLocalFlowSpec(userInputMatcher)).forEach(sinkFlow ->
-                    doAfterVisit(new TaintedFileOrPathVisitor<>(newVariablePrefix, sinkFlow.getExpressionSinks()))
+                    doAfterVisit(new TaintedFileOrPathVisitor<>(
+                            newVariablePrefix,
+                            exceptionMessage,
+                            sinkFlow.getExpressionSinks()
+                    ))
             );
             return super.visitMethodInvocation(method, p);
         }
@@ -184,10 +192,13 @@ public class PathTraversalGuardInsertionVisitor<P> extends JavaIsoVisitor<P> {
     @EqualsAndHashCode(callSuper = false)
     private static class TaintedFileOrPathVisitor<P> extends JavaVisitor<P> {
         private static final String IO_EXCEPTION_FQN = "java.io.IOException";
-        private static final String RUNTIME_EXCEPTION_THROW_LINE = "    throw new RuntimeException(\"Bad zip entry\");\n";
-        private static final String IO_EXCEPTION_THROW_LINE = "    throw new IOException(\"Bad zip entry\");\n";
 
         private final JavaType ioException = TypeGenerator.generate(IO_EXCEPTION_FQN);
+
+        private final String newVariablePrefix;
+        private final String exceptionMessage;
+        @EqualsAndHashCode.Include
+        private final List<Expression> taintedSinks;
 
         private void maybeAddImportIOException() {
             getCursor()
@@ -195,9 +206,17 @@ public class PathTraversalGuardInsertionVisitor<P> extends JavaIsoVisitor<P> {
                     .computeMessageIfAbsent(IMPORT_REQUIRED_MESSAGE, __ -> Collections.singletonList(IO_EXCEPTION_FQN));
         }
 
+        private String runtimeExceptionThrowLine() {
+            return String.format("    throw new RuntimeException(\"%s\");\n", exceptionMessage);
+        }
+
+        private String ioExceptionThrowLine() {
+            return String.format("    throw new IOException(\"%s\");\n", exceptionMessage);
+        }
+
         private JavaTemplate noPathTraversalFileTemplate() {
             boolean canSupportIoException = canSupportScopeSupportExceptionOfType(getCursor(), ioException);
-            String exceptionLine = canSupportIoException ? IO_EXCEPTION_THROW_LINE : RUNTIME_EXCEPTION_THROW_LINE;
+            String exceptionLine = canSupportIoException ? ioExceptionThrowLine() : runtimeExceptionThrowLine();
             JavaTemplate.Builder noPathTraversalFileTemplate = JavaTemplate.builder(
                     "if (!#{any(java.io.File)}.toPath().normalize().startsWith(#{any(java.io.File)}.toPath().normalize())) {\n" +
                     exceptionLine +
@@ -211,7 +230,7 @@ public class PathTraversalGuardInsertionVisitor<P> extends JavaIsoVisitor<P> {
 
         private JavaTemplate noPathTraversalFileWithStringTemplate() {
             boolean canSupportIoException = canSupportScopeSupportExceptionOfType(getCursor(), ioException);
-            String exceptionLine = canSupportIoException ? IO_EXCEPTION_THROW_LINE : RUNTIME_EXCEPTION_THROW_LINE;
+            String exceptionLine = canSupportIoException ? ioExceptionThrowLine() : runtimeExceptionThrowLine();
             JavaTemplate.Builder noPathTraversalFileWithStringTemplate = JavaTemplate.builder(
                     "if (!#{any(java.io.File)}.toPath().normalize().startsWith(#{any(String)})) {\n" +
                     exceptionLine +
@@ -225,7 +244,7 @@ public class PathTraversalGuardInsertionVisitor<P> extends JavaIsoVisitor<P> {
 
         private JavaTemplate noPathTraversalPathStartsWithPathTemplate() {
             boolean canSupportIoException = canSupportScopeSupportExceptionOfType(getCursor(), ioException);
-            String exceptionLine = canSupportIoException ? IO_EXCEPTION_THROW_LINE : RUNTIME_EXCEPTION_THROW_LINE;
+            String exceptionLine = canSupportIoException ? ioExceptionThrowLine() : runtimeExceptionThrowLine();
             JavaTemplate.Builder noPathTraversalPathStartsWithPathTemplate = JavaTemplate.builder(
                     "if (!#{any(java.nio.file.Path)}.normalize().startsWith(#{any(java.nio.file.Path)}.normalize())) {\n" +
                     exceptionLine +
@@ -240,9 +259,6 @@ public class PathTraversalGuardInsertionVisitor<P> extends JavaIsoVisitor<P> {
         private boolean canSupportScopeSupportExceptionOfType(Cursor cursor, JavaType exceptionType) {
             return CursorUtil.canSupportScopeSupportExceptionOfType(cursor, exceptionType);
         }
-        private final String newVariablePrefix;
-        @EqualsAndHashCode.Include
-        private final List<Expression> taintedSinks;
 
         @Value
         @NonNull
