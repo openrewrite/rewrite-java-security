@@ -61,6 +61,7 @@ public class ZipSlip extends Recipe {
                 Repeat.repeatUntilStable(new PathTraversalGuardInsertionVisitor<>(
                         ZIP_ENTRY_GET_NAME,
                         "zipEntry",
+                        "Bad zip entry",
                         true
                 )));
     }
