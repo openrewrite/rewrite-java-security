@@ -24,7 +24,7 @@ import org.openrewrite.test.RewriteTest;
 import static org.openrewrite.java.Assertions.java;
 import static org.openrewrite.yaml.Assertions.yaml;
 
-public class FindAwsSecretsTest implements RewriteTest {
+class FindAwsSecretsTest implements RewriteTest {
 
     @Override
     public void defaults(RecipeSpec spec) {

@@ -22,7 +22,7 @@ import org.openrewrite.test.RewriteTest;
 
 import static org.openrewrite.yaml.Assertions.yaml;
 
-public class FindSlackSecretsTest implements RewriteTest {
+class FindSlackSecretsTest implements RewriteTest {
 
     @Override
     public void defaults(RecipeSpec spec) {

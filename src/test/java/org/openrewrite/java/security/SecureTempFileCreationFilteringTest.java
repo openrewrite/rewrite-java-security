@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.openrewrite.java.Assertions.*;
 
-public class SecureTempFileCreationFilteringTest implements RewriteTest {
+class SecureTempFileCreationFilteringTest implements RewriteTest {
 
     @Language("java")
     private static final String PRODUCTION_TEMP_DIR_HIJACKING_VULNERABLE = """

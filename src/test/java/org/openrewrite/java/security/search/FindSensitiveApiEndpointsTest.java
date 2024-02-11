@@ -26,7 +26,7 @@ import java.util.List;
 
 import static org.openrewrite.java.Assertions.java;
 
-public class FindSensitiveApiEndpointsTest implements RewriteTest {
+class FindSensitiveApiEndpointsTest implements RewriteTest {
 
     @Override
     public void defaults(RecipeSpec spec) {
