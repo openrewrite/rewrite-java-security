@@ -60,8 +60,8 @@ public class SecureRandomPrefersDefaultSeed extends Recipe {
 
     private static class SecureRandomUseDefaultSeedVisitor extends JavaIsoVisitor<ExecutionContext> {
         private static final MethodMatcher SET_SEED_MATCHER = new MethodMatcher("java.security.SecureRandom setSeed(..)");
-        private static final MethodMatcher SYSTEM_TIME_MATCHER = new MethodMatcher("System currentTimeMillis()");
-        private static final MethodMatcher SYSTEM_NANO_TIME_MATCHER = new MethodMatcher("System nanoTime()");
+        private static final MethodMatcher SYSTEM_TIME_MATCHER = new MethodMatcher("java.lang.System currentTimeMillis()");
+        private static final MethodMatcher SYSTEM_NANO_TIME_MATCHER = new MethodMatcher("java.lang.System nanoTime()");
         private static final MethodMatcher STRING_BYTES_MATCHER = new MethodMatcher("String getBytes()");
         private final JavaType dateType = JavaType.buildType("java.util.Date");
 
