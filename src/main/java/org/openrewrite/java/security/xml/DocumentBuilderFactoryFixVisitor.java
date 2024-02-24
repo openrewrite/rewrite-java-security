@@ -21,6 +21,7 @@ import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.TreeVisitor;
 import org.openrewrite.analysis.InvocationMatcher;
+import org.openrewrite.analysis.constantfold.ConstantFold;
 import org.openrewrite.analysis.dataflow.DataFlowNode;
 import org.openrewrite.analysis.dataflow.DataFlowSpec;
 import org.openrewrite.analysis.dataflow.Dataflow;
@@ -84,37 +85,9 @@ public class DocumentBuilderFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
     }
 
     private static Option<String> findFeatureName(DataFlowNode node) {
-        return node
-                // If the DataFlow node is a VarAccess
-                .asExpr(VarAccess.class)
-                // Get the variable that is being accessed
-                .map(VarAccess::getVariable)
-                // Get the assigned values to that variable
-                .map(Variable::getAssignedValues)
-                // If there are assigned values
-                .bind(assignedValues -> {
-                    if (assignedValues.size() > 1) {
-                        // If there are more than one assigned values,
-                        // we can't determine which one is the one we are looking for
-                        return Option.none();
-                    }
-                    // Iterate even if it's a single value or zero values
-                    for (Expr e : assignedValues) {
-                        if (e instanceof Literal) {
-                            Literal l = (Literal) e;
-                            if (DISALLOWED_DTD_FEATURES.contains(l.getValue().orSome("")))
-                                return l.getValue().map(String.class::cast);
-                        }
-                    }
-                    return Option.none();
-                }).orElse(() -> node
-                        // If the DataFlow node is a Literal
-                        .asExprParent(Literal.class)
-                        // Get the value of the literal
-                        .bind(Literal::getValue)
-                        // Keep the value only if its one of the DTD Features we're concerned with.
-                        .filter(DISALLOWED_DTD_FEATURES::contains)
-                        .map(String.class::cast));
+        return ConstantFold
+                .findConstantLiteralValue(node, String.class)
+                .filter(DISALLOWED_DTD_FEATURES::contains);
     }
 
     @Override

@@ -28,6 +28,54 @@ class FileConstructorFixVisitorTest implements RewriteTest {
         spec.recipe(RewriteTest.toRecipe(() -> new FileConstructorFixVisitor<>()));
     }
 
+    @Test
+    void changesFileWithSlashes() {
+        rewriteRun(
+          java(
+            """
+              import java.io.File;    
+              class Test {
+                  public File exportTo(File original, String extension) {
+                      return new File(original.getAbsolutePath() + "/" + extension);
+                  }
+              }
+              """,
+            """
+              import java.io.File;
+              class Test {
+                  public File exportTo(File original, String extension) {
+                      return new File(original.getAbsolutePath(), extension);
+                  }
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void changesFileWithFileSeperator() {
+        rewriteRun(
+          java(
+            """
+              import java.io.File;
+              class Test {
+                  public File exportTo(File original, String extension) {
+                      return new File(original.getAbsolutePath() + File.separator + extension);
+                  }
+              }
+              """,
+            """
+              import java.io.File;
+              class Test {
+                  public File exportTo(File original, String extension) {
+                      return new File(original.getAbsolutePath(), extension);
+                  }
+              }
+              """
+          )
+        );
+    }
+
     @SuppressWarnings("UnnecessaryLocalVariable")
     @Test
     void doesNotChangeConstructorWhenNonSlashAppended() {
