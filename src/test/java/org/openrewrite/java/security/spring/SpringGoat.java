@@ -19,6 +19,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.remoting.httpinvoker.HttpInvokerServiceExporter;
 
+/**
+ * A class meant to demonstrate security vulnerabilities in Spring.
+ */
+@SuppressWarnings("deprecation")
 @Configuration
 class Server {
     @Bean(name = "/account")
