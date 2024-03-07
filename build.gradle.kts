@@ -45,6 +45,7 @@ dependencies {
 
     testImplementation("com.arakelian:faker:latest.release")
     testImplementation("org.springframework:spring-web:5.+")
+    testImplementation("org.springframework:spring-context:5.+")
     testImplementation("org.springframework:spring-webflux:5.+")
     testImplementation("javax:javaee-api:7.+")
 
