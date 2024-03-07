@@ -38,6 +38,7 @@ recipeList:
   - org.openrewrite.java.spring.security5.search.FindEncryptorsQueryableTextUses
   - org.openrewrite.java.security.ZipSlip
   - org.openrewrite.java.security.PartialPathTraversalVulnerability
+  - org.openrewrite.java.security.spring.UnvalidatedRedirect
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.java.security.OwaspA02
