@@ -19,12 +19,10 @@ import org.openrewrite.ExecutionContext;
 import org.openrewrite.Recipe;
 import org.openrewrite.Tree;
 import org.openrewrite.TreeVisitor;
-import org.openrewrite.analysis.trait.expr.ClassInstanceExpr;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaSourceFile;
-import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.java.tree.TypeUtils;
 import org.openrewrite.marker.SearchResult;
 import org.openrewrite.xml.XPathMatcher;
@@ -44,7 +42,7 @@ public class InsecureSpringServiceExporter extends Recipe {
 
     @Override
     public String getDescription() {
-        return "The default Java deserialization mechanism is available via ObjectInputStream " +
+        return "The default Java deserialization mechanism is available via `ObjectInputStream` " +
                "class. This mechanism is known to be vulnerable. If an attacker can make an " +
                "application deserialize malicious data, it may result in arbitrary code execution.\n" +
                "\n" +
