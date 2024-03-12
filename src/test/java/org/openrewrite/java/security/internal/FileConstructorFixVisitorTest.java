@@ -25,15 +25,16 @@ class FileConstructorFixVisitorTest implements RewriteTest {
 
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(RewriteTest.toRecipe(FileConstructorFixVisitor::new));
+        spec.recipe(RewriteTest.toRecipe(() -> new FileConstructorFixVisitor<>()));
     }
 
     @Test
     void changesFileWithSlashes() {
         rewriteRun(
+          //language=java
           java(
             """
-              import java.io.File;    
+              import java.io.File;
               class Test {
                   public File exportTo(File original, String extension) {
                       return new File(original.getAbsolutePath() + "/" + extension);
@@ -55,6 +56,7 @@ class FileConstructorFixVisitorTest implements RewriteTest {
     @Test
     void changesFileWithFileSeperator() {
         rewriteRun(
+          //language=java
           java(
             """
               import java.io.File;
