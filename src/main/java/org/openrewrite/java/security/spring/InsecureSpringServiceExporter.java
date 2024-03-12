@@ -110,7 +110,7 @@ public class InsecureSpringServiceExporter extends Recipe {
             public Xml.Tag visitTag(Xml.Tag tag, ExecutionContext ctx) {
                 if (bean.matches(getCursor())) {
                     if (tag.getAttributes().stream()
-                            .anyMatch(a -> a.getKeyAsString().equals("class") && (
+                            .anyMatch(a -> "class".equals(a.getKeyAsString()) && (
                                     "org.springframework.remoting.httpinvoker.HttpInvokerServiceExporter".equals(a.getValueAsString())) ||
                                            "org.springframework.remoting.httpinvoker.SimpleHttpInvokerServiceExporter".equals(a.getValueAsString())
                             )) {

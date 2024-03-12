@@ -207,11 +207,11 @@ public class PathTraversalGuardInsertionVisitor<P> extends JavaIsoVisitor<P> {
         }
 
         private String runtimeExceptionThrowLine() {
-            return String.format("    throw new RuntimeException(\"%s\");\n", exceptionMessage);
+            return String.format("    throw new RuntimeException(\"%s\");%n", exceptionMessage);
         }
 
         private String ioExceptionThrowLine() {
-            return String.format("    throw new IOException(\"%s\");\n", exceptionMessage);
+            return String.format("    throw new IOException(\"%s\");%n", exceptionMessage);
         }
 
         private JavaTemplate noPathTraversalFileTemplate() {
