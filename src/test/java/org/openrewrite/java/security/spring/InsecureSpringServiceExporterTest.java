@@ -16,6 +16,7 @@
 package org.openrewrite.java.security.spring;
 
 import org.junit.jupiter.api.Test;
+import org.openrewrite.DocumentExample;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
@@ -28,7 +29,7 @@ import static org.openrewrite.xml.Assertions.xml;
  * blog post</a> on this vulnerability.
  */
 @SuppressWarnings("deprecation")
-public class InsecureSpringServiceExporterTest implements RewriteTest {
+class InsecureSpringServiceExporterTest implements RewriteTest {
 
     @Override
     public void defaults(RecipeSpec spec) {
@@ -38,6 +39,7 @@ public class InsecureSpringServiceExporterTest implements RewriteTest {
             .classpath("spring-beans", "spring-context", "spring-web"));
     }
 
+    @DocumentExample
     @Test
     void javaBean() {
         rewriteRun(

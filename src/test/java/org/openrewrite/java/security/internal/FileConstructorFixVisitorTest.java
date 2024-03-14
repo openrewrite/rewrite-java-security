@@ -16,6 +16,7 @@
 package org.openrewrite.java.security.internal;
 
 import org.junit.jupiter.api.Test;
+import org.openrewrite.DocumentExample;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
@@ -28,6 +29,7 @@ class FileConstructorFixVisitorTest implements RewriteTest {
         spec.recipe(RewriteTest.toRecipe(() -> new FileConstructorFixVisitor<>()));
     }
 
+    @DocumentExample
     @Test
     void changesFileWithSlashes() {
         rewriteRun(
