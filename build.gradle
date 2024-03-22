@@ -9,6 +9,12 @@ def rewriteVersion = rewriteRecipe.rewriteVersion.get()
 
 recipeDependencies {
     parserClasspath("org.yaml:snakeyaml:1.33")
+    parserClasspath("com.fasterxml.jackson.core:jackson-core:2.13.+")
+    parserClasspath("com.fasterxml.jackson.core:jackson-databind:2.13.+")
+    parserClasspath("org.springframework:spring-context:5.+")
+    parserClasspath("org.springframework.security:spring-security-config:5.+")
+    parserClasspath("javax:javaee-api:7.+")
+    parserClasspath("jakarta.servlet:jakarta.servlet-api:4.+")
 }
 
 dependencies {
@@ -26,33 +32,23 @@ dependencies {
     implementation("com.nimbusds:nimbus-jose-jwt:9.+")
 
     runtimeOnly("org.openrewrite:rewrite-java-17")
-    runtimeOnly("org.springframework:spring-context:5.+")
-    runtimeOnly("org.springframework.security:spring-security-config:5.+")
-    runtimeOnly("org.springframework.security:spring-security-web:5.+")
-    runtimeOnly("jakarta.servlet:jakarta.servlet-api:4.+")
-    runtimeOnly("javax:javaee-api:7.+")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:latest.release")
     testImplementation("org.junit.jupiter:junit-jupiter-params:latest.release")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:latest.release")
 
-    testRuntimeOnly("org.springframework.boot:spring-boot-starter:2.+")
-
     testImplementation("org.openrewrite:rewrite-test:${rewriteVersion}")
-    testImplementation("org.openrewrite:rewrite-java-tck:${rewriteVersion}")
 
     testImplementation("org.assertj:assertj-core:latest.release")
-
     testImplementation("com.arakelian:faker:latest.release")
     testImplementation("org.springframework:spring-web:5.+")
     testImplementation("org.springframework:spring-context:5.+")
     testImplementation("org.springframework:spring-webflux:5.+")
     testImplementation("javax:javaee-api:7.+")
-
-    testRuntimeOnly("org.openrewrite:rewrite-java-17:${rewriteVersion}")
     testRuntimeOnly("junit:junit:latest.release")
-    testRuntimeOnly("com.fasterxml.jackson.core:jackson-databind:2.13.4")
-    testRuntimeOnly("commons-io:commons-io:2.11.0")
-    testRuntimeOnly("org.apache.commons:commons-lang3:3.11")
-    testRuntimeOnly("commons-lang:commons-lang:2.6")
+    testRuntimeOnly("org.springframework.boot:spring-boot-starter:2.+")
+    testRuntimeOnly("org.springframework.boot:spring-boot-starter-test:2.+")
+    testRuntimeOnly("org.springframework.security:spring-security-config:5.+")
+    testRuntimeOnly("org.springframework.security:spring-security-web:5.+")
+    testRuntimeOnly("jakarta.servlet:jakarta.servlet-api:4.+")
 }

@@ -71,7 +71,7 @@ public class GenerateWebSecurityConfigurerAdapter {
         }
 
         J.CompilationUnit generated = JavaParser.fromJavaVersion()
-                .classpath("spring-security-config", "spring-context", "jakarta.servlet-api")
+                .classpathFromResources(ctx, "spring-security-config", "spring-context", "jakarta.servlet-api")
                 .build()
                 .parseInputs(singletonList(new Parser.Input(
                         (springBootApplication.getSourcePath().getParent() == null ? Paths.get("") :

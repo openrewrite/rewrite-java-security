@@ -73,7 +73,7 @@ public class CsrfProtection extends ScanningRecipe<GenerateWebSecurityConfigurer
                         .contextSensitive()
                         .imports("org.springframework.security.web.csrf.CookieCsrfTokenRepository")
                         .javaParser(JavaParser.fromJavaVersion()
-                                .classpath(
+                                .classpathFromResources(ctx,
                                         "spring-security-config",
                                         "spring-context",
                                         "jakarta.servlet-api",

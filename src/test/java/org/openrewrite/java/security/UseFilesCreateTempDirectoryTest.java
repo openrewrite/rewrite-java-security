@@ -40,7 +40,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
             """
               import java.io.File;
               import java.io.IOException;
-
+              
               class A {
                   void b() throws IOException {
                       File tempDir;
@@ -55,7 +55,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
               import java.io.File;
               import java.io.IOException;
               import java.nio.file.Files;
-
+              
               class A {
                   void b() throws IOException {
                       File tempDir;
@@ -78,7 +78,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
               import java.io.File;
               import java.io.IOException;
               import static org.junit.jupiter.api.Assertions.assertTrue;
-
+              
               class A {
                   void b() throws IOException {
                       File tempDir;
@@ -154,7 +154,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
               import java.io.File;
               import java.io.IOException;
               import static org.junit.Assert.assertTrue;
-
+              
               class A {
                   void b() throws IOException {
                       File tempDir;
@@ -169,7 +169,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
               import java.io.File;
               import java.io.IOException;
               import java.nio.file.Files;
-
+              
               class A {
                   void b() throws IOException {
                       File tempDir;
@@ -192,7 +192,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
               import java.io.File;
               import java.io.IOException;
               import static org.junit.Assert.assertTrue;
-
+              
               class A {
                   void b() throws IOException {
                       File tempDir;
@@ -207,7 +207,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
               import java.io.File;
               import java.io.IOException;
               import java.nio.file.Files;
-
+              
               class A {
                   void b() throws IOException {
                       File tempDir;
@@ -229,7 +229,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
               import java.io.File;
               import java.io.IOException;
               import java.nio.file.Files;
-
+              
               class A {
                   File testData = Files.createTempDirectory("").toFile();
                   void b() throws IOException {
@@ -243,7 +243,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
               import java.io.File;
               import java.io.IOException;
               import java.nio.file.Files;
-
+              
               class A {
                   File testData = Files.createTempDirectory("").toFile();
                   void b() throws IOException {
@@ -263,7 +263,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
             """
               import java.io.File;
               import java.io.IOException;
-
+              
               class A {
                   void b() throws IOException {
                       File tempDir = File.createTempFile("abc", "def");
@@ -281,7 +281,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
               import java.io.File;
               import java.io.IOException;
               import java.nio.file.Files;
-
+              
               class A {
                   void b() throws IOException {
                       File tempDir = Files.createTempDirectory("abc" + "def").toFile();
@@ -369,7 +369,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
             """
               import java.io.File;
               import java.io.IOException;
-
+              
               class T {
                   void vulnerableFileCreateTempFileMkdirTainted() {
                       File tempDirChild = new File(System.getProperty("java.io.tmpdir"), "/child");
@@ -389,7 +389,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
             """
               import java.io.File;
               import java.io.IOException;
-
+              
               class T {
                   public void doSomething() throws IOException {
                       File tmpDir = new File("/some/dumb/thing");
@@ -410,7 +410,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
               import java.io.File;
               import java.io.IOException;
               import java.nio.file.Files;
-
+              
               class T {
                   public void doSomething() throws IOException {
                       File tmpDir = new File("/some/dumb/thing");
@@ -438,7 +438,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
               import java.io.File;
               import java.io.IOException;
               import java.nio.file.Files;
-
+              
               class A {
                   File testData = Files.createTempDirectory("").toFile();
                   void b() throws IOException {
@@ -454,7 +454,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
               import java.io.File;
               import java.io.IOException;
               import java.nio.file.Files;
-
+              
               class A {
                   File testData = Files.createTempDirectory("").toFile();
                   void b() throws IOException {
@@ -475,7 +475,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
               import java.io.File;
               import java.io.IOException;
               import java.nio.file.Files;
-
+              
               class A {
                   File testData = Files.createTempDirectory("").toFile();
                   void b() throws IOException {
@@ -489,7 +489,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
               import java.io.File;
               import java.io.IOException;
               import java.nio.file.Files;
-
+              
               class A {
                   File testData = Files.createTempDirectory("").toFile();
                   void b() throws IOException {
@@ -510,7 +510,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
               import java.io.File;
               import java.io.IOException;
               import java.nio.file.Files;
-
+              
               class A {
                   File testData = Files.createTempDirectory("").toFile();
                   void b() throws IOException {
@@ -525,7 +525,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
               import java.io.File;
               import java.io.IOException;
               import java.nio.file.Files;
-
+              
               class A {
                   File testData = Files.createTempDirectory("").toFile();
                   void b() throws IOException {
@@ -546,7 +546,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
             """
               import java.io.File;
               import java.io.IOException;
-
+              
               class A {
                   File b() throws IOException {
                       boolean success = true;
@@ -565,7 +565,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
               import java.io.File;
               import java.io.IOException;
               import java.nio.file.Files;
-
+              
               class A {
                   File b() throws IOException {
                       boolean success = true;
@@ -591,7 +591,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
               import java.io.File;
               import java.io.FileWriter;
               import java.io.IOException;
-
+              
               class A {
                   void b() throws IOException {
                       boolean success = true;
@@ -613,7 +613,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
               import java.io.FileWriter;
               import java.io.IOException;
               import java.nio.file.Files;
-
+              
               class A {
                   void b() throws IOException {
                       boolean success = true;
@@ -641,7 +641,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
               import java.io.File;
               import java.io.FileWriter;
               import java.io.IOException;
-
+              
               class A {
                   void createWorkingDir() throws IOException {
                       File temp = File.createTempFile("temp", Long.toString(System.nanoTime()));
@@ -663,7 +663,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
             """
               import java.io.File;
               import java.io.IOException;
-
+              
               class T {
                   private void initTmpDir() {
                       try {
@@ -681,7 +681,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
               import java.io.File;
               import java.io.IOException;
               import java.nio.file.Files;
-
+              
               class T {
                   private void initTmpDir() {
                       try {
@@ -705,7 +705,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
             """
               import java.io.File;
               import java.io.IOException;
-
+              
               class Test {
                   private File createTmpDir() throws IOException {
                       File dir = File.createTempFile("artifact", "copy");
@@ -720,7 +720,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
               import java.io.File;
               import java.io.IOException;
               import java.nio.file.Files;
-
+              
               class Test {
                   private File createTmpDir() throws IOException {
                       File dir = Files.createTempDirectory("artifact" + "copy").toFile();
@@ -741,7 +741,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
             """
               import java.io.File;
               import java.io.IOException;
-
+              
               class A {
                   void b() throws IOException {
                       File tempDir;
@@ -756,7 +756,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
               import java.io.File;
               import java.io.IOException;
               import java.nio.file.Files;
-
+              
               class A {
                   void b() throws IOException {
                       File tempDir;
@@ -778,7 +778,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
             """
               import java.io.File;
               import java.io.IOException;
-
+              
               class A {
                   void b() throws IOException {
                       File tempDir;
@@ -793,7 +793,7 @@ class UseFilesCreateTempDirectoryTest implements RewriteTest {
               import java.io.File;
               import java.io.IOException;
               import java.nio.file.Files;
-
+              
               class A {
                   void b() throws IOException {
                       File tempDir;

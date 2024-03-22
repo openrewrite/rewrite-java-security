@@ -64,7 +64,7 @@ public class CookieSetSecure extends Recipe {
                     J.MethodInvocation setSecureFalse = getCursor().getMessage("setSecureFalse");
                     if (setSecureFalse == null) {
                         return JavaTemplate.builder("#{any(javax.servlet.http.Cookie)}.setSecure(true);")
-                                .javaParser(JavaParser.fromJavaVersion().classpath("javaee-api"))
+                                .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "javaee-api"))
                                 .build()
                                 .apply(getCursor(), insecure.getCoordinates().after(),
                                         insecure.getVariables().get(0).getName());

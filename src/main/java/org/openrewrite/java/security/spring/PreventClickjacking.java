@@ -78,7 +78,7 @@ public class PreventClickjacking extends ScanningRecipe<GenerateWebSecurityConfi
                         .builder("http.headers().frameOptions().deny();")
                         .contextSensitive()
                         .javaParser(JavaParser.fromJavaVersion()
-                                .classpath("spring-security-config", "spring-context", "jakarta.servlet-api"))
+                                .classpathFromResources(ctx, "spring-security-config", "spring-context", "jakarta.servlet-api"))
                         .build()
                         .apply(getCursor(), block.getCoordinates().lastStatement());
             }

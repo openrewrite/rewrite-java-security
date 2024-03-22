@@ -84,7 +84,7 @@ public class SecureJacksonDefaultTyping extends Recipe {
                                 .builder(template.toString())
                                 .imports("com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator")
                                 .javaParser(JavaParser.fromJavaVersion()
-                                        .classpath("jackson-databind", "jackson-core"))
+                                        .classpathFromResources(ctx, "jackson-databind", "jackson-core"))
                                 .build()
                                 .apply(getCursor(),
                                         method.getCoordinates().replace(),
