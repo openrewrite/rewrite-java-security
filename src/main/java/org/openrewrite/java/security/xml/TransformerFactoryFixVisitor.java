@@ -95,7 +95,7 @@ public class TransformerFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
             if (m.getArguments().get(1) instanceof J.Literal) {
                 J.Literal string = (J.Literal) m.getArguments().get(1);
                 assert string.getValue() != null;
-                if (!(((String) string.getValue()).isEmpty())) {
+                if (!((String) string.getValue()).isEmpty()) {
                     addMessage(DISALLOW_MODIFY_FLAG);
                 }
             }

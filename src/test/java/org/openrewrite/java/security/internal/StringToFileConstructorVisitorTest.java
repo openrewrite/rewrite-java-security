@@ -25,7 +25,7 @@ import static org.openrewrite.java.Assertions.java;
 class StringToFileConstructorVisitorTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(RewriteTest.toRecipe(() -> new StringToFileConstructorVisitor<>()));
+        spec.recipe(RewriteTest.toRecipe(StringToFileConstructorVisitor::new));
     }
 
     @DocumentExample

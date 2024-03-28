@@ -93,10 +93,9 @@ public class DocumentBuilderFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
     @Override
     public Expression visitExpression(Expression expression, P p) {
         Dataflow.startingAt(getCursor()).findSinks(new DBFArgumentsSpec()).forEach(sink -> {
-            Option<String> featureName = DataFlowNode.of(getCursor()).bind(n -> findFeatureName(n));
-            sink.getSinkCursors().forEach(sinkCursor -> {
-                addMessage(featureName.some(), sinkCursor.dropParentUntil(J.Block.class::isInstance));
-            });
+            Option<String> featureName = DataFlowNode.of(getCursor()).bind(DocumentBuilderFactoryFixVisitor::findFeatureName);
+            sink.getSinkCursors().forEach(sinkCursor ->
+                addMessage(featureName.some(), sinkCursor.dropParentUntil(J.Block.class::isInstance)));
         });
         return super.visitExpression(expression, p);
     }
