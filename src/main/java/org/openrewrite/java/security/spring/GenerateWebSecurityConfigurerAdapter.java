@@ -27,8 +27,10 @@ import org.openrewrite.java.tree.*;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import static java.util.Collections.singletonList;
 import static org.openrewrite.Tree.randomId;
@@ -41,17 +43,15 @@ public class GenerateWebSecurityConfigurerAdapter {
     private final boolean onlyIfExistingConfig;
     private final JavaVisitor<ExecutionContext> onConfigureBlock;
 
-    J.CompilationUnit springBootApplication;
+    List<J.CompilationUnit> springBootApplications = new ArrayList<>();
     Path configurationSourcePath;
 
     void scan(SourceFile sourceFile, ExecutionContext ctx) {
         if (sourceFile instanceof J.CompilationUnit) {
             J.CompilationUnit cu = (J.CompilationUnit) sourceFile;
-            if (springBootApplication == null) {
-                for (JavaType javaType : cu.getTypesInUse().getTypesInUse()) {
-                    if (TypeUtils.isOfClassType(javaType, "org.springframework.boot.autoconfigure.SpringBootApplication")) {
-                        springBootApplication = cu;
-                    }
+            for (JavaType javaType : cu.getTypesInUse().getTypesInUse()) {
+                if (TypeUtils.isOfClassType(javaType, "org.springframework.boot.autoconfigure.SpringBootApplication")) {
+                    springBootApplications.add(cu);
                 }
             }
 
@@ -66,36 +66,41 @@ public class GenerateWebSecurityConfigurerAdapter {
     }
 
     Collection<? extends SourceFile> generate(ExecutionContext ctx) {
-        if (configurationSourcePath != null || onlyIfExistingConfig || springBootApplication == null) {
+        if (configurationSourcePath != null || onlyIfExistingConfig || springBootApplications.isEmpty()) {
             return Collections.emptyList();
         }
 
-        J.CompilationUnit generated = JavaParser.fromJavaVersion()
-                .classpathFromResources(ctx, "spring-security-config", "spring-context", "jakarta.servlet-api")
-                .build()
-                .parseInputs(singletonList(new Parser.Input(
-                        (springBootApplication.getSourcePath().getParent() == null ? Paths.get("") :
-                                springBootApplication.getSourcePath().getParent())
-                                .resolve("SecurityConfig.java")
-                                .normalize(),
-                        () -> GenerateWebSecurityConfigurerAdapter.class
-                                .getResourceAsStream("/WebSecurityConfigurerAdapterTemplate.java")
-                )), null, ctx)
-                .map(J.CompilationUnit.class::cast)
-                .findAny().get();
+        List<J.CompilationUnit> results = new ArrayList<>();
+        for (J.CompilationUnit springBootApplication : springBootApplications) {
+            J.CompilationUnit generated = JavaParser.fromJavaVersion()
+                    .classpathFromResources(ctx, "spring-security-config", "spring-context", "jakarta.servlet-api")
+                    .build()
+                    .parseInputs(singletonList(new Parser.Input(
+                            (springBootApplication.getSourcePath().getParent() == null ? Paths.get("") :
+                                    springBootApplication.getSourcePath().getParent())
+                                    .resolve("SecurityConfig.java")
+                                    .normalize(),
+                            () -> GenerateWebSecurityConfigurerAdapter.class
+                                    .getResourceAsStream("/WebSecurityConfigurerAdapterTemplate.java")
+                    )), null, ctx)
+                    .map(J.CompilationUnit.class::cast)
+                    .findAny()
+                    .get();
 
-        J.Package pkg = springBootApplication.getPackageDeclaration();
-        if (pkg != null) {
-            generated = generated
-                    .withPackageDeclaration(pkg.withId(randomId()))
-                    .withPrefix(Space.EMPTY);
+            J.Package pkg = springBootApplication.getPackageDeclaration();
+            if (pkg != null) {
+                generated = generated
+                        .withPackageDeclaration(pkg.withId(randomId()))
+                        .withPrefix(Space.EMPTY);
+            }
+
+            generated = generated.withMarkers(springBootApplication.getMarkers());
+            generated = (J.CompilationUnit) new AutoFormatVisitor<ExecutionContext>().visitNonNull(generated, ctx);
+            generated = visitConfigureMethod(generated, ctx, onConfigureBlock);
+            results.add(generated);
         }
 
-        generated = generated.withMarkers(springBootApplication.getMarkers());
-        generated = (J.CompilationUnit) new AutoFormatVisitor<ExecutionContext>().visit(generated, ctx);
-        assert generated != null;
-
-        return Collections.singletonList(visitConfigureMethod(generated, ctx, onConfigureBlock));
+        return results;
     }
 
     JavaSourceFile modify(JavaSourceFile sourceFile, ExecutionContext ctx) {
