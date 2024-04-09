@@ -47,14 +47,16 @@ class PreventClickjackingTest implements RewriteTest {
     void withSecurityConfig() {
         //language=java
         rewriteRun(
-          java("""
+          java(
+                """
             import org.springframework.boot.autoconfigure.SpringBootApplication;
             
             @SpringBootApplication
             class Application {
             }
             """),
-          java("""
+          java(
+                """
               import org.springframework.context.annotation.Configuration;
               import org.springframework.security.config.annotation.web.builders.HttpSecurity;
               import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
