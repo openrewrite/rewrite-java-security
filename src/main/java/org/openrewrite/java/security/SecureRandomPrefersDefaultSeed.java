@@ -45,7 +45,7 @@ public class SecureRandomPrefersDefaultSeed extends Recipe {
 
     @Override
     public Set<String> getTags() {
-        return Collections.singleton("RSPEC-4347");
+        return Collections.singleton("RSPEC-S4347");
     }
 
     @Override

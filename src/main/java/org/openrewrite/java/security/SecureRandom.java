@@ -41,7 +41,7 @@ public class SecureRandom extends Recipe {
 
     @Override
     public Set<String> getTags() {
-        return Collections.singleton("RSPEC-2245");
+        return Collections.singleton("RSPEC-S2245");
     }
 
     @Override
