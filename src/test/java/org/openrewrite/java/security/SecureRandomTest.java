@@ -17,6 +17,7 @@ package org.openrewrite.java.security;
 
 import org.junit.jupiter.api.Test;
 import org.openrewrite.DocumentExample;
+import org.openrewrite.Issue;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
@@ -30,6 +31,7 @@ class SecureRandomTest implements RewriteTest {
     }
 
     @DocumentExample
+    @Issue("https://github.com/openrewrite/rewrite-java-security/issues/131")
     @Test
     void secureContext() {
         rewriteRun(
@@ -53,6 +55,33 @@ class SecureRandomTest implements RewriteTest {
                   String generateSecretToken() {
                       Random r = new SecureRandom();
                       return Long.toHexString(r.nextLong());
+                  }
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void removeImport() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import java.util.Random;
+
+              public class A {
+                  void generateSecretToken() {
+                      int num = new Random().nextInt();
+                  }
+              }
+              """,
+            """
+              import java.security.SecureRandom;
+
+              public class A {
+                  void generateSecretToken() {
+                      int num = new SecureRandom().nextInt();
                   }
               }
               """

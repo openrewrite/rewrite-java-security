@@ -55,6 +55,7 @@ public class SecureRandom extends Recipe {
                 J.NewClass n = super.visitNewClass(newClass, ctx);
                 if (TypeUtils.isOfClassType(newClass.getType(), "java.util.Random")) {
                     maybeAddImport("java.security.SecureRandom");
+                    maybeRemoveImport("java.util.Random");
                     return JavaTemplate.builder("new SecureRandom()")
                             .imports("java.security.SecureRandom")
                             .build()
