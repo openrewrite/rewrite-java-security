@@ -78,6 +78,12 @@ public class CookieSetSecure extends Recipe {
 
             @Override
             public J.NewClass visitNewClass(J.NewClass newClass, ExecutionContext ctx) {
+                // Currently the rest of this recipe doesn't handle arrays or collections of cookies
+                // Return early to avoid making incorrect changes in the absence of enhancements that would enable collections
+                J.NewArray newArray = getCursor().firstEnclosing(J.NewArray.class);
+                if(newArray != null) {
+                    return newClass;
+                }
                 if (newCookie.matches(newClass) && getCursor().firstEnclosing(J.VariableDeclarations.class) != null) {
                     boolean isInsecure = Dataflow.startingAt(getCursor()).findSinks(new DataFlowSpec() {
                                 @Override

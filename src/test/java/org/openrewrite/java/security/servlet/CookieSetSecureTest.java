@@ -112,4 +112,37 @@ class CookieSetSecureTest implements RewriteTest {
           )
         );
     }
+
+    @Test
+    void array() {
+        //language=java
+        rewriteRun(
+          java(
+            """
+              import javax.servlet.http.Cookie;
+              
+              class Test {
+                  void test() {
+                      Cookie[] cookies = new Cookie[] { new Cookie("foo", "bar"), new Cookie("baz", "bing") };
+                      System.out.println("hi");
+                  }
+              }
+              """
+//              ,"""
+//              import javax.servlet.http.Cookie;
+//
+//              class Test {
+//                  void test() {
+//                      Cookie[] cookies = new Cookie[] { new Cookie("foo", "bar"), new Cookie("baz", "bing") };
+//                      for (Cookie cookie : cookies) {
+//                          cookie.setSecure(true);
+//                      }
+//                      System.out.println("hi");
+//                  }
+//              }
+//              """
+          )
+        );
+    }
+
 }
