@@ -8,7 +8,7 @@ description = "Enforce logging best practices and migrate between logging framew
 def rewriteVersion = rewriteRecipe.rewriteVersion.get()
 
 recipeDependencies {
-    parserClasspath("org.yaml:snakeyaml:1.33")
+    parserClasspath("org.yaml:snakeyaml:2.2")
     parserClasspath("com.fasterxml.jackson.core:jackson-core:2.13.+")
     parserClasspath("com.fasterxml.jackson.core:jackson-databind:2.13.+")
     parserClasspath("org.springframework:spring-context:5.+")

@@ -31,7 +31,7 @@ class SecureSnakeYamlConstructorTest implements RewriteTest {
     public void defaults(RecipeSpec spec) {
         spec.recipe(new SecureSnakeYamlConstructor())
           .parser(JavaParser.fromJavaVersion()
-            .classpathFromResources(new InMemoryExecutionContext(), "snakeyaml-1.33"));
+            .classpathFromResources(new InMemoryExecutionContext(), "snakeyaml"));
     }
 
     @DocumentExample

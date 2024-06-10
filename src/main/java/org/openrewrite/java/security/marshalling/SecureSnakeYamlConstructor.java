@@ -63,7 +63,7 @@ public class SecureSnakeYamlConstructor extends Recipe {
                             .imports("org.yaml.snakeyaml.Yaml")
                             .imports("org.yaml.snakeyaml.constructor.SafeConstructor")
                             .javaParser(JavaParser.fromJavaVersion()
-                                    .classpathFromResources(ctx, "snakeyaml-1.33"))
+                                    .classpathFromResources(ctx, "snakeyaml"))
                             .build()
                             .apply(getCursor(), memberRef.getCoordinates().replace());
                 }
@@ -86,7 +86,7 @@ public class SecureSnakeYamlConstructor extends Recipe {
                             .imports("org.yaml.snakeyaml.Yaml")
                             .imports("org.yaml.snakeyaml.constructor.SafeConstructor")
                             .javaParser(JavaParser.fromJavaVersion()
-                                    .classpathFromResources(ctx, "snakeyaml-1.33"))
+                                    .classpathFromResources(ctx, "snakeyaml"))
                             .build()
                             .apply(getCursor(), newClass.getCoordinates().replace());
                 } else if (snakeYamlRepresenterArgumentConstructor.matches(newClass)) {
@@ -104,7 +104,7 @@ public class SecureSnakeYamlConstructor extends Recipe {
                                     "org.yaml.snakeyaml.representer.Representer"
                             )
                             .javaParser(JavaParser.fromJavaVersion()
-                                    .classpathFromResources(ctx, "snakeyaml-1.33"))
+                                    .classpathFromResources(ctx, "snakeyaml"))
                             .build()
                             .apply(getCursor(), newClass.getCoordinates().replace(), newClass.getArguments().get(0));
                 } else if (snakeYamlDumperArgumentConstructor.matches(newClass)) {
@@ -122,7 +122,7 @@ public class SecureSnakeYamlConstructor extends Recipe {
                                     "org.yaml.snakeyaml.representer.Representer"
                             )
                             .javaParser(JavaParser.fromJavaVersion()
-                                    .classpathFromResources(ctx, "snakeyaml-1.33"))
+                                    .classpathFromResources(ctx, "snakeyaml"))
                             .build()
                             .apply(getCursor(), newClass.getCoordinates().replace(), newClass.getArguments().get(0));
                 }
