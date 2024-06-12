@@ -197,6 +197,7 @@ public class PathTraversalGuardInsertionVisitor<P> extends JavaIsoVisitor<P> {
 
         private final String newVariablePrefix;
         private final String exceptionMessage;
+
         @EqualsAndHashCode.Include
         private final List<Expression> taintedSinks;
 
