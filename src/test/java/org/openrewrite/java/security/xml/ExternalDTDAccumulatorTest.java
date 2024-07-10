@@ -21,13 +21,13 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class ExternalDTDAccumulatorTest {
     @ParameterizedTest
     @MethodSource("provideEntitySplitTestArguments")
     void entitySplit(String initial, String expected) {
-        assertEquals(expected, ExternalDTDAccumulator.extractURLFromEntity(initial));
+        assertThat(ExternalDTDAccumulator.extractURLFromEntity(initial)).isEqualTo(expected);
     }
 
     private static Stream<Arguments> provideEntitySplitTestArguments() {
