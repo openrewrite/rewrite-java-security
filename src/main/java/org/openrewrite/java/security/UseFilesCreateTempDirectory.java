@@ -345,8 +345,7 @@ public class UseFilesCreateTempDirectory extends Recipe {
             return false;
         }
 
-        @Nullable
-        private static J.Identifier getIdent(J createFileStatement) {
+        private static @Nullable J.Identifier getIdent(J createFileStatement) {
             if (createFileStatement instanceof J.Assignment) {
                 J.Assignment assignment = (J.Assignment) createFileStatement;
                 return (J.Identifier) assignment.getVariable();

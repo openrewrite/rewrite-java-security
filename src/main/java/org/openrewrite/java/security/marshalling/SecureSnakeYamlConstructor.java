@@ -236,8 +236,7 @@ public class SecureSnakeYamlConstructor extends Recipe {
         return isUnsafe.get();
     }
 
-    @Nullable
-    private static Cursor getOuterMostExecutableBlock(Cursor startCursor) {
+    private static @Nullable Cursor getOuterMostExecutableBlock(Cursor startCursor) {
         Cursor blockCursor = null;
         for (Cursor cursor : (Iterable<Cursor>) startCursor::getPathAsCursors) {
             Object cursorValue = cursor.getValue();
