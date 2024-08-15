@@ -16,12 +16,12 @@
 package org.openrewrite.java.security;
 
 import org.intellij.lang.annotations.Language;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.ScanningRecipe;
 import org.openrewrite.Tree;
 import org.openrewrite.TreeVisitor;
-import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.search.IsLikelyNotTest;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;

@@ -16,10 +16,10 @@
 package org.openrewrite.java.security.secrets;
 
 import com.nimbusds.jwt.JWTParser;
+import org.jspecify.annotations.Nullable;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
-import org.openrewrite.internal.lang.Nullable;
 
 import java.text.ParseException;
 import java.util.regex.Pattern;

@@ -17,8 +17,8 @@ package org.openrewrite.java.security.secrets;
 
 import lombok.EqualsAndHashCode;
 import lombok.Value;
+import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
-import org.openrewrite.internal.lang.Nullable;
 
 import java.util.regex.Pattern;
 
