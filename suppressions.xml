@@ -27,4 +27,14 @@
    ]]></notes>
         <cve>CVE-2022-31569</cve>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+   file name: spring-data-mongodb-2.2.12.RELEASE.jar
+   ]]>
+            comming in via rewrite-spring.
+            required to be able to migrate away from the vulnerable dependencies
+        </notes>
+        <packageUrl regex="true">^pkg:maven/org\.springframework\.data/spring-data-mongodb@.*$</packageUrl>
+        <cve>CVE-2022-22980</cve>
+    </suppress>
 </suppressions>
