@@ -22,6 +22,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 class ExternalDTDAccumulatorTest {
     @ParameterizedTest
@@ -32,14 +33,22 @@ class ExternalDTDAccumulatorTest {
 
     private static Stream<Arguments> provideEntitySplitTestArguments() {
         return Stream.of(
-          Arguments.of("<!ENTITY open-hatch-public\n" +
-              "      PUBLIC \"-//Textuality//TEXT Standard open-hatch boilerplate//EN\"\n" +
-              "      \"http://www.texty.com/boilerplate/OpenHatch.xml\">",
-            "http://www.texty.com/boilerplate/OpenHatch.xml"),
-          Arguments.of("<!ENTITY hatch-pic\n" +
-              "      SYSTEM \"../grafix/OpenHatch.gif\"\n" +
-              "      NDATA gif>",
-            "../grafix/OpenHatch.gif")
+          arguments(
+              """
+              <!ENTITY open-hatch-public
+                    PUBLIC "-//Textuality//TEXT Standard open-hatch boilerplate//EN"
+                    "http://www.texty.com/boilerplate/OpenHatch.xml">
+              """,
+            "http://www.texty.com/boilerplate/OpenHatch.xml"
+          ),
+          arguments(
+              """
+              <!ENTITY hatch-pic
+                    SYSTEM "../grafix/OpenHatch.gif"
+                    NDATA gif>
+              """,
+            "../grafix/OpenHatch.gif"
+          )
         );
     }
 }
