@@ -165,9 +165,9 @@ class SecureTempFileCreationFilteringTest implements RewriteTest {
             return new TreeVisitor<>() {
                 @Override
                 public @Nullable Tree visit(@Nullable Tree tree, ExecutionContext ctx) {
-                    if (!acc.get()
-                      && new IsLikelyNotTest().getVisitor().visit(tree, ctx) != tree
-                      && new SecureTempFileCreation().getVisitor().visit(tree, ctx) != tree) {
+                    if (!acc.get() &&
+                      new IsLikelyNotTest().getVisitor().visit(tree, ctx) != tree &&
+                      new SecureTempFileCreation().getVisitor().visit(tree, ctx) != tree) {
                         acc.set(true);
                     }
                     return tree;

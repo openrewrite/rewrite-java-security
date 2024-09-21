@@ -75,11 +75,11 @@ public class SecureRandomPrefersDefaultSeed extends Recipe {
                         isWeakSeed = true;
                     } else if (arg instanceof J.MethodInvocation) {
                         J.MethodInvocation argMi = (J.MethodInvocation) arg;
-                        if (SYSTEM_TIME_MATCHER.matches(arg) || SYSTEM_NANO_TIME_MATCHER.matches(argMi)
-                                || (STRING_BYTES_MATCHER.matches(argMi) && argMi.getSelect() instanceof J.Literal)) {
+                        if (SYSTEM_TIME_MATCHER.matches(arg) || SYSTEM_NANO_TIME_MATCHER.matches(argMi) ||
+                                (STRING_BYTES_MATCHER.matches(argMi) && argMi.getSelect() instanceof J.Literal)) {
                             isWeakSeed = true;
-                        } else if (argMi.getMethodType() != null
-                                && (TypeUtils.isAssignableTo(dateType, argMi.getMethodType().getDeclaringType()))) {
+                        } else if (argMi.getMethodType() != null &&
+                                (TypeUtils.isAssignableTo(dateType, argMi.getMethodType().getDeclaringType()))) {
                             isWeakSeed = true;
                             maybeRemoveImport("java.util.Date");
                         }

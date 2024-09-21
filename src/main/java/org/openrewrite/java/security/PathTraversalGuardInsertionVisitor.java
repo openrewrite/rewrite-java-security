@@ -318,8 +318,8 @@ public class PathTraversalGuardInsertionVisitor<P> extends JavaIsoVisitor<P> {
         }
 
         private <M extends MethodCall> Optional<J.Identifier> visitMethodCall(M methodCall, Function<M, Expression> parentDirExtractor) {
-            if (methodCall.getArguments().stream().anyMatch(taintedSinks::contains)
-                && Dataflow.startingAt(getCursor()).findSinks(new FileOrPathCreationToVulnerableUsageLocalFlowSpec()).isSome()) {
+            if (methodCall.getArguments().stream().anyMatch(taintedSinks::contains) &&
+                Dataflow.startingAt(getCursor()).findSinks(new FileOrPathCreationToVulnerableUsageLocalFlowSpec()).isSome()) {
                 J.Block firstEnclosingBlock = getCursor().firstEnclosingOrThrow(J.Block.class);
                 @SuppressWarnings("SuspiciousMethodCalls")
                 Statement enclosingStatement = getCursor()

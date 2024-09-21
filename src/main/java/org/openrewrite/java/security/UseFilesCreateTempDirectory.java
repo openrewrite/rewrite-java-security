@@ -370,8 +370,8 @@ public class UseFilesCreateTempDirectory extends Recipe {
         public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, P p) {
             J.MethodInvocation m = method;
             if (CREATE_TEMP_FILE_MATCHER.matches(m)) {
-                if (m.getArguments().size() == 2
-                    || (m.getArguments().size() == 3 && m.getArguments().get(2).getType() == JavaType.Primitive.Null)) {
+                if (m.getArguments().size() == 2 ||
+                    (m.getArguments().size() == 3 && m.getArguments().get(2).getType() == JavaType.Primitive.Null)) {
                     // File.createTempFile(String prefix, String suffix)
                     m = maybeAutoFormat(m, twoArg.apply(
                                     getCursor(),
