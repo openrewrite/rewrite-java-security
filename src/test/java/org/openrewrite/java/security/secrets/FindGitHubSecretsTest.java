@@ -18,10 +18,16 @@ package org.openrewrite.java.security.secrets;
 import org.junit.jupiter.api.Test;
 import org.openrewrite.DocumentExample;
 import org.openrewrite.config.Environment;
+import org.openrewrite.marker.SearchResult;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
+import org.openrewrite.yaml.tree.Yaml;
 
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.openrewrite.java.Assertions.java;
+import static org.openrewrite.yaml.Assertions.yaml;
 
 class FindGitHubSecretsTest implements RewriteTest {
 
@@ -55,6 +61,34 @@ class FindGitHubSecretsTest implements RewriteTest {
                   }
               }
               """
+          )
+        );
+    }
+
+    @Test
+    void githubSecretsInList() {
+        rewriteRun(
+          //language=yaml
+          yaml(
+            """
+              list:
+                - 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
+                - foo_wWPw5k4aXcaT4fNP0UcnZwJUVFk6LO0pINUx
+              """,
+            // Markers on sequence entries aren't printed for now
+            """
+              list:
+                - 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
+                - foo_wWPw5k4aXcaT4fNP0UcnZwJUVFk6LO0pINUx
+              """,
+            spec -> spec.afterRecipe(doc -> {
+                // But the markers should be present on the LST elements
+                Yaml.Mapping block = (Yaml.Mapping) doc.getDocuments().get(0).getBlock();
+                Yaml.Sequence value = (Yaml.Sequence) block.getEntries().get(0).getValue();
+                List<Yaml.Sequence.Entry> entries = value.getEntries();
+                assertThat(entries.get(0).getMarkers().getMarkers()).first().isInstanceOf(SearchResult.class);
+                assertThat(entries.get(1).getMarkers().getMarkers()).isEmpty();
+            })
           )
         );
     }
