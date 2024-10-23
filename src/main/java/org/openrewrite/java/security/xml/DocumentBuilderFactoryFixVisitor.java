@@ -58,7 +58,6 @@ public class DocumentBuilderFactoryFixVisitor<P> extends XmlFactoryVisitor<P> {
 
     private static final String SET_X_INCLUDE_AWARE_PROPERTY_NAME = "setXIncludeAware";
     private static final String SET_EXPAND_ENTITY_REFERENCES_PROPERTY_NAME = "setExpandEntityReferences";
-    private static final String FEATURE_SECURE_PROCESSING_PROPERTY_NAME = "FEATURE_SECURE_PROCESSING";
     private static final String DBF_INITIALIZATION_METHOD = "dbf-initialization-method";
     private static final String DBF_VARIABLE_NAME = "dbf-variable-name";
 
