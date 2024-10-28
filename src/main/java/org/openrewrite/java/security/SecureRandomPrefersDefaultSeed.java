@@ -15,6 +15,7 @@
  */
 package org.openrewrite.java.security;
 
+import org.jspecify.annotations.Nullable;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
@@ -66,7 +67,7 @@ public class SecureRandomPrefersDefaultSeed extends Recipe {
         private final JavaType dateType = JavaType.buildType("java.util.Date");
 
         @Override
-        public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, ExecutionContext ctx) {
+        public  J.@Nullable MethodInvocation visitMethodInvocation(J.MethodInvocation method, ExecutionContext ctx) {
             J.MethodInvocation mi = super.visitMethodInvocation(method, ctx);
             if (SET_SEED_MATCHER.matches(mi)) {
                 boolean isWeakSeed = false;
