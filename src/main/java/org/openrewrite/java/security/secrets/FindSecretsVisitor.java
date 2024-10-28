@@ -39,7 +39,7 @@ public abstract class FindSecretsVisitor extends TreeVisitor<Tree, ExecutionCont
     }
 
     @Override
-    public Tree visit(@Nullable Tree tree, ExecutionContext ctx) {
+    public @Nullable Tree visit(@Nullable Tree tree, ExecutionContext ctx) {
         if (tree == null) {
             return null;
         } else if (tree instanceof J) {
