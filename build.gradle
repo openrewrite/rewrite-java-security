@@ -15,7 +15,7 @@ dependencyCheck {
 
 
 group = "org.openrewrite.recipe"
-description = "Enforce logging best practices and migrate between logging frameworks. Automatically."
+description = "Patch Java security vulnerabilities. Automatically."
 
 def rewriteVersion = rewriteRecipe.rewriteVersion.get()
 
@@ -25,6 +25,7 @@ recipeDependencies {
     parserClasspath("com.fasterxml.jackson.core:jackson-databind:2.13.+")
     parserClasspath("org.springframework:spring-context:5.+")
     parserClasspath("org.springframework.security:spring-security-config:5.+")
+    parserClasspath("org.springframework.security:spring-security-web:5.+")
     parserClasspath("javax:javaee-api:7.+")
     parserClasspath("jakarta.servlet:jakarta.servlet-api:4.+")
 }
