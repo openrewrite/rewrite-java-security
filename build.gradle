@@ -15,7 +15,7 @@ dependencyCheck {
 
 
 group = "org.openrewrite.recipe"
-description = "Enforce logging best practices and migrate between logging frameworks. Automatically."
+description = "Patch Java security vulnerabilities. Automatically."
 
 def rewriteVersion = rewriteRecipe.rewriteVersion.get()
 
