@@ -38,7 +38,12 @@ class CsrfProtectionTest implements RewriteTest {
 
         spec.recipe(new CsrfProtection(null))
           .parser(JavaParser.fromJavaVersion()
-            .classpath("spring-boot-autoconfigure", "spring-security-config", "spring-context", "servlet-api", "spring-beans"))
+            .classpath(
+              "spring-boot-autoconfigure",
+              "spring-security-config",
+              "spring-context",
+              "servlet-api",
+              "spring-beans"))
           .executionContext(ctx); // don't skip source set generation
     }
 
@@ -50,7 +55,7 @@ class CsrfProtectionTest implements RewriteTest {
           java(
                 """
             import org.springframework.boot.autoconfigure.SpringBootApplication;
-            
+
             @SpringBootApplication
             class Application {
             }
@@ -60,7 +65,7 @@ class CsrfProtectionTest implements RewriteTest {
               import org.springframework.context.annotation.Configuration;
               import org.springframework.security.config.annotation.web.builders.HttpSecurity;
               import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-              
+
               @Configuration
               class SecurityConfig extends WebSecurityConfigurerAdapter {
                   @Override
@@ -73,7 +78,7 @@ class CsrfProtectionTest implements RewriteTest {
               import org.springframework.security.config.annotation.web.builders.HttpSecurity;
               import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
               import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-              
+
               @Configuration
               class SecurityConfig extends WebSecurityConfigurerAdapter {
                   @Override
